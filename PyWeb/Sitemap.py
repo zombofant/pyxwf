@@ -3,10 +3,10 @@ from __future__ import unicode_literals
 import xml.etree.ElementTree as ET
 
 import PyWeb.utils as utils
-from PyWeb.Registry import NodePlugins
+import PyWeb.Nodes.Directory as Directory
 
 class Site(object):
-    namespace = "http://pyweb.sotecware.net/site"
+    namespace = "http://pyweb.sotecware.net/xmlns/site"
     
     def __init__(self, sitemapFileLike=None, **kwargs):
         super(Site, self).__init__(**kwargs)
@@ -39,17 +39,8 @@ class Site(object):
         self._require(self.root, "root")
         self._require(self.urlRoot, "urlRoot")
 
-    def _loadNode(self, node):
-        plugin = NodePlugins.getPluginInstance(node, self)
-        children = list(map(self._loadNode, node))
-        if len(children) > 0:
-            plugin.extend(children)
-        return plugin
-
     def _loadTree(self, tree):
-        self.tree = []
-        root = self.root
-        self.tree = list(map(self._loadNode, tree))
+        self.tree = Directory.Directory("tree", tree, self)
 
     def loadSitemap(self, root):
         self._loadMeta(root)
@@ -67,4 +58,8 @@ class Site(object):
             for line in node.nodeTree():
                 base += "\n    "+line
         return base
+
+    def render(self, path):
+        node = self.tree.resolvePath(path, path)
+        return node.getDocument()
 

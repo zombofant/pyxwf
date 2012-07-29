@@ -3,13 +3,14 @@ import os
 import PyWeb.Nodes as Nodes
 import PyWeb.Registry as Registry
 
-class Page(Nodes.ContainerNode):
+class Page(Nodes.Node):
     __metaclass__ = Registry.NodeMeta
 
-    namespace = "http://pyweb.sotecware.net/page"
+    namespace = "http://pyweb.zombofant.net/xmlns/nodes/page"
 
-    def __init__(self, name, node, site):
-        if name != "node":
+    def __init__(self, tag, node, site):
+        super(Page, self).__init__(tag, node, site)
+        if tag != "node":
             raise ValueError("Unknown node name: {0}".format(name))
 
         self.src = node.get("src")
@@ -22,7 +23,7 @@ class Page(Nodes.ContainerNode):
         finally:
             f.close()
     
-    def _render(self, path):
+    def getDocument(self):
         return self.doc
 
     def _nodeTreeEntry(self):

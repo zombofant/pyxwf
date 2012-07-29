@@ -39,3 +39,4 @@ class Document(object):
         self.title = title
         self.keywords = keywords
         self.links = links
+        self.body = body

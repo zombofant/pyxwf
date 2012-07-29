@@ -45,7 +45,7 @@ __all__ = [
     "HTTP500", "InternalServerError",
     "HTTP501", "NotImplemented",
     "HTTP502", "BadGateway",
-    "HTTP503", "ServiceNotAvailable",
+    "HTTP503", "ServiceUnavailable",
     "HTTP504", "GatewayTimeout",
     "HTTP505", "HTTPVersionNotSupported"
 ]
@@ -172,7 +172,7 @@ Forbidden = HTTP403
     
 class HTTP404(HTTPClientError):
     def __init__(self, resourceName=None, statusCodeTitle="Not Found", **kwargs):
-        super(HTTP404, self).__init__(404, statusCodeTitle=statusCodeTitle, **kwargs)
+        super(HTTP404, self).__init__(404, message=resourceName, statusCodeTitle=statusCodeTitle, **kwargs)
         self.resourceName = resourceName
 NotFound = HTTP404
     
