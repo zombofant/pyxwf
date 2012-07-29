@@ -1,3 +1,5 @@
+import os
+
 import PyWeb.Errors as Errors
 
 import PyWeb.Nodes as Nodes
@@ -8,17 +10,28 @@ class Redirect(Nodes.Node):
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/redirect"
 
-    def __init__(self, tag, node, site):
-        super(Redirect, self).__init__(tag, node, site)
+    methods = {
+        "found": Errors.Found,
+        "see-other": Errors.SeeOther,
+        "moved-permanently": Errors.MovedPermanently,
+        "temporary-redirect": Errors.TemporaryRedirect,
+        "internal": Errors.InternalRedirect
+    }
+
+    def __init__(self, parent, tag, node, site):
+        super(Redirect, self).__init__(parent, tag, node, site)
         if tag != "node":
             raise ValueError("Unknown node name: {0}".format(name))
         self.target = node.get("to")
+        self.method = self.methods[node.get("method", "found")]
     
     def getDocument(self):
         pass
 
     def resolvePath(self, fullPath, relPath):
-        raise Found(os.path.join(fullPath[:-(len(relPath)+len(self.name)+1)], self.target, relPath))
+        newPath = os.path.join(fullPath[:-(len(relPath)+len(self.name)+1)])
+        newPath = os.path.join(newPath, self.target, relPath)
+        raise self.method(newPath)
 
     def _nodeTreeEntry(self):
         return """<Page title="{0}">""".format(self.doc.title)

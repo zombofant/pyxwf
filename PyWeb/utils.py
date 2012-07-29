@@ -1,3 +1,4 @@
+import lxml.etree as ET
 
 def splitTag(tag):
     assert(isinstance(tag, basestring))

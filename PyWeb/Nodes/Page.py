@@ -8,8 +8,8 @@ class Page(Nodes.Node):
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/page"
 
-    def __init__(self, tag, node, site):
-        super(Page, self).__init__(tag, node, site)
+    def __init__(self, parent, tag, node, site):
+        super(Page, self).__init__(parent, tag, node, site)
         if tag != "node":
             raise ValueError("Unknown node name: {0}".format(name))
 

@@ -1,6 +1,6 @@
 import abc
-import xml.etree.ElementTree as ET
 
+from PyWeb.utils import ET
 import PyWeb.Namespaces as NS
 
 class DocumentBase(object):
@@ -17,16 +17,16 @@ class Link(object):
     _linkTag = "{{{0}}}link".format(NS.xhtml)
     _scriptTag = "{{{0}}}script".format(NS.xhtml)
     
-    @staticmethod
-    def create(rel, typeName, href):
+    @classmethod
+    def create(cls, rel, typeName, href):
         if rel == "stylesheet":
-            return ET.Element(self._linkTag, attrib={
+            return ET.Element(cls._linkTag, attrib={
                 "rel": "stylesheet",
                 "type": typeName,
                 "href": href
             })
         elif rel == "script":
-            return ET.Element(self._scriptTag, attrib={
+            return ET.Element(cls._scriptTag, attrib={
                 "type": typeName,
                 "src": href
             })

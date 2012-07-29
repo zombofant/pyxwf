@@ -1,3 +1,5 @@
+from PyWeb.utils import ET
+
 import PyWeb.Errors as Errors
 
 import PyWeb.Registry as Registry
@@ -8,12 +10,14 @@ class Directory(Nodes.Node):
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/directory"
     
-    def __init__(self, tag, node, site):
-        super(Directory, self).__init__(tag, node, site)
+    def __init__(self, parent, tag, node, site):
+        super(Directory, self).__init__(parent, tag, node, site)
         self.pathDict = {}
         self.children = []
         for child in node:
-            self.append(Registry.NodePlugins.getPluginInstance(child, site))
+            if child.tag is ET.Comment:
+                continue
+            self.append(Registry.NodePlugins.getPluginInstance(child, self, site))
 
     def append(self, plugin):
         if plugin.name in self.pathDict:

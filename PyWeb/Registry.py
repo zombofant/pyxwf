@@ -21,12 +21,12 @@ class RegistryBase(dict):
             raise
 
 class _NodePlugins(RegistryBase):
-    def getPluginInstance(self, node, site):
+    def getPluginInstance(self, node, parent, site):
         ns, name = utils.splitTag(node.tag)
         cls = self.get(ns, None)
         if cls is None:
             raise KeyError("Unknown plugin namespace: {0}".format(ns))
-        return cls(name, node, site)
+        return cls(parent, name, node, site)
 
 class _DocumentPlugins(RegistryBase):
     def __init__(self):
