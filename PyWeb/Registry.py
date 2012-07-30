@@ -4,12 +4,14 @@ import PyWeb.utils as utils
 import PyWeb.Nodes as Nodes
 
 class RegistryBase(dict):
+    keyDescription = "key"
+    
     def __setitem__(self, key, cls):
         if key in self:
-            raise ValueError("Conflicting key: {0} already taken by {1}".format(key, self[key]))
+            raise ValueError("Conflicting {2}: {0} already taken by {1}".format(key, self[key], self.keyDescription))
         super(RegistryBase, self).__setitem__(key, cls)
 
-    def multiReg(self, keys, cls):
+    def registerMultiple(self, keys, cls):
         try:
             lastSuccessful = None
             for key in keys:
@@ -21,15 +23,27 @@ class RegistryBase(dict):
                     del self[key]
             raise
 
-class _NodePlugins(RegistryBase):
-    def getPluginInstance(self, node, parent, site):
+class NamespaceRegistry(RegistryBase):
+    keyDescription = "namespace/name pair"
+    
+    def getPluginInstance(self, node, *args):
         ns, name = utils.splitTag(node.tag)
-        cls = self.get(ns, None)
+        cls = self.get((ns, name), None)
         if cls is None:
             raise KeyError("Unknown plugin namespace: {0}".format(ns))
-        return cls(parent, name, node, site)
+        self._getInstance(cls, node, *args)
+
+    def register(self, ns, names, cls):
+        keys = list(itertools.izip(itertools.repeat(ns), names))
+        self.registerMultiple(keys, cls)
+
+class _NodePlugins(NamespaceRegistry):
+    def _getInstance(self, cls, node, parent, site):
+        return cls(parent, node, site)
 
 class _DocumentPlugins(RegistryBase):
+    keyDescription = "MIME type"
+    
     def __init__(self):
         super(_DocumentPlugins, self).__init__()
         self.instances = {}
@@ -45,18 +59,40 @@ class _DocumentPlugins(RegistryBase):
         self.instances[mime] = inst
         return inst
 
+    def register(self, types, cls):
+        self.registerMultiple(types, cls)
+
+class _CrumbPlugins(RegistryBase):
+    keyDescription = "namespace"
+
+    def _getInstance(self, cls, node):
+        return cls(node)
+
 NodePlugins = _NodePlugins()
 DocumentPlugins = _DocumentPlugins()
+CrumbPlugins = _CrumbPlugins()
 
-class NodeMeta(Nodes.NodeMeta):
+class NamespaceMetaMixin(type):
+    defaultNames = []
+    
     def __new__(mcls, name, bases, dct):
         ns = dct.get("namespace", None)
+        try:
+            names = list(dct.get("names", mcls.defaultNames))
+        except TypeError:
+            raise TypeError("Plugin needs names attribute which must be convertible to a sequence.")
         if not isinstance(ns, basestring):
             raise TypeError("Plugin needs attribute namespace with a string assigned.")
+        if len(names) == 0:
+            raise ValueError("Plugins must register for at least one name.")
 
-        cls = abc.ABCMeta.__new__(mcls, name, bases, dct)
-        NodePlugins[ns] = cls
+        cls = type.__new__(mcls, name, bases, dct)
+        mcls.register(ns, names, cls)
         return cls
+
+class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
+    def register(mcls, ns, names, cls):
+        NodePlugins.register(ns, names, cls)
 
 class DocumentMeta(abc.ABCMeta):
     def __new__(mcls, name, bases, dct):
@@ -66,5 +102,9 @@ class DocumentMeta(abc.ABCMeta):
         except TypeError:
             raise TypeError("Plugin needs attribute namespace with a string assigned.")
         cls = abc.ABCMeta.__new__(mcls, name, bases, dct)
-        DocumentPlugins.multiReg(iterable, cls)
+        DocumentPlugins.register(iterable, cls)
         return cls
+
+class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
+    def register(mcls, ns, names, cls):
+        CrumbPlugins.register(ns, names, cls)

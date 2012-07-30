@@ -9,6 +9,7 @@ class Directory(Nodes.Node):
     __metaclass__ = Registry.NodeMeta
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/directory"
+    names = ["node"]
     
     def __init__(self, parent, tag, node, site):
         super(Directory, self).__init__(parent, tag, node, site)
@@ -41,3 +42,8 @@ class Directory(Nodes.Node):
 
     def __len__(self):
         return len(self.children)
+
+class RootDirectory(Directory):
+    __metaclass__ = Registry.NodeMeta
+    
+    names = ["tree"]

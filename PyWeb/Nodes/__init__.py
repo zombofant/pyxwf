@@ -3,18 +3,33 @@ import abc, collections
 import PyWeb.Errors as Errors
 
 class NodeMeta(abc.ABCMeta):
+    def _raiseNoValidRequestHandlers(self):
+        raise TypeError("{0} requires requestHandlers as dict (or dict-compatible) or callable".format(name))
+    
     def __new__(mcls, name, bases, dct):
-        requestHandlers = dct.get("requestHandlers", None)
+        try:
+            requestHandlers = dct["requestHandlers"]
+        except KeyError:
+            for base in bases:
+                try:
+                    requestHandlers = base.requestHandlers
+                    break;
+                except AttributeError:
+                    pass
+            else:
+                self._raiseNoValidRequestHandlers()
+        if requestHandlers is None:
+            raise TypeError("requestHandlers has been set to None intentionally in {0}".format(name))
 
         isCallable = hasattr(requestHandlers, "__call__")
         if not isCallable:
             try:
                 requestHandlers = dict(requestHandlers)
-            except ValueError, TypeError:
+            except (ValueError, TypeError):
                 try:
                     methods = dict(requestHandlers.items())
-                except ValueError, TypeError:
-                    raise TypeError("Node requires requestHandlers as dict (or dict-compatible) or callable")
+                except (ValueError, TypeError, AttributeError):
+                    self._raiseNoValidRequestHandlers()
         else:
             requestHandlers = collections.defaultdict(lambda x: requestHandlers)
             

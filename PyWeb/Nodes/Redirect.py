@@ -9,6 +9,7 @@ class Redirect(Nodes.Node):
     __metaclass__ = Registry.NodeMeta
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/redirect"
+    names = ["node"]
 
     methods = {
         "found": Errors.Found,

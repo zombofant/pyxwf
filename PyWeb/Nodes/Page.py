@@ -7,6 +7,7 @@ class Page(Nodes.Node):
     __metaclass__ = Registry.NodeMeta
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/page"
+    names = ["node"]
 
     def __init__(self, parent, tag, node, site):
         super(Page, self).__init__(parent, tag, node, site)
