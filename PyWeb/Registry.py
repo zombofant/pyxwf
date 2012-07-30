@@ -22,6 +22,9 @@ class RegistryBase(dict):
                 for key in itertools.takewhile(lambda x: x is not lastSuccessful, keys):
                     del self[key]
             raise
+            
+    def __call__(self, *args, **kwargs):
+        return self.getPluginInstance(*args, **kwargs)
 
 class NamespaceRegistry(RegistryBase):
     keyDescription = "namespace/name pair"
@@ -31,15 +34,15 @@ class NamespaceRegistry(RegistryBase):
         cls = self.get((ns, name), None)
         if cls is None:
             raise KeyError("Unknown plugin namespace: {0}".format(ns))
-        self._getInstance(cls, node, *args)
+        return self._getInstance(cls, node, *args)
 
     def register(self, ns, names, cls):
         keys = list(itertools.izip(itertools.repeat(ns), names))
         self.registerMultiple(keys, cls)
 
 class _NodePlugins(NamespaceRegistry):
-    def _getInstance(self, cls, node, parent, site):
-        return cls(parent, node, site)
+    def _getInstance(self, cls, node, site, parent):
+        return cls(site, parent, node)
 
 class _DocumentPlugins(RegistryBase):
     keyDescription = "MIME type"
@@ -62,9 +65,7 @@ class _DocumentPlugins(RegistryBase):
     def register(self, types, cls):
         self.registerMultiple(types, cls)
 
-class _CrumbPlugins(RegistryBase):
-    keyDescription = "namespace"
-
+class _CrumbPlugins(NamespaceRegistry):
     def _getInstance(self, cls, node):
         return cls(node)
 
@@ -91,6 +92,7 @@ class NamespaceMetaMixin(type):
         return cls
 
 class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
+    @classmethod
     def register(mcls, ns, names, cls):
         NodePlugins.register(ns, names, cls)
 
@@ -106,5 +108,6 @@ class DocumentMeta(abc.ABCMeta):
         return cls
 
 class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
+    @classmethod
     def register(mcls, ns, names, cls):
         CrumbPlugins.register(ns, names, cls)

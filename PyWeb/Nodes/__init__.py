@@ -3,7 +3,7 @@ import abc, collections
 import PyWeb.Errors as Errors
 
 class NodeMeta(abc.ABCMeta):
-    def _raiseNoValidRequestHandlers(self):
+    def _raiseNoValidRequestHandlers(mcls):
         raise TypeError("{0} requires requestHandlers as dict (or dict-compatible) or callable".format(name))
     
     def __new__(mcls, name, bases, dct):
@@ -17,7 +17,7 @@ class NodeMeta(abc.ABCMeta):
                 except AttributeError:
                     pass
             else:
-                self._raiseNoValidRequestHandlers()
+                mcls._raiseNoValidRequestHandlers(mcls)
         if requestHandlers is None:
             raise TypeError("requestHandlers has been set to None intentionally in {0}".format(name))
 
@@ -29,7 +29,7 @@ class NodeMeta(abc.ABCMeta):
                 try:
                     methods = dict(requestHandlers.items())
                 except (ValueError, TypeError, AttributeError):
-                    self._raiseNoValidRequestHandlers()
+                    mcls._raiseNoValidRequestHandlers(mcls)
         else:
             requestHandlers = collections.defaultdict(lambda x: requestHandlers)
             
@@ -43,7 +43,7 @@ class NodeMeta(abc.ABCMeta):
 class Node(object):
     __metaclass__ = NodeMeta
     
-    def __init__(self, parent, tag, node, site):
+    def __init__(self, site, parent, node):
         super(Node, self).__init__()
         self.parent = parent
         self.site = site

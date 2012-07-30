@@ -9,15 +9,13 @@ class Page(Nodes.Node):
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/page"
     names = ["node"]
 
-    def __init__(self, parent, tag, node, site):
-        super(Page, self).__init__(parent, tag, node, site)
-        if tag != "node":
-            raise ValueError("Unknown node name: {0}".format(name))
+    def __init__(self, site, parent, node):
+        super(Page, self).__init__(site, parent, node)
 
         self.src = node.get("src")
         self.mimeType = node.get("type")
 
-        documentHandler = Registry.DocumentPlugins.getPluginInstance(self.mimeType)
+        documentHandler = Registry.DocumentPlugins(self.mimeType)
         f = open(os.path.join(site.root, self.src), "r")
         try:
             self.doc = documentHandler.parse(f)

@@ -19,10 +19,8 @@ class Redirect(Nodes.Node):
         "internal": Errors.InternalRedirect
     }
 
-    def __init__(self, parent, tag, node, site):
-        super(Redirect, self).__init__(parent, tag, node, site)
-        if tag != "node":
-            raise ValueError("Unknown node name: {0}".format(name))
+    def __init__(self, site, parent, node):
+        super(Redirect, self).__init__(site, parent, node)
         self.target = node.get("to")
         self.method = self.methods[node.get("method", "found")]
     

@@ -11,14 +11,14 @@ class Directory(Nodes.Node):
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/directory"
     names = ["node"]
     
-    def __init__(self, parent, tag, node, site):
-        super(Directory, self).__init__(parent, tag, node, site)
+    def __init__(self, site, parent, node):
+        super(Directory, self).__init__(site, parent, node)
         self.pathDict = {}
         self.children = []
         for child in node:
             if child.tag is ET.Comment:
                 continue
-            self.append(Registry.NodePlugins.getPluginInstance(child, self, site))
+            self.append(Registry.NodePlugins(child, site, self))
 
     def append(self, plugin):
         if plugin.name in self.pathDict:
@@ -46,4 +46,5 @@ class Directory(Nodes.Node):
 class RootDirectory(Directory):
     __metaclass__ = Registry.NodeMeta
     
+    namespace = Directory.namespace
     names = ["tree"]

@@ -7,10 +7,10 @@ from PyWeb.utils import ET
 
 import PyWeb.Errors as Errors
 import PyWeb.utils as utils
-import PyWeb.Nodes.Directory as Directory
 import PyWeb.Namespaces as NS
 import PyWeb.Documents.PyWebXML as PyWebXML
 import PyWeb.Message as Message
+import PyWeb.Registry as Registry
 
 class Site(object):
     def __init__(self, sitemapFileLike=None, **kwargs):
@@ -52,8 +52,15 @@ class Site(object):
         for plugin in plugins.findall(NS.Site.p):
             importlib.import_module(plugin.text)
 
-    def _loadTree(self, tree):
-        self.tree = Directory.Directory(None, "tree", tree, self)
+    def _loadTree(self, root):
+        # find the tree root. This is kinda complicated as we do not
+        # know its namespace ...
+        for node in root:
+            if node.tag.endswith("tree"):
+                self.tree = Registry.NodePlugins(node, self, None)
+                break
+        else:
+            raise ValueError("No tree node.")
 
     def _getTemplateTransform(self, templateFile):
         cached = self._templateCache.get(templateFile, None)
@@ -111,8 +118,7 @@ class Site(object):
     def loadSitemap(self, root):
         self._loadMeta(root)
         self._loadPlugins(root)
-        tree = root.find(NS.Site.tree)
-        self._loadTree(tree)
+        self._loadTree(root)
 
     def clear(self):
         self.title = None
