@@ -66,8 +66,8 @@ class _DocumentPlugins(RegistryBase):
         self.registerMultiple(types, cls)
 
 class _CrumbPlugins(NamespaceRegistry):
-    def _getInstance(self, cls, node):
-        return cls(node)
+    def _getInstance(self, cls, node, site):
+        return cls(site, node)
 
 NodePlugins = _NodePlugins()
 DocumentPlugins = _DocumentPlugins()

@@ -33,7 +33,7 @@ class Site(object):
         meta = root.find(NS.Site.meta)
         if meta is None:
             raise ValueError("meta tag must be present.")
-        self.title = meta.findtext(NS.Site.title)
+        self.title = unicode(meta.findtext(NS.Site.title))
         license = meta.find(NS.Site.license)
         if license is not None:
             self.licenseName = unicode(license.text)
@@ -46,6 +46,7 @@ class Site(object):
         self._require(self.urlRoot, "urlRoot")
 
     def _loadPlugins(self, root):
+        self.nodes = {}
         plugins = root.find(NS.Site.plugins)
         if plugins is None:
             return
@@ -61,6 +62,14 @@ class Site(object):
                 break
         else:
             raise ValueError("No tree node.")
+    
+    def _loadCrumbs(self, root):
+        self.crumbs = {}
+        crumbs = root.find(NS.Site.crumbs)
+        for crumb in crumbs:
+            if not isinstance(crumb.tag, basestring):
+                continue 
+            self.addCrumb(Registry.CrumbPlugins(crumb, self))
 
     def _getTemplateTransform(self, templateFile):
         cached = self._templateCache.get(templateFile, None)
@@ -69,16 +78,43 @@ class Site(object):
             self._templateCache[templateFile] = transform
             return transform
         return cached
+        
+    def _placeCrumb(self, node, crumbNode, crumb):
+        tree = crumb.render(node)
+        crumbParent = crumbNode.getparent()
+        crumbNodeIdx = crumbParent.index(crumbNode)
+        crumbParent[crumbNodeIdx] = tree
 
-    def _transformPyNamespace(self, body):
+    def _transformPyNamespace(self, node, body):
+        crumbs = True
+        while crumbs:
+            crumbs = False
+            for crumbNode in body.iter(NS.PyWebXML.crumb):
+                crumbs = True
+                crumbID = crumbNode.get("id")
+                try:
+                    crumb = self.crumbs[crumbID]
+                except KeyError:
+                    raise ValueError("Invalid crumb id: {0!r}.".format(crumbId))
+                self._placeCrumb(node, crumbNode, crumb)
         for localLink in body.iter(NS.PyWebXML.a):
             localLink.tag = NS.XHTML.a
             localLink.set("href", os.path.join(self.urlRoot, localLink.get("href")))
 
-    def _applyTemplate(self, title, links, keywords, body, template):
-        self._transformPyNamespace(body)
-        newDoc = template(body)
+    def _getTemplateArguments(self, document):
+        return {
+            b"doc_title": repr(document.title)[1:],
+            b"site_title": repr(self.title)[1:]
+        }
+
+    def _applyTemplate(self, node, document, transform):
+        links = document.links
+        keywords = document.keywords
+        templateArgs = self._getTemplateArguments(document)
+        print(templateArgs)
+        newDoc = transform(document.body, **templateArgs)
         body = newDoc.find(NS.XHTML.body)
+        self._transformPyNamespace(node, body)
         if body is None:
             raise ValueError("Template did not return a valid body.")
         meta = newDoc.find(NS.PyWebXML.meta)
@@ -86,6 +122,9 @@ class Site(object):
             addKeywords, addLinks = PyWebXML.PyWebXML.getLinksAndKeywords(meta)
             links = itertools.chain(links, addLinks)
             keywords = list(itertools.chain(keywords, addKeywords))
+            title = unicode(meta.findtext(NS.PyWebXML.title) or document.title)
+        else:
+            title = document.title
 
         html = ET.Element(NS.XHTML.html)
         head = ET.SubElement(html, NS.XHTML.head)
@@ -114,28 +153,33 @@ class Site(object):
             except Errors.InternalRedirect as redirect:
                 path = redirect.to
         return node, remPath
+    
+    def addCrumb(self, crumb):
+        if crumb.ID is None:
+            raise ValueError("Crumb declared without id.")
+        if crumb.ID in self.crumbs:
+            raise ValueError("Duplicate crumb id: {0}".format(crumb.ID))
+        self.crumbs[crumb.ID] = crumb
+        
+    def registerNodeID(self, ID, node):
+        if ID in self.nodes:
+            raise ValueError("Duplicate node id: {0}".format(ID))
+        self.nodes[ID] = node
 
     def loadSitemap(self, root):
         self._loadMeta(root)
         self._loadPlugins(root)
         self._loadTree(root)
+        self._loadCrumbs(root)
 
     def clear(self):
         self.title = None
         self.licenseName = None
         self.licenseHref = None
 
-    def render(self, document, template):
-        transform = self._getTemplateTransform(template)
-        return self._applyTemplate(
-            document.title,
-            document.links,
-            document.keywords,
-            document.body,
-            transform)
-
     def handle(self, request, strip=True):
         node, remPath = self._getNode(request.path, strip)
         document = node.handle(request, remPath)
-        resultTree = self.render(document, node.getTemplate())
+        transform = self._getTemplateTransform(node.getTemplate())
+        resultTree = self._applyTemplate(node, document, transform)
         return Message.XHTMLMessage(resultTree)

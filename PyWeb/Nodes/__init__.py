@@ -49,6 +49,9 @@ class Node(object):
         self.site = site
         self.name = node.get("name")
         self.template = node.get("template", None)
+        self.ID = node.get("id")
+        if self.ID is not None:
+            site.registerNodeID(self.ID, self)
     
     def nodeTree(self):
         yield self._nodeTreeEntry()
