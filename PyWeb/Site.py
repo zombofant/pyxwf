@@ -81,13 +81,13 @@ class Site(object):
             return transform
         return cached
         
-    def _placeCrumb(self, node, crumbNode, crumb):
-        tree = crumb.render(node)
+    def _placeCrumb(self, ctx, crumbNode, crumb):
+        tree = crumb.render(ctx)
         crumbParent = crumbNode.getparent()
         crumbNodeIdx = crumbParent.index(crumbNode)
         crumbParent[crumbNodeIdx] = tree
 
-    def _transformPyNamespace(self, node, body):
+    def _transformPyNamespace(self, ctx, body):
         crumbs = True
         while crumbs:
             crumbs = False
@@ -97,8 +97,8 @@ class Site(object):
                 try:
                     crumb = self.crumbs[crumbID]
                 except KeyError:
-                    raise ValueError("Invalid crumb id: {0!r}.".format(crumbId))
-                self._placeCrumb(node, crumbNode, crumb)
+                    raise ValueError("Invalid crumb id: {0!r}.".format(crumbID))
+                self._placeCrumb(ctx, crumbNode, crumb)
         for localLink in body.iter(NS.PyWebXML.a):
             localLink.tag = NS.XHTML.a
             localPath = localLink.get("href")
@@ -113,13 +113,21 @@ class Site(object):
             b"site_title": repr(self.title)[1:]
         }
 
-    def _applyTemplate(self, node, document, transform):
+    def _transformHref(self, node, attrName="href"):
+        v = node.get(attrName)
+        print("WARNING: MISSING NONLOCAL DETECTION")
+        if v[:1] == "/":
+            v = v[1:]
+        node.set(attrName, os.path.join(self.urlRoot, v))
+
+    def _applyTemplate(self, ctx, document, transform):
         links = document.links
         keywords = document.keywords
         templateArgs = self._getTemplateArguments(document)
         newDoc = transform(document.body, **templateArgs)
         body = newDoc.find(NS.XHTML.body)
-        self._transformPyNamespace(node, body)
+        ctx.body = body
+        self._transformPyNamespace(ctx, body)
         if body is None:
             raise ValueError("Template did not return a valid body.")
         meta = newDoc.find(NS.PyWebXML.meta)
@@ -135,6 +143,7 @@ class Site(object):
         head = ET.SubElement(html, NS.XHTML.head)
         ET.SubElement(head, NS.XHTML.title).text = title
         for link in links:
+            self._transformHref(link)
             head.append(link)
         if len(keywords) > 0:
             ET.SubElement(head, NS.XHTML.meta, attrib={
@@ -190,5 +199,5 @@ class Site(object):
         ctx.pageNode = node
         document = node.handle(ctx, remPath)
         transform = self._getTemplateTransform(node.Template)
-        resultTree = self._applyTemplate(node, document, transform)
+        resultTree = self._applyTemplate(ctx, document, transform)
         return Message.XHTMLMessage(resultTree)

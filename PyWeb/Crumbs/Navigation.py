@@ -42,18 +42,31 @@ class Navigation(Crumbs.CrumbBase):
         self.showRoot = utils.getBoolAttr(node, "show-root", False)
         self.maxDepth = int(node.get("max-depth", 0))
         self.activeClass = node.get("active-class", "nav-active")
-        self.propagateActive = utils.getBoolAttr(node, "propagate-active", True)
+        self.childActiveClass = node.get("child-active-class")
+
+    def _propagateActive(self, eNode):
+        cls = self.activeClass
+        while eNode is not None:
+            if eNode.tag == NS.XHTML.li:
+                utils.addClass(eNode, cls)
+            if not self.childActiveClass:
+                return
+            eNode = eNode.getparent()
+            cls = self.childActiveClass
     
-    def _navTree(self, ctx, info, depth=0):
+    def _navTree(self, parent, ctx, info, depth=0):
         if self.maxDepth > 0 and depth > self.maxDepth:
-            return None
+            return
         nodeIterable = IteratorStack()
         try:
             nodeIterable.push(iter(info))
         except (ValueError, TypeError):
-            print("not iterable")
-            return None
-        ul = ET.Element(NS.XHTML.ul)
+            return
+        if parent is not None:
+            ul = ET.SubElement(parent, NS.XHTML.ul)
+        else:
+            ul = ET.Element(NS.XHTML.ul)
+        
         for child in nodeIterable:
             navInfo = child.getNavigationInfo(ctx)
             displayMode = navInfo.getDisplay()
@@ -63,13 +76,15 @@ class Navigation(Crumbs.CrumbBase):
                 li = ET.SubElement(ul, NS.XHTML.li)
                 a = ET.SubElement(li, NS.PyWebXML.a, href=child.Path)
                 a.text = navInfo.getTitle()
-                subtree = self._navTree(ctx, navInfo, depth+1)
+                subtree = self._navTree(li, ctx, navInfo, depth+1)
+                if navInfo.getRepresentative() is ctx.pageNode:
+                    self._propagateActive(li)
                 if subtree is not None:
                     li.append(subtree)
         return ul
 
     def render(self, ctx):
         if self.showRoot:
-            return self._navTree(ctx, [self.root], depth=0)
+            return self._navTree(None, ctx, [self.root], depth=0)
         else:
-            return self._navTree(ctx, self.root.getNavigationInfo(ctx))
+            return self._navTree(None, ctx, self.root.getNavigationInfo(ctx))

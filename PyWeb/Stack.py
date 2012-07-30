@@ -14,6 +14,7 @@ class Context(object):
         self.path = transaction.get_path_info()
         self.out = transaction.get_response_stream()
         self.pageNode = None
+        self.body = None
 
 class WebStackSite(Site.Site):
     def __init__(self, sitemapFilelike=None, **kwargs):
