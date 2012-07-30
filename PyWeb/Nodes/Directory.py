@@ -25,9 +25,6 @@ class Directory(Nodes.Node):
         self.pathDict[plugin.name] = plugin
         self.children.append(plugin)
 
-    def getDocument(self):
-        pass
-
     def resolvePath(self, fullPath, relPath):
         try:
             pathHere, relPath = relPath.split("/", 1)
@@ -36,7 +33,7 @@ class Directory(Nodes.Node):
             relPath = ""
         node = self.pathDict.get(pathHere, None)
         if node is None:
-            raise Errors.NotFound(resourceName=fullPath)
+            raise Errors.NotFound()
         return node.resolvePath(fullPath, relPath)
 
     def __iter__(self):

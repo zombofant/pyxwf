@@ -1,6 +1,7 @@
-import itertools
+import itertools, abc
+
 import PyWeb.utils as utils
-import abc
+import PyWeb.Nodes as Nodes
 
 class RegistryBase(dict):
     def __setitem__(self, key, cls):
@@ -47,7 +48,7 @@ class _DocumentPlugins(RegistryBase):
 NodePlugins = _NodePlugins()
 DocumentPlugins = _DocumentPlugins()
 
-class NodeMeta(abc.ABCMeta):
+class NodeMeta(Nodes.NodeMeta):
     def __new__(mcls, name, bases, dct):
         ns = dct.get("namespace", None)
         if not isinstance(ns, basestring):

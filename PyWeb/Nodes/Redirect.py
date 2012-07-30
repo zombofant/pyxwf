@@ -25,13 +25,20 @@ class Redirect(Nodes.Node):
         self.target = node.get("to")
         self.method = self.methods[node.get("method", "found")]
     
-    def getDocument(self):
-        pass
-
-    def resolvePath(self, fullPath, relPath):
+    def redirect(self, relPath):
         newPath = os.path.join(fullPath[:-(len(relPath)+len(self.name)+1)])
         newPath = os.path.join(newPath, self.target, relPath)
         raise self.method(newPath)
 
+    def resolvePath(self, fullPath, relPath):
+        if self.method is Errors.InternalRedirect:
+            newPath = os.path.join(fullPath[:-(len(relPath)+len(self.name)+1)])
+            newPath = os.path.join(newPath, self.target, relPath)
+            raise self.method(newPath)
+        else:
+            return (self, relPath)
+
     def _nodeTreeEntry(self):
         return """<Page title="{0}">""".format(self.doc.title)
+        
+    requestHandlers = redirect

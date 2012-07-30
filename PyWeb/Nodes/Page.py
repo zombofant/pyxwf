@@ -23,8 +23,12 @@ class Page(Nodes.Node):
         finally:
             f.close()
     
-    def getDocument(self):
+    def doGet(self, relPath):
         return self.doc
 
     def _nodeTreeEntry(self):
         return """<Page title="{0}">""".format(self.doc.title)
+        
+    requestHandlers = {
+        "GET": doGet
+    }
