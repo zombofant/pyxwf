@@ -17,6 +17,9 @@ class MessageInfo(object):
         transaction.set_content_type(self.wsContentType)
         transaction.get_response_stream().write(self.contentBytes)
 
+    def applyToContext(self, ctx):
+        self.applyToTransaction(ctx.transaction)
+
 
 class Message(object):
     __metaclass__ = abc.ABCMeta

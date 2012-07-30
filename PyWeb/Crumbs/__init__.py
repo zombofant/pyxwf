@@ -9,5 +9,5 @@ class CrumbBase(object):
         self.ID = node.get("id")
 
     @abc.abstractmethod
-    def render(self, mainNode):
+    def render(self, ctx):
         pass

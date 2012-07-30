@@ -185,9 +185,10 @@ class Site(object):
         self.licenseName = None
         self.licenseHref = None
 
-    def handle(self, request, strip=True):
-        node, remPath = self._getNode(request.path, strip)
-        document = node.handle(request, remPath)
+    def handle(self, ctx, strip=True):
+        node, remPath = self._getNode(ctx.path, strip)
+        ctx.pageNode = node
+        document = node.handle(ctx, remPath)
         transform = self._getTemplateTransform(node.Template)
         resultTree = self._applyTemplate(node, document, transform)
         return Message.XHTMLMessage(resultTree)

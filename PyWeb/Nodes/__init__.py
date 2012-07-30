@@ -96,5 +96,9 @@ class Node(object):
     @property
     def ID(self):
         return self._id
+
+    @abc.abstractmethod
+    def getNavigationInfo(self, ctx):
+        pass
     
     requestHandlers = {}

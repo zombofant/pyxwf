@@ -4,7 +4,7 @@ import PyWeb.Nodes as Nodes
 import PyWeb.Registry as Registry
 import PyWeb.Navigation as Navigation
 
-class Page(Nodes.Node):
+class Page(Nodes.Node, Navigation.Info):
     __metaclass__ = Registry.NodeMeta
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/page"
@@ -14,6 +14,7 @@ class Page(Nodes.Node):
         super(Page, self).__init__(site, parent, node)
 
         self.src = node.get("src")
+        self.navDisplay = Navigation.getDisplayAttr(node, "nav-display")
         self.mimeType = node.get("type")
 
         documentHandler = Registry.DocumentPlugins(self.mimeType)
@@ -22,14 +23,24 @@ class Page(Nodes.Node):
             self.doc = documentHandler.parse(f)
         finally:
             f.close()
-        
-        self._navigationTitle = self.doc.title
     
     def doGet(self, relPath):
         return self.doc
 
     def _nodeTreeEntry(self):
         return """<Page title="{0}">""".format(self.doc.title)
+
+    def getTitle(self):
+        return self.doc.title
+
+    def getDisplay(self):
+        return self.navDisplay
+
+    def getRepresentative(self):
+        return self
+
+    def getNavigationInfo(self, ctx):
+        return self
         
     requestHandlers = {
         "GET": doGet

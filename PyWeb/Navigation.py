@@ -26,6 +26,17 @@ class Info(object):
     def getRepresentative(self):
         return None
 
-    @abc.abstractmethod
-    def __iter__(self):
-        return iter([])
+def getDisplayAttr(node, name, default=Show):
+    v = node.get(name)
+    if v is None:
+        return default
+    else:
+        try:
+            return {
+                "show": Show,
+                "hide": Hidden,
+                "hidden": Hidden,
+                "replace-with-children": ReplaceWithChildren
+            }[v]
+        except KeyError:
+            raise ValueError("Invalid {0} attribute on {1}: {2}".format(name, utils.splitTag(node)[1], v))
