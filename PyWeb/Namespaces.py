@@ -1,12 +1,10 @@
-class __metaclass__(type):
-    def _notInstanciable(mcls, cls):
-        raise TypeError("Cannot instanciate {0}".format(cls.__name__))
-    
+import PyWeb.utils as utils
+
+class __metaclass__(utils.NoInstance):
     def __new__(mcls, name, bases, dct):
-        dct["__new__"] = mcls._notInstanciable
         cache = dct.get("cache", list())
         dct["cache"] = dict()
-        cls = type.__new__(mcls, name, bases, dct)
+        cls = super(__metaclass__, mcls).__new__(mcls, name, bases, dct)
         # prepopulate cache
         for entry in cache:
             getattr(cls, entry)

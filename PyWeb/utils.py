@@ -1,3 +1,5 @@
+import abc
+
 import lxml.etree as ET
 
 boolNames = {
@@ -6,6 +8,14 @@ boolNames = {
     "true": True,
     "yes": True
 }
+
+class NoInstance(type):
+    def _notInstanciable(*args):
+        raise TypeError("Cannot instanciate {0}".format(cls.__name__))
+        
+    def __new__(mcls, name, bases, dct):
+        dct["__new__"] = mcls._notInstanciable
+        return super(NoInstance, mcls).__new__(mcls, name, bases, dct)
 
 def splitTag(tag):
     assert(isinstance(tag, basestring))
@@ -28,3 +38,8 @@ def getBoolAttr(node, attr, default=None):
         return boolNames[v]
     except KeyError:
         raise ValueError("Invalid boolean value: {0}.".format(node.get(attr)))
+
+def addClass(node, cls):
+    classes = set(node.get("class", "").split())
+    classes.add(cls)
+    node.set("class", " ".join(classes))

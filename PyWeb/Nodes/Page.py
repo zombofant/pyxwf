@@ -2,6 +2,7 @@ import os
 
 import PyWeb.Nodes as Nodes
 import PyWeb.Registry as Registry
+import PyWeb.Navigation as Navigation
 
 class Page(Nodes.Node):
     __metaclass__ = Registry.NodeMeta
@@ -21,6 +22,8 @@ class Page(Nodes.Node):
             self.doc = documentHandler.parse(f)
         finally:
             f.close()
+        
+        self._navigationTitle = self.doc.title
     
     def doGet(self, relPath):
         return self.doc

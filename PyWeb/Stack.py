@@ -1,3 +1,5 @@
+import os
+
 import WebStack
 from WebStack.Generic import EndOfResponse
 
@@ -22,7 +24,8 @@ class WebStackSite(Site.Site):
             transaction.set_response_code(status.statusCode)
             return
         except Errors.HTTPRedirection as status:
-            transaction.redirect(status.newLocation, status.statusCode)
+            loc = os.path.join(self.urlRoot, status.newLocation)
+            transaction.redirect(loc, status.statusCode)
             return
         except (Errors.HTTP200, EndOfResponse) as status:
             transaction.set_response_code(status.statusCode)

@@ -4,12 +4,10 @@ import PyWeb.Errors as Errors
 
 import PyWeb.Nodes as Nodes
 import PyWeb.Registry as Registry
+import PyWeb.Navigation as Navigation
 
-class Redirect(Nodes.Node):
-    __metaclass__ = Registry.NodeMeta
-
+class RedirectBase(Nodes.Node):
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/redirect"
-    names = ["node"]
 
     methods = {
         "found": Errors.Found,
@@ -20,24 +18,35 @@ class Redirect(Nodes.Node):
     }
 
     def __init__(self, site, parent, node):
-        super(Redirect, self).__init__(site, parent, node)
-        self.target = node.get("to")
+        super(RedirectBase, self).__init__(site, parent, node)
         self.method = self.methods[node.get("method", "found")]
     
     def redirect(self, relPath):
-        newPath = os.path.join(fullPath[:-(len(relPath)+len(self.name)+1)])
-        newPath = os.path.join(newPath, self.target, relPath)
-        raise self.method(newPath)
+        raise self.method(self.Target)
 
     def resolvePath(self, fullPath, relPath):
+        if relPath != "":
+            raise Errors.NotFound(resource=fullPath)
         if self.method is Errors.InternalRedirect:
-            newPath = os.path.join(fullPath[:-(len(relPath)+len(self.name)+1)])
-            newPath = os.path.join(newPath, self.target, relPath)
-            raise self.method(newPath)
+            raise self.method(self.Target)
         else:
             return (self, relPath)
-
-    def _nodeTreeEntry(self):
-        return """<Page title="{0}">""".format(self.doc.title)
         
     requestHandlers = redirect
+
+class RedirectInternal(RedirectBase):
+    __metaclass__ = Registry.NodeMeta
+    
+    namespace = RedirectBase.namespace
+    names = ["internal"]
+    
+    def __init__(self, site, parent, node):
+        super(RedirectInternal, self).__init__(site, parent, node)
+        self.to = node.get("to")
+        
+    @property
+    def Target(self):
+        if hasattr(self, "target"):
+            return self.target
+        else:
+            self.target = self.site.getNode(self.to).Path

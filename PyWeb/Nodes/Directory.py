@@ -19,11 +19,13 @@ class Directory(Nodes.Node):
             if child.tag is ET.Comment:
                 continue
             self.append(Registry.NodePlugins(child, site, self))
+        self.index = site.getNode(node.get("index-node"))
+        self.pathDict[""] = self.index
 
     def append(self, plugin):
-        if plugin.name in self.pathDict:
+        if plugin.Name in self.pathDict:
             raise ValueError("Duplicate path name: {0}".format(plugin.name))
-        self.pathDict[plugin.name] = plugin
+        self.pathDict[plugin.Name] = plugin
         self.children.append(plugin)
 
     def resolvePath(self, fullPath, relPath):

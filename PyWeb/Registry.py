@@ -33,7 +33,7 @@ class NamespaceRegistry(RegistryBase):
         ns, name = utils.splitTag(node.tag)
         cls = self.get((ns, name), None)
         if cls is None:
-            raise KeyError("Unknown plugin namespace: {0}".format(ns))
+            raise KeyError("Unknown plugin: {1} in {0}".format(ns, name))
         return self._getInstance(cls, node, *args)
 
     def register(self, ns, names, cls):

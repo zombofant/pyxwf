@@ -51,6 +51,8 @@ class Site(object):
         if plugins is None:
             return
         for plugin in plugins.findall(NS.Site.p):
+            if not isinstance(plugin.tag, basestring):
+                continue
             importlib.import_module(plugin.text)
 
     def _loadTree(self, root):
@@ -99,7 +101,11 @@ class Site(object):
                 self._placeCrumb(node, crumbNode, crumb)
         for localLink in body.iter(NS.PyWebXML.a):
             localLink.tag = NS.XHTML.a
-            localLink.set("href", os.path.join(self.urlRoot, localLink.get("href")))
+            localPath = localLink.get("href")
+            if len(localPath) > 0 and localPath[0] == "/":
+                localPath = localPath[1:]
+            localLink.set("href", os.path.join(self.urlRoot, localPath))
+            
 
     def _getTemplateArguments(self, document):
         return {
@@ -111,7 +117,6 @@ class Site(object):
         links = document.links
         keywords = document.keywords
         templateArgs = self._getTemplateArguments(document)
-        print(templateArgs)
         newDoc = transform(document.body, **templateArgs)
         body = newDoc.find(NS.XHTML.body)
         self._transformPyNamespace(node, body)
@@ -165,6 +170,9 @@ class Site(object):
         if ID in self.nodes:
             raise ValueError("Duplicate node id: {0}".format(ID))
         self.nodes[ID] = node
+        
+    def getNode(self, ID):
+        return self.nodes[ID]
 
     def loadSitemap(self, root):
         self._loadMeta(root)
@@ -180,6 +188,6 @@ class Site(object):
     def handle(self, request, strip=True):
         node, remPath = self._getNode(request.path, strip)
         document = node.handle(request, remPath)
-        transform = self._getTemplateTransform(node.getTemplate())
+        transform = self._getTemplateTransform(node.Template)
         resultTree = self._applyTemplate(node, document, transform)
         return Message.XHTMLMessage(resultTree)

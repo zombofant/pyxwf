@@ -1,5 +1,6 @@
 import abc, collections
 
+import PyWeb.utils as utils
 import PyWeb.Errors as Errors
 
 class NodeMeta(abc.ABCMeta):
@@ -47,9 +48,12 @@ class Node(object):
         super(Node, self).__init__()
         self.parent = parent
         self.site = site
-        self.name = node.get("name")
-        self.template = node.get("template", None)
-        self.ID = node.get("id")
+        self._id = node.get("id")
+        self._name = node.get("name", "")
+        self._template = node.get("template", None)
+        
+        parentPath = (parent.Path + "/") if parent is not None else ""
+        self._path = parentPath + self._name
         if self.ID is not None:
             site.registerNodeID(self.ID, self)
     
@@ -61,6 +65,8 @@ class Node(object):
             handler = self.requestHandlers[request.method]
         except KeyError:
             raise Errors.MethodNotAllowed(request.method)
+        except TypeError:
+            return self.requestHandlers(relPath)
         return handler(self, relPath)
 
     def resolvePath(self, fullPath, relPath):
@@ -68,10 +74,27 @@ class Node(object):
             return (self, relPath)
         raise Errors.NotFound(resourceName=fullPath)
 
-    def getTemplate(self):
-        template = self.template
+    @property
+    def Template(self):
+        template = self._template
         if template is None and self.parent is not None:
-            template = self.parent.getTemplate()
+            template = self.parent.Template
         return template
+    
+    @Template.setter
+    def Template(self, value):
+        self._template = value
+        
+    @property
+    def Name(self):
+        return self._name
+        
+    @property
+    def Path(self):
+        return self._path
+            
+    @property
+    def ID(self):
+        return self._id
     
     requestHandlers = {}
