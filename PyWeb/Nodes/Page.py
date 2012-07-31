@@ -25,7 +25,8 @@ class Page(Nodes.Node, Navigation.Info):
         finally:
             f.close()
     
-    def doGet(self, relPath):
+    def doGet(self, ctx):
+        ctx.checkNotModified(self.doc.lastModified)
         return self.doc
 
     def _nodeTreeEntry(self):

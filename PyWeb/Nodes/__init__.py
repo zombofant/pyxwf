@@ -60,14 +60,14 @@ class Node(object):
     def nodeTree(self):
         yield self._nodeTreeEntry()
 
-    def handle(self, request, relPath):
+    def handle(self, ctx):
         try:
-            handler = self.requestHandlers[request.method]
+            handler = self.requestHandlers[ctx.method]
         except KeyError:
-            raise Errors.MethodNotAllowed(request.method)
+            raise Errors.MethodNotAllowed(ctx.method)
         except TypeError:
-            return self.requestHandlers(relPath)
-        return handler(self, relPath)
+            return self.requestHandlers(ctx)
+        return handler(self, ctx)
 
     def resolvePath(self, fullPath, relPath):
         if relPath == "":

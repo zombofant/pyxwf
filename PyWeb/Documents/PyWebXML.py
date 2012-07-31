@@ -48,8 +48,9 @@ class PyWebXML(Document.DocumentBase):
         links = list(map(cls._linkFromNode, meta.findall(NS.PyWebXML.link)))
         return keywords, links
 
-    def parse(self, filelike):
-        tree = ET.parse(filelike)
+    def parse(self, fileref):
+        lastModified = self._lastModified(fileref)
+        tree = ET.parse(fileref)
         root = tree.getroot()
         if root.tag != NS.PyWebXML.page:
             raise ValueError("This is not a pyweb-xml document.")
@@ -67,5 +68,6 @@ class PyWebXML(Document.DocumentBase):
         body = root.find(NS.XHTML.body)
         if body is None:
             raise ValueError("No body tag found")
-
-        return Document.Document(title, keywords, links, body)
+        
+        return Document.Document(title, keywords, links, body,
+            lastModified=lastModified)

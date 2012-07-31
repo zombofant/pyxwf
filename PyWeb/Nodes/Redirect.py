@@ -22,7 +22,7 @@ class RedirectBase(Nodes.Node):
         super(RedirectBase, self).__init__(site, parent, node)
         self.method = self.methods[node.get("method", self.defaultMethod)]
     
-    def redirect(self, relPath):
+    def redirect(self, ctx):
         raise self.method(self.Target)
 
     def resolvePath(self, fullPath, relPath):

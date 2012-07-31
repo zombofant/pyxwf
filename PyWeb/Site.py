@@ -219,7 +219,10 @@ class Site(object):
     def handle(self, ctx, strip=True):
         node, remPath = self._getNode(ctx.path, strip)
         ctx.pageNode = node
-        document = node.handle(ctx, remPath)
+        document = node.handle(ctx)
         transform = self._getTemplateTransform(node.Template)
         resultTree = self._applyTemplate(ctx, document, transform)
-        return Message.XHTMLMessage(resultTree)
+        
+        message = Message.XHTMLMessage(resultTree)
+        message.LastModified = document.lastModified
+        return message

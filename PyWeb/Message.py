@@ -13,6 +13,9 @@ from WebStack.Generic import Transaction, ContentType
 
 import PyWeb.ContentTypes as ContentTypes
 from PyWeb.utils import ET
+from datetime import datetime
+from wsgiref.handlers import format_date_time
+import PyWeb.TimeUtils as TimeUtils
 
 class Message(object):
     """
@@ -30,6 +33,21 @@ class Message(object):
         super(Message, self).__init__()
         self._mimeType = mimeType
         self._encoding = None
+        self._lastModified = None
+
+    @property
+    def LastModified(self):
+        """
+        :cls:`datetime.datetime` instance representing the last modification of
+        the messages contents. This can be None if unknown or not well defined.
+        """
+        return self._lastModified
+
+    @LastModified.setter
+    def LastModified(self, value):
+        if value is None:
+            self._lastModified = None
+        self._lastModified = value
 
     @property
     def MIMEType(self):
@@ -61,6 +79,11 @@ class Message(object):
     def sendInTransaction(self, transaction):
         transaction.rollback()
         transaction.set_content_type(ContentType(self.MIMEType, self.Encoding))
+        lastModified = self.LastModified
+        if lastModified is not None:
+            transaction.set_header_value("Last-Modified",
+                format_date_time(TimeUtils.toTimestamp(lastModified)))
+            
         transaction.get_response_stream().write(self.getEncodedBody())
 
     def sendInContext(self, ctx):
