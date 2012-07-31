@@ -15,7 +15,7 @@ class PyWebXML(Document.DocumentBase):
     @staticmethod
     def _linkFromNode(node):
         return Document.Link.create(
-            node.get("rel"), node.get("type"), node.get("href")
+            node.get("rel"), node.get("type"), node.get("href"), node.get("media")
         )
 
     @classmethod

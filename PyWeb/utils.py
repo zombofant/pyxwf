@@ -5,8 +5,10 @@ import lxml.etree as ET
 boolNames = {
     "false": False,
     "no": False,
+    "off": False, 
     "true": True,
-    "yes": True
+    "yes": True,
+    "on": True
 }
 
 class NoInstance(type):

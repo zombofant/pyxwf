@@ -12,7 +12,11 @@ class Breadcrumbs(Crumbs.CrumbBase):
 
     def __init__(self, site, node):
         super(Breadcrumbs, self).__init__(site, node)
-        self.root = site.getNode(node.get("root"))
+        rootID = node.get("root")
+        if rootID is not None:
+            self.root = site.getNode(rootID)
+        else:
+            self.root = None
 
     def render(self, ctx):
         ul = ET.Element(NS.XHTML.ul)

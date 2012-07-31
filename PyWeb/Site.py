@@ -1,7 +1,7 @@
 # encoding=utf-8
 from __future__ import unicode_literals
 
-import itertools, os, importlib
+import itertools, os, importlib, copy
 
 from PyWeb.utils import ET
 
@@ -73,8 +73,26 @@ class Site(object):
                 continue 
             self.addCrumb(Registry.CrumbPlugins(crumb, self))
 
+    def _loadTweaks(self, tweaks):
+        workingCopy = copy.copy(tweaks)
+        perf = workingCopy.find(NS.Site.performance)
+        if perf is not None:
+            workingCopy.remove(perf)
+            self.templateCache = utils.getBoolAttr(perf, "template-cache", True)
+
+        for child in workingCopy:
+            if child.tag is ET.Comment:
+                continue
+            print(child.tag)
+            ns, name = utils.splitTag(child)
+            if ns == NS.Site.xmlns:
+                print("Warning: Unknown tweak parameter: {0}".format(name))
+
     def _getTemplateTransform(self, templateFile):
-        cached = self._templateCache.get(templateFile, None)
+        if self.templateCache:
+            cached = self._templateCache.get(templateFile, None)
+        else:
+            cached = None
         if not cached:
             transform = ET.XSLT(ET.parse(os.path.join(self.root, templateFile)))
             self._templateCache[templateFile] = transform
@@ -188,6 +206,9 @@ class Site(object):
         self._loadPlugins(root)
         self._loadTree(root)
         self._loadCrumbs(root)
+        tweaks = root.find(NS.Site.tweaks)
+        if tweaks is not None:
+            self._loadTweaks(tweaks)
 
     def clear(self):
         self.title = None

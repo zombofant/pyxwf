@@ -18,13 +18,16 @@ class Link(object):
     _scriptTag = "{{{0}}}script".format(NS.xhtml)
     
     @classmethod
-    def create(cls, rel, typeName, href):
+    def create(cls, rel, typeName, href, media=None):
         if rel == "stylesheet":
-            return ET.Element(cls._linkTag, attrib={
+            link = ET.Element(cls._linkTag, attrib={
                 "rel": "stylesheet",
                 "type": typeName,
                 "href": href
             })
+            if media:
+                link.set("media", media)
+            return link
         elif rel == "script":
             return ET.Element(cls._scriptTag, attrib={
                 "type": typeName,
