@@ -1,9 +1,13 @@
 import abc
 
-from PyWeb.utils import ET
-import PyWeb.Namespaces as NS
-
 class DocumentBase(object):
+    """
+    Baseclass for Document type implementations. Derived classes should use
+    :cls:`PyWeb.Registry.DocumentMeta` as metaclass to automatically register
+    with the doctype registry. See there for further documentation.
+
+    Documents have to implement the `parse` method.
+    """
     __metaclass__ = abc.ABCMeta
     
     def __init__(self):
@@ -11,32 +15,24 @@ class DocumentBase(object):
 
     @abc.abstractmethod
     def parse(self, filelike):
-        pass
+        """
+        Take a *filelike* and parse the hell out of it. Return a :cls:`Document`
+        instance with all data filled out.
+        
+        Derived classes must implement this.
+        """
 
-class Link(object):
-    _linkTag = "{{{0}}}link".format(NS.xhtml)
-    _scriptTag = "{{{0}}}script".format(NS.xhtml)
-    
-    @classmethod
-    def create(cls, rel, typeName, href, media=None):
-        if rel == "stylesheet":
-            link = ET.Element(cls._linkTag, attrib={
-                "rel": "stylesheet",
-                "type": typeName,
-                "href": href
-            })
-            if media:
-                link.set("media", media)
-            return link
-        elif rel == "script":
-            return ET.Element(cls._scriptTag, attrib={
-                "type": typeName,
-                "src": href
-            })
-        else:
-            raise KeyError("Unknown link relation: {0}".format(rel))
 
 class Document(object):
+    """
+    Contains all relevant information about a Document. *body* must be a valid
+    xhtml body (as :mod:`lxml.etree` nodes). *title* must be a string-like
+    containing the title which is used on the page. *keywords* must be an
+    iterable of strings and *links* must be an iterable of etree nodes
+    which resemble nodes to put into the xhtml header. These are used for
+    stylesheet and script associations, but can also contain different elements.
+    """
+    
     def __init__(self, title, keywords, links, body):
         super(Document, self).__init__()
         self.title = title

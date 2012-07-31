@@ -1,6 +1,20 @@
+"""
+XML namespace magic. The classes defined in this module have special
+``__getattr__`` implementations, which will return a string containing the
+name of the attribute asked for prefixed with the ElementTree representation
+of the namespace of the class. The only exception is the `xmlns` attribute which
+will return the namespace itself.
+"""
+
 import PyWeb.utils as utils
 
 class __metaclass__(utils.NoInstance):
+    """
+    Metaclass for namespace classes. Namespace classes must have an *xmlns*
+    attribute which is the XML namespace they're representing. They may have
+    a *cache* attribute which must be an iterable of strings. The contained
+    strings will be precached.
+    """
     def __new__(mcls, name, bases, dct):
         cache = dct.get("cache", list())
         dct["cache"] = dict()
@@ -8,6 +22,7 @@ class __metaclass__(utils.NoInstance):
         # prepopulate cache
         for entry in cache:
             getattr(cls, entry)
+        dct["cache"]["xmlns"] = dct["xmlns"]
         return cls
     
     def __getattr__(cls, name):

@@ -40,4 +40,4 @@ class WebStackSite(Site.Site):
         except (Errors.HTTP200, EndOfResponse) as status:
             transaction.set_response_code(status.statusCode)
             return
-        message.getMessageInfo().applyToContext(ctx);
+        message.sendInContext(ctx);

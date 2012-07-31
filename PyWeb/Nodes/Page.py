@@ -14,7 +14,8 @@ class Page(Nodes.Node, Navigation.Info):
         super(Page, self).__init__(site, parent, node)
 
         self.src = node.get("src")
-        self.navDisplay = Navigation.getDisplayAttr(node, "nav-display")
+        self.navDisplay = Navigation.DisplayMode(node.get("nav-display"),
+            default=Navigation.Show)
         self.mimeType = node.get("type")
 
         documentHandler = Registry.DocumentPlugins(self.mimeType)

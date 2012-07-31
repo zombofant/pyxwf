@@ -1,5 +1,6 @@
 from PyWeb.utils import ET
 import PyWeb.utils as utils
+import PyWeb.Types as Types
 import PyWeb.Namespaces as NS
 import PyWeb.Registry as Registry
 import PyWeb.Crumbs as Crumbs
@@ -39,7 +40,8 @@ class Navigation(Crumbs.CrumbBase):
     def __init__(self, site, node):
         super(Navigation, self).__init__(site, node)
         self.root = site.getNode(node.get("root"))
-        self.showRoot = utils.getBoolAttr(node, "show-root", False)
+        self.showRoot = Types.DefaultForNone(False, Types.Typecasts.bool)\
+                                            (node.get("show-root"))
         self.maxDepth = int(node.get("max-depth", 0))
         self.activeClass = node.get("active-class", "nav-active")
         self.childActiveClass = node.get("child-active-class")

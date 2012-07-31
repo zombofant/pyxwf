@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import itertools, os, importlib, copy
 
 from PyWeb.utils import ET
-
+import PyWeb.Types as Types
 import PyWeb.Errors as Errors
 import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
@@ -78,7 +78,9 @@ class Site(object):
         perf = workingCopy.find(NS.Site.performance)
         if perf is not None:
             workingCopy.remove(perf)
-            self.templateCache = utils.getBoolAttr(perf, "template-cache", True)
+            self.templateCache = \
+                Types.DefaultForNone(True, Types.Typecasts.bool)\
+                (perf.get("template-cache"))
 
         for child in workingCopy:
             if child.tag is ET.Comment:
@@ -133,9 +135,8 @@ class Site(object):
 
     def _transformHref(self, node, attrName="href"):
         v = node.get(attrName)
-        print("WARNING: MISSING NONLOCAL DETECTION")
-        if v[:1] == "/":
-            v = v[1:]
+        if v is None or "://" in v or v.startswith("/"):  # non local href
+            return
         node.set(attrName, os.path.join(self.urlRoot, v))
 
     def _applyTemplate(self, ctx, document, transform):

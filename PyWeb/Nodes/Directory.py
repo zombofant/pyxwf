@@ -44,7 +44,8 @@ class Directory(Nodes.Node):
         super(Directory, self).__init__(site, parent, node)
         self.pathDict = {}
         self.children = []
-        self.display = Navigation.getDisplayAttr(node, "nav-display")
+        self.display = Navigation.DisplayMode(node.get("nav-display"),
+            default=Navigation.Show)
         for child in node:
             if child.tag is ET.Comment:
                 continue

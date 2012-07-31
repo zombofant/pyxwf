@@ -4,6 +4,30 @@ import PyWeb.Registry as Registry
 import PyWeb.Document as Document
 import PyWeb.Namespaces as NS
 
+class Link(object):
+    _linkTag = "{{{0}}}link".format(NS.xhtml)
+    _scriptTag = "{{{0}}}script".format(NS.xhtml)
+    
+    @classmethod
+    def create(cls, rel, typeName, href, media=None):
+        if rel == "stylesheet":
+            link = ET.Element(cls._linkTag, attrib={
+                "rel": "stylesheet",
+                "type": typeName,
+                "href": href
+            })
+            if media:
+                link.set("media", media)
+            return link
+        elif rel == "script":
+            return ET.Element(cls._scriptTag, attrib={
+                "type": typeName,
+                "src": href
+            })
+        else:
+            raise KeyError("Unknown link relation: {0}".format(rel))
+
+
 class PyWebXML(Document.DocumentBase):
     __metaclass__ = Registry.DocumentMeta
 
@@ -14,7 +38,7 @@ class PyWebXML(Document.DocumentBase):
 
     @staticmethod
     def _linkFromNode(node):
-        return Document.Link.create(
+        return Link.create(
             node.get("rel"), node.get("type"), node.get("href"), node.get("media")
         )
 
