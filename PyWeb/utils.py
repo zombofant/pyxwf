@@ -1,4 +1,5 @@
-import abc
+import abc, os
+from datetime import datetime
 
 import lxml.etree as ET
 
@@ -26,3 +27,31 @@ def addClass(node, cls):
     classes = set(node.get("class", "").split())
     classes.add(cls)
     node.set("class", " ".join(classes))
+
+
+def fileLastModified(fileref, floatTimes=False):
+    """
+    If *fileref* is a file name or a file like with associated fileno which
+    points to an actual file, return the date of last modification
+    stored in the filesystem, **None** otherwise.
+
+    By default, the times are truncated to full seconds. If you need the
+    floating point part of the times (if supported by the platform), pass
+    ``True`` to *floatTimes*.
+    """
+    try:
+        if isinstance(fileref, basestring):
+            st = os.stat(fileref)
+        else:
+            fno = fileref.fileno()
+            if fno >= 0:
+                st = os.fstat(fno)
+            else:
+                return None
+    except (OSError, AttributeError):
+        return None
+    if floatTimes:
+        mtime = st.st_mtime
+    else:
+        mtime = int(st.st_mtime)
+    return datetime.utcfromtimestamp(mtime)

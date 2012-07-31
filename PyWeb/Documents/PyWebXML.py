@@ -1,5 +1,5 @@
 from PyWeb.utils import ET
-
+import PyWeb.utils as utils
 import PyWeb.Registry as Registry
 import PyWeb.Document as Document
 import PyWeb.Namespaces as NS
@@ -49,7 +49,7 @@ class PyWebXML(Document.DocumentBase):
         return keywords, links
 
     def parse(self, fileref):
-        lastModified = self._lastModified(fileref)
+        lastModified = utils.fileLastModified(fileref)
         tree = ET.parse(fileref)
         root = tree.getroot()
         if root.tag != NS.PyWebXML.page:

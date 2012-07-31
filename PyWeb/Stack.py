@@ -19,6 +19,7 @@ class Context(object):
         self.pageNode = None
         self.body = None
         self.ifModifiedSince = None
+        self.stale = False
 
         self._parseIfModifiedSince()
 
@@ -32,9 +33,29 @@ class Context(object):
         self.ifModifiedSince = HTTPUtils.parseHTTPDate(values[0])
 
     def checkNotModified(self, lastModified):
+        """
+        Throw :cls:`PyWeb.Errors.HTTP.HTTP304` (Not Modified) if the value
+        of *lastModified* is smaller than or equal to the current value of
+        *ifModifiedSince* and *stale* is currently set to False.
+        """
+        if self.stale:
+            return
         if self.ifModifiedSince is not None and lastModified is not None:
             if self.ifModifiedSince >= lastModified:
                 raise Errors.NotModified()
+
+    def overrideLastModified(self, timestamp):
+        """
+        Set *stale* to ``True`` if the given *timestamp* is newer than the
+        current value of *ifModifiedSince*.
+
+        This can be used to cancel any exceptions which would later be thrown
+        by *checkNotModified*, for example when a dependency used to generate
+        the output has changed.
+        """
+        if self.ifModifiedSince is not None:
+            if timestamp > self.ifModifiedSince:
+                self.ifModifiedSince = None
 
 class WebStackSite(Site.Site):
     def __init__(self, sitemapFilelike=None, **kwargs):

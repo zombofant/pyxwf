@@ -11,11 +11,14 @@ import PyWeb.Namespaces as NS
 import PyWeb.Documents.PyWebXML as PyWebXML
 import PyWeb.Message as Message
 import PyWeb.Registry as Registry
+import PyWeb.Cache as Cache
+import PyWeb.Templates as Templates
 
 class Site(object):
     def __init__(self, sitemapFileLike=None, **kwargs):
         super(Site, self).__init__(**kwargs)
-        self._templateCache = {}
+        self.cache = Cache.Cache()
+        self._templateCache = self.cache[(self, "templates")]
         if sitemapFileLike is not None:
             try:
                 self.loadSitemap(ET.parse(sitemapFileLike).getroot())
@@ -90,15 +93,16 @@ class Site(object):
             if ns == NS.Site.xmlns:
                 print("Warning: Unknown tweak parameter: {0}".format(name))
 
-    def _getTemplateTransform(self, templateFile):
+    def _getTemplate(self, templateFile):
         if self.templateCache:
-            cached = self._templateCache.get(templateFile, None)
+            cached = self._templateCache.getDefault(templateFile, None)
         else:
             cached = None
         if not cached:
-            transform = ET.XSLT(ET.parse(os.path.join(self.root, templateFile)))
-            self._templateCache[templateFile] = transform
-            return transform
+            templatePath = os.path.join(self.root, templateFile)
+            template = Templates.XSLTTemplate(templatePath)
+            self._templateCache.add(templatePath, template)
+            return template
         return cached
         
     def _placeCrumb(self, ctx, crumbNode, crumb):
@@ -107,7 +111,7 @@ class Site(object):
         crumbNodeIdx = crumbParent.index(crumbNode)
         crumbParent[crumbNodeIdx] = tree
 
-    def _transformPyNamespace(self, ctx, body):
+    def transformPyNamespace(self, ctx, body):
         crumbs = True
         while crumbs:
             crumbs = False
@@ -127,50 +131,17 @@ class Site(object):
             localLink.set("href", os.path.join(self.urlRoot, localPath))
             
 
-    def _getTemplateArguments(self, document):
+    def getTemplateArguments(self):
+        # XXX: This will possibly explode one day ... 
         return {
-            b"doc_title": repr(document.title)[1:],
             b"site_title": repr(self.title)[1:]
         }
 
-    def _transformHref(self, node, attrName="href"):
+    def transformHref(self, node, attrName="href"):
         v = node.get(attrName)
         if v is None or "://" in v or v.startswith("/"):  # non local href
             return
         node.set(attrName, os.path.join(self.urlRoot, v))
-
-    def _applyTemplate(self, ctx, document, transform):
-        links = document.links
-        keywords = document.keywords
-        templateArgs = self._getTemplateArguments(document)
-        newDoc = transform(document.body, **templateArgs)
-        body = newDoc.find(NS.XHTML.body)
-        ctx.body = body
-        self._transformPyNamespace(ctx, body)
-        if body is None:
-            raise ValueError("Template did not return a valid body.")
-        meta = newDoc.find(NS.PyWebXML.meta)
-        if meta is not None:
-            addKeywords, addLinks = PyWebXML.PyWebXML.getLinksAndKeywords(meta)
-            links = itertools.chain(links, addLinks)
-            keywords = list(itertools.chain(keywords, addKeywords))
-            title = unicode(meta.findtext(NS.PyWebXML.title) or document.title)
-        else:
-            title = document.title
-
-        html = ET.Element(NS.XHTML.html)
-        head = ET.SubElement(html, NS.XHTML.head)
-        ET.SubElement(head, NS.XHTML.title).text = title
-        for link in links:
-            self._transformHref(link)
-            head.append(link)
-        if len(keywords) > 0:
-            ET.SubElement(head, NS.XHTML.meta, attrib={
-                "name": "keywords",
-                "content": " ".join(keywords)
-            })
-        html.append(body)
-        return ET.ElementTree(html)
 
     def _getNode(self, path, strip=True):
         if strip:
@@ -219,9 +190,12 @@ class Site(object):
     def handle(self, ctx, strip=True):
         node, remPath = self._getNode(ctx.path, strip)
         ctx.pageNode = node
+        template = self._getTemplate(node.Template)
+        ctx.template = template
+        ctx.overrideLastModified(template.LastModified)
+        
         document = node.handle(ctx)
-        transform = self._getTemplateTransform(node.Template)
-        resultTree = self._applyTemplate(ctx, document, transform)
+        resultTree = template.apply(self, ctx, document)
         
         message = Message.XHTMLMessage(resultTree)
         message.LastModified = document.lastModified
