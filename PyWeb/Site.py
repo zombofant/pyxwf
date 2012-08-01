@@ -10,6 +10,7 @@ import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
 import PyWeb.Documents.PyWebXML as PyWebXML
 import PyWeb.Message as Message
+import PyWeb.Document as Document
 import PyWeb.Registry as Registry
 import PyWeb.Cache as Cache
 import PyWeb.Templates as Templates
@@ -47,6 +48,19 @@ class Site(object):
         self._require(self.title, "title")
         self._require(self.root, "root")
         self._require(self.urlRoot, "urlRoot")
+
+        self._authors = {}
+        for author in meta.findall(NS.PyWebXML.author):
+            authorObj = Document.Author.fromNode(author)
+            if authorObj.id is None:
+                raise ValueError("Authors must be referrable by an id")
+            self._authors[authorObj.id] = authorObj
+
+        license = meta.find(NS.PyWebXML.license)
+        if license is not None:
+            self._license = Document.License.fromNode(license)
+        else:
+            self._license = None
 
     def _loadPlugins(self, root):
         self.nodes = {}
@@ -134,6 +148,18 @@ class Site(object):
             return template
         return cached
 
+    def transformReferences(self, ctx, tree):
+        for author in tree.iter(NS.PyWebXML.author):
+            id = author.get("id")
+            if id:
+                try:
+                    authorObj = self._authors[id]
+                except KeyError:
+                    author.tag = NS.XHTML.span
+                    author.text = "AUTHOR NOT FOUND {0}".format(id)
+                    continue
+                authorObj.applyToNode(author)
+
     def transformPyNamespace(self, ctx, body):
         crumbs = True
         while crumbs:
@@ -148,10 +174,12 @@ class Site(object):
                 self._placeCrumb(ctx, crumbNode, crumb)
         for localLink in body.iter(NS.PyWebXML.a):
             localLink.tag = NS.XHTML.a
-            localPath = localLink.get("href")
-            if len(localPath) > 0 and localPath[0] == "/":
-                localPath = localPath[1:]
-            localLink.set("href", os.path.join(self.urlRoot, localPath))
+            self.transformHref(localLink)
+        for localImg in body.iter(NS.PyWebXML.img):
+            localImg.tag = NS.XHTML.img
+            self.transformHref(localImg)
+            localImg.set("src", localImg.get("href"))
+            del localImg.attrib["href"]
 
     def getTemplateArguments(self):
         # XXX: This will possibly explode one day ... 
@@ -217,7 +245,8 @@ class Site(object):
         ctx.overrideLastModified(template.LastModified)
         
         document = node.handle(ctx)
-        resultTree = template.final(self, ctx, document)
+        resultTree = template.final(self, ctx, document,
+                licenseFallback=self._license)
         
         message = Message.XHTMLMessage(resultTree)
         message.LastModified = document.lastModified

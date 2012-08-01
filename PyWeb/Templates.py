@@ -31,11 +31,16 @@ class Template(Cache.Cachable):
     def transform(self, body, templateArgs):
         pass
 
-    def final(self, site, ctx, document):
+    def final(self, site, ctx, document, licenseFallback=None):
         templateArgs = site.getTemplateArguments()
         templateArgs.update(document.getTemplateArguments())
 
+        metaPath = NS.PyWebXML.meta
+        licensePath = metaPath + "/" + NS.PyWebXML.license
         page = document.toPyWebXMLPage()
+        if licenseFallback is not None and page.find(licensePath) is None:
+            page.find(metaPath).append(licenseFallback.toNode())
+        site.transformReferences(ctx, page)
         
         newDoc = self.transform(page, templateArgs)
         newDoc.links.extend(document.links)

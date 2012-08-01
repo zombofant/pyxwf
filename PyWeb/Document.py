@@ -44,18 +44,52 @@ class Author(object):
         self.pageHref = pageHref
         self.id = id
 
+    def applyToNode(self, node, carryID=True):
+        if self.id and carryID:
+            node.set("id", self.id)
+        if self.pageHref:
+            node.set("href", self.pageHref)
+        if self.eMail:
+            node.set("email", self.eMail)
+        node.text = self.fullName
+
     def toNode(self):
-        if self.id:
-            return ET.Element(NS.PyWebXML.author, attrib={
-                "id": self.id
-            })
-        else:
-            node = ET.Element(NS.PyWebXML.author, attrib={
-                "href": self.pageHref,
-                "email": self.eMail
-            })
-            node.text = self.fullName
+        node = ET.Element(NS.PyWebXML.author)
+        self.applyToNode(node)
         return node
+
+
+class License(object):
+    @classmethod
+    def fromNode(cls, node):
+        infoHref = node.get("href")
+        imgHref = node.get("img-href")
+        description = node.text
+        name = node.get("name")
+        return cls(name, description, infoHref, imgHref)
+
+    def __init__(self, name, description, infoHref, imgHref):
+        super(License, self).__init__()
+        self.name = name
+        self.description = description
+        self.infoHref = infoHref
+        self.imgHref = imgHref
+
+    def applyToNode(self, node):
+        if self.name:
+            node.set("name", self.name)
+        if self.description:
+            node.text = self.description
+        if self.infoHref:
+            node.set("href", self.infoHref)
+        if self.imgHref:
+            node.set("img-href", self.imgHref)
+
+    def toNode(self):
+        node = ET.Element(NS.PyWebXML.license)
+        self.applyToNode(node)
+        return node
+
 
 class Document(object):
     """
@@ -83,7 +117,8 @@ class Document(object):
             etag=None,
             ext=None,
             authors=None,
-            date=None):
+            date=None,
+            license=None):
         super(Document, self).__init__()
         self.title = title
         self.authors = list(authors or [])
@@ -93,6 +128,7 @@ class Document(object):
         self.lastModified = lastModified
         self.etag = etag
         self.date = date
+        self.license = license
         self.ext = ET.Element("blank") if ext is None else ext
 
     def toPyWebXMLPage(self):
@@ -115,6 +151,9 @@ class Document(object):
         if self.date:
             date = ET.SubElement(meta, NS.PyWebXML.date)
             date.text = self.date.isoformat()
+
+        if self.license:
+            meta.append(self.license.toNode())
 
         page.append(self.body)
 

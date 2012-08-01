@@ -78,3 +78,10 @@ class RootDirectory(Directory):
     
     namespace = Directory.namespace
     names = ["tree"]
+
+    def __init__(self, site, parent, node):
+        super(RootDirectory, self).__init__(site, parent, node)
+
+    @property
+    def Path(self):
+        return None
