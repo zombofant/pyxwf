@@ -14,6 +14,18 @@ import PyWeb.Nodes as Nodes
 import PyWeb.Navigation as Navigation
 import PyWeb.Namespaces as NS
 
+def lastModifiedFromPosts(ctx, posts):
+    highestTimestamp = None
+    # some items might get deleted during this
+    for post in list(posts):  
+        post.update()
+        if highestTimestamp:
+            highestTimestamp = max(post.lastModified, highestTimestamp)
+        else:
+            highestTimestamp = post.lastModified
+    ctx.checkNotModified(highestTimestamp)
+    return highestTimestamp
+
 class BlogFakeDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
     def __init__(self, blog, parent, name=None, node=None):
         if node is None and name is None:
@@ -119,26 +131,17 @@ class BlogMonthDir(BlogFakeDir):
         del self.pathDict[post.Name]
         self.children.remove(post)
 
-    def checkNotModified(self, ctx):
-        highestTimestamp = None
-        # some items might get deleted during this
-        for post in list(self.children):  
-            post.update()
-            if highestTimestamp:
-                highestTimestamp = max(post.lastModified, highestTimestamp)
-            else:
-                highestTimestamp = post.lastModified
-        ctx.checkNotModified(highestTimestamp)
-
     def doGet(self, ctx):
-        self.checkNotModified(ctx)
+        lastModified = lastModifiedFromPosts(ctx, self.children)
         abstractList = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
             "kind": "month",
             "title": self._fullMonthName
         })
         for post in self.children:
             abstractList.append(post.getAbstract(ctx))
-        return self.blog.abstractListTemplate.transform(abstractList, {})
+        doc = self.blog.abstractListTemplate.transform(abstractList, {})
+        doc.lastModified = lastModified
+        return doc
 
     def getTitle(self):
         if self.blog.combinedStyle:

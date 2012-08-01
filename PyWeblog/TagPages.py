@@ -24,6 +24,11 @@ class TagPage(Nodes.Node, Navigation.Info):
 
     def doGet(self, ctx):
         posts = self.getPosts()
+        lastModified = Directories.lastModifiedFromPosts(ctx, posts)
+        if len(posts) == 0:
+            # this _might_ have changed after reload
+            posts = self.getPosts()
+            lastModified = Directories.lastModifiedFromPosts(ctx, posts)
         if len(posts) == 0:
             error = ET.Element(NS.PyBlog.error)
             noPosts = ET.SubElement(error, getattr(NS.PyBlog, "no-posts"),
@@ -38,7 +43,9 @@ class TagPage(Nodes.Node, Navigation.Info):
         })
         for post in sorted(posts, key=lambda x: x.creationDate, reverse=True):
             abstractList.append(post.getAbstract(ctx))
-        return self.blog.abstractListTemplate.transform(abstractList, {})
+        doc = self.blog.abstractListTemplate.transform(abstractList, {})
+        doc.lastModified = lastModified
+        return doc
 
     def __len__(self):
         return len(self.getPosts())

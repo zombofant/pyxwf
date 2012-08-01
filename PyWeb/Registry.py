@@ -8,6 +8,7 @@ import itertools, abc
 
 import PyWeb.utils as utils
 import PyWeb.Nodes as Nodes
+import PyWeb.Errors as Errors
 
 class RegistryBase(dict):
     """
@@ -54,7 +55,7 @@ class NamespaceRegistry(RegistryBase):
         ns, name = utils.splitTag(node.tag)
         cls = self.get((ns, name), None)
         if cls is None:
-            raise KeyError("Unknown plugin: {1} in {0}".format(ns, name))
+            raise self.errorClass(ns, name)
         return self._getInstance(cls, node, *args)
 
     def register(self, ns, names, cls):
@@ -65,6 +66,8 @@ class NamespaceRegistry(RegistryBase):
         self.registerMultiple(keys, cls)
 
 class _NodePlugins(NamespaceRegistry):
+    errorClass = Errors.MissingNodePlugin
+    
     def _getInstance(self, cls, node, site, parent):
         return cls(site, parent, node)
 
@@ -81,7 +84,7 @@ class _DocumentPlugins(RegistryBase):
             return inst
         cls = self.get(mime, None)
         if cls is None:
-            raise KeyError("No Document handler for MIME type: {0}".format(mime))
+            raise Errors.MissingDocumentPlugin(mime)
         inst = cls(mime)
         self.instances[mime] = inst
         return inst
@@ -90,6 +93,8 @@ class _DocumentPlugins(RegistryBase):
         self.registerMultiple(types, cls)
 
 class _CrumbPlugins(NamespaceRegistry):
+    errorClass = Errors.MissingCrumbPlugin
+    
     def _getInstance(self, cls, node, site):
         return cls(site, node)
 

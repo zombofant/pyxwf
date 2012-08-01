@@ -20,11 +20,7 @@ class BlogPost(Nodes.Node, Navigation.Info):
 
     def _processFile(self, fileName):
         mimeType, encoding = mimetypes.guess_type(fileName, strict=False)
-        try:
-            documentHandler = Registry.DocumentPlugins(mimeType)
-        except KeyError:
-            print("invalid post (no doc handler for {0})".format(mimeType))
-            return
+        documentHandler = Registry.DocumentPlugins(mimeType)
         return documentHandler.parse(fileName)
 
     def _processDocument(self, doc):

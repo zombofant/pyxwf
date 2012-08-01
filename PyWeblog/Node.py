@@ -33,6 +33,9 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         self.navTitle = Types.Typecasts.unicode(node.get("nav-title"))
         self.navDisplay = Types.DefaultForNone(Navigation.Show,
             Navigation.DisplayMode)(node.get("nav-display"))
+        self._reloadTrigger = Types.DefaultForNone("blog.reload")\
+            (node.get("index-trigger"))
+        self._reloadTrigger = os.path.join(self.entriesDir, self._reloadTrigger)
 
         templates = node.find(NS.PyBlog.templates)
         if templates is None:
@@ -69,6 +72,9 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         }
         self._navChildren = [self.tagDir]
 
+        if not os.path.isfile(self._reloadTrigger):
+            open(self._reloadTrigger, "w").close()
+
     def _loadTemplate(self, node, attr):
         templateFmt = "templates/blog/{0}.xsl"
         templateName = Types.DefaultForNone(templateFmt.format(attr))\
@@ -78,7 +84,8 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     def _indexUpToDate(self):
         if not hasattr(self, "_allPosts"):
             return False
-        return True
+        indexTriggerDate = utils.fileLastModified(self._reloadTrigger)
+        return indexTriggerDate <= self._lastIndexUpdate
 
     def addToIndex(self, post):
         year = post.creationDate.year
@@ -113,10 +120,14 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
     def _createIndex(self):
         self._clearIndex()
+        self._lastIndexUpdate = datetime.utcnow()
         for dirpath, dirnames, filenames in os.walk(self.entriesDir):
             for filename in filenames:
                 fullFile = os.path.join(dirpath, filename)
-                post = Post.BlogPost(self, fullFile)
+                try:
+                    post = Post.BlogPost(self, fullFile)
+                except Errors.MissingDocumentPlugin:
+                    pass
         self._allPosts.sort(key=lambda x: x.creationDate, reverse=True)
 
     def _getChildNode(self, key):
