@@ -11,7 +11,6 @@ import PyWeb.Navigation as Navigation
 import PyWeb.Types as Types
 import PyWeb.Errors as Errors
 import PyWeb.Document as Document
-import PyWeb.Cache as Cache
 import PyWeb.Nodes as Nodes
 import PyWeb.Navigation as Navigation
 import PyWeb.Namespaces as NS
