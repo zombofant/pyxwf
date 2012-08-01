@@ -17,8 +17,10 @@ import PyWeb.Templates as Templates
 # import PyWeb.ImportSavepoints as ImportSavepoints
 
 class Site(object):
-    def __init__(self, sitemapFile, **kwargs):
+    def __init__(self, sitemapFile, defaultURLRoot=None, **kwargs):
         super(Site, self).__init__(**kwargs)
+        self.startCWD = os.getcwd()
+        self.defaultURLRoot = defaultURLRoot
         self.cache = Cache.Cache()
         self._templateCache = self.cache[(self, "templates")]
         # self.savepoint = ImportSavepoints.RollbackImporter()
@@ -41,8 +43,9 @@ class Site(object):
             self.licenseName = unicode(license.text)
             self.licenseHref = unicode(license.get("href", None))
 
-        self.root = meta.findtext(NS.Site.root)
-        self.urlRoot = meta.findtext(NS.Site.urlRoot)
+        self.root = meta.findtext(NS.Site.root) or self.startCWD
+        self.urlRoot = meta.findtext(NS.Site.urlRoot) or self.defaultURLRoot
+        print("configured url root: {0}".format(self.urlRoot))
         self._require(self.title, "title")
         self._require(self.root, "root")
         self._require(self.urlRoot, "urlRoot")

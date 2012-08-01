@@ -58,8 +58,8 @@ class Context(object):
                 self.ifModifiedSince = None
 
 class WebStackSite(Site.Site):
-    def __init__(self, sitemapFilelike=None, **kwargs):
-        super(WebStackSite, self).__init__(sitemapFilelike)
+    def __init__(self, sitemapFile, **kwargs):
+        super(WebStackSite, self).__init__(sitemapFile, **kwargs)
 
     def respond(self, transaction):
         try:
