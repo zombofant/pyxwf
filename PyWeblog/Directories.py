@@ -15,11 +15,14 @@ import PyWeb.Navigation as Navigation
 import PyWeb.Namespaces as NS
 
 class BlogFakeDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
-    def __init__(self, blog, parent, name):
-        super(BlogFakeDir, self).__init__(blog.site, parent, None)
+    def __init__(self, blog, parent, name=None, node=None):
+        if node is None and name is None:
+            raise ValueError("One of name and node must be set")
+        super(BlogFakeDir, self).__init__(blog.site, parent, node)
         self.blog = blog
-        self._name = unicode(name)
-        self._path = parent.Path + "/" + name
+        if node is None:
+            self._name = unicode(name)
+            self._path = parent.Path + "/" + self._name
 
     def getTitle(self):
         return self._name
@@ -83,7 +86,7 @@ class BlogYearDir(BlogFakeDir):
         return monthObj
 
     def __iter__(self):
-        return iter(self._validMonthIter())
+        return iter(self._validMonthIter(reverse=True))
 
     def __len__(self):
         return sum(1 for _ in self._validMonthIter())
@@ -100,13 +103,16 @@ class BlogMonthDir(BlogFakeDir):
         self._month = month
         self.pathDict = {}
         self.children = []
-        self._monthName = time.strftime("%B", (2000, self._month, 1, 0, 0, 0, 0, 0, -1))
+        self._fullMonthName = time.strftime("%B %Y",
+            (self.parent._year, self._month, 1, 0, 0, 0, 0, 0, -1))
+        self._monthName = time.strftime("%B",
+            (2000, self._month, 1, 0, 0, 0, 0, 0, -1))
 
     def add(self, post):
         if post.Name in self.pathDict:
             raise ValueError("Duplicate name: {0}".format(post.Name))
         self.children.append(post)
-        self.children.sort(key=lambda x: x.creationDate)
+        self.children.sort(key=lambda x: x.creationDate, reverse=True)
         self.pathDict[post.Name] = post
 
     def remove(self, post):
@@ -126,18 +132,17 @@ class BlogMonthDir(BlogFakeDir):
 
     def doGet(self, ctx):
         self.checkNotModified(ctx)
-        abstractList = ET.Element(getattr(NS.PyBlog, "abstract-list"))
+        abstractList = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
+            "kind": "month",
+            "title": self._fullMonthName
+        })
         for post in self.children:
             abstractList.append(post.getAbstract(ctx))
-        return self.blog.abstractListTemplate.transform(abstractList, {
-            b"year": str(self.parent._year),
-            b"month": str(self._month),
-            b"month_name": utils.unicodeToXPathStr(self._monthName)
-        })
+        return self.blog.abstractListTemplate.transform(abstractList, {})
 
     def getTitle(self):
         if self.blog.combinedStyle:
-            return time.strftime("%B %Y", (self.parent._year, self._month, 1, 0, 0, 0, 0, 0, -1))
+            return self._fullMonthName
         else:
             return self._monthName
 

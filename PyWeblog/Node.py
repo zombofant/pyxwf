@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import os, mimetypes, abc, itertools, copy
+import os, mimetypes, abc, itertools, copy, operator
 from datetime import datetime
 import time
 
@@ -13,9 +13,11 @@ import PyWeb.Errors as Errors
 import PyWeb.Nodes as Nodes
 import PyWeb.Navigation as Navigation
 import PyWeb.Namespaces as NS
+
 import PyWeblog.Post as Post
 import PyWeblog.Directories as Directories
 import PyWeblog.LandingPage as LandingPage
+import PyWeblog.TagPages as TagPages
 
 class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     __metaclass__ = Registry.NodeMeta
@@ -39,6 +41,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         self.abstractTemplate = self._loadTemplate(templates, "abstract")
         self.postTemplate = self._loadTemplate(templates, "post")
         self.landingPageTemplate = self._loadTemplate(templates, "landing-page")
+        self.tagDirTemplate = self._loadTemplate(templates, "tag-dir")
 
         structure = node.find(NS.PyBlog.structure)
         self.combinedStyle = Types.DefaultForNone(False, Types.EnumMap({
@@ -51,9 +54,20 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
         landingPage = node.find(getattr(NS.PyBlog, "landing-page"))
         if landingPage is None:
-            landingPage = ET.Element(NS.PyBlog, "landing-page")
+            landingPage = ET.Element(getattr(NS.PyBlog, "landing-page"))
         landingPage.set("name", "")
         self.landingPage = LandingPage.LandingPage(self, landingPage)
+
+        tagDir = node.find(getattr(NS.PyBlog, "tag-dir"))
+        if tagDir is None:
+            tagDir = ET.Element(getattr(NS.PyBlog, "tag-dir"))
+        self.tagDir = TagPages.TagDir(self, tagDir)
+
+        self._pathDict = {
+            "": self.landingPage,
+            self.tagDir.Name: self.tagDir,
+        }
+        self._navChildren = [self.tagDir]
 
     def _loadTemplate(self, node, attr):
         templateFmt = "templates/blog/{0}.xsl"
@@ -78,6 +92,8 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         monthDir = yearDir[month+1]
         monthDir.add(post)
         self._allPosts.append(post)
+        for tag in post.tags:
+            self._tagCloud.setdefault(tag, []).append(post)
         return monthDir
 
     def removeFromIndex(self, post):
@@ -85,6 +101,8 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         year = post.creationDate.year
         yearDir = self._calendary[year]
         yearDir.remove(post)
+        for tag in post.tags:
+            self._tagCloud[tag].remove(post)
 
     def _clearIndex(self):
         self._allPosts = []
@@ -99,28 +117,51 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
             for filename in filenames:
                 fullFile = os.path.join(dirpath, filename)
                 post = Post.BlogPost(self, fullFile)
-        self._allPosts.sort(key=lambda x: x.creationDate)
+        self._allPosts.sort(key=lambda x: x.creationDate, reverse=True)
 
     def _getChildNode(self, key):
-        if key == "":
-            return self.landingPage
-        else:
-            if not self._indexUpToDate():
-                self._createIndex()
-            try:
-                k = int(key)
-                if str(k) != key:
-                    exc = Errors.MovedPermanently(newLocation=str(k))
-                    exc.local = True
-                    raise exc
-                return self._calendary[k]
-            except (ValueError, TypeError, KeyError):
-                return None
+        try:
+            return self._pathDict[key]
+        except KeyError:
+            pass
+        if not self._indexUpToDate():
+            self._createIndex()
+        try:
+            year = int(key)
+            if str(year) != key:
+                exc = Errors.MovedPermanently(newLocation=str(k))
+                exc.local = True
+                raise exc
+            return self._calendary[year]
+        except (ValueError, TypeError, KeyError):
+            return None
 
     def iterRecent(self, count):
         if not self._indexUpToDate():
             self._createIndex()
         return itertools.islice(self._allPosts, 0, count)
+
+    def getTagPath(self, tag):
+        return self.tagDir.Path + "/" + tag
+
+    def getTagsByPostCount(self):
+        if not self._indexUpToDate():
+            self._createIndex()
+        return sorted(self._tagCloud.viewitems(),
+            key=lambda x: len(x[1]), reverse=True)
+
+    def getPostsByTag(self, tag):
+        if not self._indexUpToDate():
+            self._createIndex()
+        try:
+            return self._tagCloud[tag]
+        except KeyError:
+            return []
+
+    def viewTagPosts(self):
+        if not self._indexUpToDate():
+            self._createIndex()
+        return self._tagCloud.viewitems()
 
     def doGet(self, ctx):
         if not self._indexUpToDate():
@@ -139,7 +180,10 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     def __iter__(self):
         if not self._indexUpToDate():
             self._createIndex()
-        return iter(self._years)
+        return itertools.chain(
+            self._years,
+            self._navChildren
+        )
 
     requestHandlers = {
         "GET": doGet

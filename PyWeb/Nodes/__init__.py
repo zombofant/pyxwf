@@ -53,7 +53,6 @@ class Node(object):
             self._name = node.get("name", "")
             self._template = node.get("template", None)
             parentPath = (parent.Path + "/") if parent is not None and parent.Path is not None else ""
-            print(parentPath)
             self._path = parentPath + self._name
         else:
             self._id = None

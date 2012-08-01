@@ -43,6 +43,7 @@ class BlogPost(Nodes.Node, Navigation.Info):
         self._processDocument(doc)
         urlName = os.path.basename(self.fileName)
         self._name = os.path.splitext(urlName)[0]
+        self.tags = list(doc.keywords)
         parent = self.blog.addToIndex(self)
         self._path = parent.Path + "/" + self._name
         self.post = None
