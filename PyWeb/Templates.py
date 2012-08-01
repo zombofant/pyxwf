@@ -34,8 +34,10 @@ class Template(Cache.Cachable):
     def final(self, site, ctx, document):
         templateArgs = site.getTemplateArguments()
         templateArgs.update(document.getTemplateArguments())
+
+        page = document.toPyWebXMLPage()
         
-        newDoc = self.transform(document.body, templateArgs)
+        newDoc = self.transform(page, templateArgs)
         newDoc.links.extend(document.links)
         newDoc.keywords.extend(document.keywords)
         body = newDoc.body

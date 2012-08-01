@@ -4,6 +4,7 @@ from datetime import datetime
 
 from PyWeb.utils import ET
 import PyWeb.utils as utils
+import PyWeb.Namespaces as NS
 
 class DocumentBase(object):
     """
@@ -27,6 +28,34 @@ class DocumentBase(object):
         Derived classes must implement this.
         """
 
+
+class Author(object):
+    @classmethod
+    def fromNode(cls, node):
+        fullName = unicode(node.text)
+        eMail = node.get("email")
+        pageHref = node.get("href")
+        return cls(fullName, eMail, pageHref, id=node.get("id"))
+    
+    def __init__(self, fullName, eMail, pageHref, id=None):
+        super(Author, self).__init__()
+        self.fullName = fullName
+        self.eMail = eMail
+        self.pageHref = pageHref
+        self.id = id
+
+    def toNode(self):
+        if self.id:
+            return ET.Element(NS.PyWebXML.author, attrib={
+                "id": self.id
+            })
+        else:
+            node = ET.Element(NS.PyWebXML.author, attrib={
+                "href": self.pageHref,
+                "email": self.eMail
+            })
+            node.text = self.fullName
+        return node
 
 class Document(object):
     """
@@ -52,15 +81,44 @@ class Document(object):
     def __init__(self, title, keywords, links, body,
             lastModified=None,
             etag=None,
-            ext=None):
+            ext=None,
+            authors=None,
+            date=None):
         super(Document, self).__init__()
         self.title = title
+        self.authors = list(authors or [])
         self.keywords = keywords
         self.links = links
         self.body = body
         self.lastModified = lastModified
         self.etag = etag
+        self.date = date
         self.ext = ET.Element("blank") if ext is None else ext
+
+    def toPyWebXMLPage(self):
+        page = ET.Element(NS.PyWebXML.page)
+        meta = ET.SubElement(page, NS.PyWebXML.meta)
+
+        title = ET.SubElement(meta, NS.PyWebXML.title)
+        title.text = self.title
+
+        for author in self.authors:
+            meta.append(author.toNode())
+
+        for keyword in self.keywords:
+            kw = ET.SubElement(meta, NS.PyWebXML.kw)
+            kw.text = keyword
+
+        for link in self.links:
+            meta.append(link)
+
+        if self.date:
+            date = ET.SubElement(meta, NS.PyWebXML.date)
+            date.text = self.date.isoformat()
+
+        page.append(self.body)
+
+        return page
 
     def getTemplateArguments(self):
         return {

@@ -1,8 +1,17 @@
+# encoding=utf-8
+from __future__ import unicode_literals
+
+import itertools
+from datetime import datetime
+
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Registry as Registry
 import PyWeb.Document as Document
 import PyWeb.Namespaces as NS
+
+
+map = itertools.imap
 
 class Link(object):
     _linkTag = "{{{0}}}link".format(NS.xhtml)
@@ -43,10 +52,31 @@ class PyWebXML(Document.DocumentBase):
         )
 
     @classmethod
+    def getLinks(cls, meta):
+        return list(map(cls._linkFromNode, meta.findall(NS.PyWebXML.link)))
+
+    @classmethod
+    def getKeywords(cls, meta):
+        return list(map(
+            lambda node: unicode(node.text), meta.findall(NS.PyWebXML.kw)))
+
+    @classmethod
     def getKeywordsAndLinks(cls, meta):
-        keywords = list(map(lambda node: unicode(node.text), meta.findall(NS.PyWebXML.kw)))
-        links = list(map(cls._linkFromNode, meta.findall(NS.PyWebXML.link)))
-        return keywords, links
+        """
+        Deprecated – do not use.
+        """
+        return cls.getKeywords(meta), cls.getLinks(meta)
+
+    @classmethod
+    def getAuthors(cls, meta):
+        return list(map(Document.Author.fromNode, meta.findall(NS.PyWebXML.author)))
+
+    @classmethod
+    def getDate(cls, meta):
+        datetext = meta.findtext(NS.PyWebXML.date)
+        if datetext is None:
+            return None
+        return datetime.strptime(datetext, "%Y-%m-%dT%H:%M:%S")
 
     def parse(self, fileref):
         lastModified = utils.fileLastModified(fileref)
@@ -69,7 +99,10 @@ class PyWebXML(Document.DocumentBase):
         if body is None:
             raise ValueError("No body tag found")
 
+        date = self.getDate(meta)
+        authors = self.getAuthors(meta)
+
         ext = meta
         
         return Document.Document(title, keywords, links, body,
-            lastModified=lastModified, ext=ext)
+            lastModified=lastModified, ext=ext, date=date, authors=authors)

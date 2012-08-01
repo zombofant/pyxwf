@@ -29,19 +29,12 @@ class BlogPost(Nodes.Node, Navigation.Info):
 
     def _processDocument(self, doc):
         ext = doc.ext
-        date = ext.find(NS.PyBlog.date)
+        date = doc.date
         if date is None:
             # fall back to last modified
-            self.creationDate = doc.lastModified
-        else:
-            self.creationDate = datetime(
-                Types.Typecasts.int(date.get("y")),
-                Types.Typecasts.int(date.get("m")),
-                Types.Typecasts.int(date.get("d")),
-                Types.Typecasts.int(date.get("hr")),
-                Types.Typecasts.int(date.get("min"))
-            )
-        self.author = ext.findtext(NS.PyBlog.author)
+            date = doc.lastModified
+        self.creationDate = date
+        self.authors = doc.authors
 
     def _reload(self, initial=False):
         if not initial:
@@ -67,19 +60,12 @@ class BlogPost(Nodes.Node, Navigation.Info):
         self._name = name
 
     def _createBlogTree(self, document):
-        article = ET.Element(NS.PyBlog.article)
-        datetime = ET.SubElement(article, NS.PyBlog.datetime)
-        datetime.text = self.creationDate.isoformat()
-        article.append(document.body)
-        nodePath = ET.SubElement(article, getattr(NS.PyBlog, "node-path"))
+        article = document.toPyWebXMLPage()
+        meta = article.find(NS.PyWebXML.meta)
+        nodePath = ET.SubElement(meta, getattr(NS.PyBlog, "node-path"))
         nodePath.text = self.Path
-        title = ET.SubElement(article, NS.PyBlog.title)
-        title.text = document.title
-        abstractText = ET.SubElement(article, getattr(NS.PyBlog, "abstract-text"))
+        abstractText = ET.SubElement(meta, getattr(NS.PyBlog, "abstract-text"))
         abstractText.text = unicode(document.ext.findtext(NS.PyBlog.abstract))
-        if self.author is not None:
-            author = ET.SubElement(article, NS.PyBlog.author)
-            author.text = self.author
         self.article = article
 
     def _createPost(self):
