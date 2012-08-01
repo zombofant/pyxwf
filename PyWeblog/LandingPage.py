@@ -37,6 +37,9 @@ class LandingPage(Nodes.Node, Navigation.Info):
     def getRepresentative(self):
         return self
 
+    def __iter__(self):
+        return iter(self.blog)
+
     requestHandlers = {
         "GET": doGet
     }
