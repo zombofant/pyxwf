@@ -55,7 +55,7 @@ def NumericRange(typecast, min, max):
     elif min is None:
         rangeStr = "-∞..{0}".format(max)
         def tc(value):
-            numeric = typecast(s)
+            numeric = typecast(value)
             if value > max:
                 raise ValueError("numeric value {0} out of bounds: {1}".format(
                     numeric, rangeStr
@@ -64,19 +64,21 @@ def NumericRange(typecast, min, max):
     elif max is None:
         rangeStr = "{0}..∞".format(min)
         def tc(value):
-            numeric = typecast(s)
+            numeric = typecast(value)
             if value < min:
                 raise ValueError("numeric value {0} out of bounds: {1}".format(
                     numeric, rangeStr
                 ))
+            return numeric
     else:
         rangeStr = "{0}..{1}".format(min, max)
         def tc(value):
-            numeric = typecast(s)
+            numeric = typecast(value)
             if not min <= value <= max:
                 raise ValueError("numeric value {0} out of bounds: {1}".format(
                     numeric, rangeStr
                 ))
+            return numeric
     return WrapFunction(tc, "{0} within a range of {1}".format(
         unicode(typecast), rangeStr
     ))

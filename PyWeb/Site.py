@@ -1,7 +1,7 @@
 # encoding=utf-8
 from __future__ import unicode_literals
 
-import itertools, os, importlib, copy
+import itertools, os, importlib, copy, mimetypes
 
 from PyWeb.utils import ET
 import PyWeb.Types as Types
@@ -76,6 +76,12 @@ class Site(object):
                 continue 
             self.addCrumb(Registry.CrumbPlugins(crumb, self))
 
+    def _loadMimeMap(self, mimeMap):
+        for child in mimeMap.findall(NS.Site.mm):
+            ext = Types.Typecasts.unicode(child.get("ext"))
+            mime = Types.Typecasts.unicode(child.get("type"))
+            mimetypes.add_type(mime, ext)
+
     def _loadTweaks(self, tweaks):
         workingCopy = copy.copy(tweaks)
         perf = workingCopy.find(NS.Site.performance)
@@ -85,15 +91,38 @@ class Site(object):
                 Types.DefaultForNone(True, Types.Typecasts.bool)\
                 (perf.get("template-cache"))
 
+        mimeMap = workingCopy.find(getattr(NS.Site, "mime-map"))
+        mimetypes.init()
+        if mimeMap is not None:
+            workingCopy.remove(mimeMap)
+            self._loadMimeMap(mimeMap)
+
+        longDate = "%c"
+        shortDate = "%c"
+        formatting = workingCopy.find(NS.Site.formatting)
+        if formatting is not None:
+            workingCopy.remove(formatting)
+            longDate = formatting.get("date-format") or longDate
+            shortDate = formatting.get("date-format") or shortDate
+            longDate = formatting.get("long-date-format") or longDate
+            shortDate = formatting.get("short-date-format") or shortDate
+        self.longDateFormat = longDate
+        self.shortDateFormat = shortDate
+
         for child in workingCopy:
             if child.tag is ET.Comment:
                 continue
-            print(child.tag)
-            ns, name = utils.splitTag(child)
+            ns, name = utils.splitTag(child.tag)
             if ns == NS.Site.xmlns:
                 print("Warning: Unknown tweak parameter: {0}".format(name))
+        
+    def _placeCrumb(self, ctx, crumbNode, crumb):
+        tree = crumb.render(ctx)
+        crumbParent = crumbNode.getparent()
+        crumbNodeIdx = crumbParent.index(crumbNode)
+        crumbParent[crumbNodeIdx] = tree
 
-    def _getTemplate(self, templateFile):
+    def getTemplate(self, templateFile):
         if self.templateCache:
             cached = self._templateCache.getDefault(templateFile, None)
         else:
@@ -104,12 +133,6 @@ class Site(object):
             self._templateCache.add(templatePath, template)
             return template
         return cached
-        
-    def _placeCrumb(self, ctx, crumbNode, crumb):
-        tree = crumb.render(ctx)
-        crumbParent = crumbNode.getparent()
-        crumbNodeIdx = crumbParent.index(crumbNode)
-        crumbParent[crumbNodeIdx] = tree
 
     def transformPyNamespace(self, ctx, body):
         crumbs = True
@@ -129,12 +152,11 @@ class Site(object):
             if len(localPath) > 0 and localPath[0] == "/":
                 localPath = localPath[1:]
             localLink.set("href", os.path.join(self.urlRoot, localPath))
-            
 
     def getTemplateArguments(self):
         # XXX: This will possibly explode one day ... 
         return {
-            b"site_title": repr(self.title)[1:]
+            b"site_title": utils.unicodeToXPathStr(self.title)
         }
 
     def transformHref(self, node, attrName="href"):
@@ -175,12 +197,12 @@ class Site(object):
 
     def loadSitemap(self, root):
         self._loadMeta(root)
-        self._loadPlugins(root)
-        self._loadTree(root)
-        self._loadCrumbs(root)
         tweaks = root.find(NS.Site.tweaks)
         if tweaks is not None:
             self._loadTweaks(tweaks)
+        self._loadPlugins(root)
+        self._loadTree(root)
+        self._loadCrumbs(root)
 
     def clear(self):
         self.title = None
@@ -190,12 +212,12 @@ class Site(object):
     def handle(self, ctx, strip=True):
         node, remPath = self._getNode(ctx.path, strip)
         ctx.pageNode = node
-        template = self._getTemplate(node.Template)
+        template = self.getTemplate(node.Template)
         ctx.template = template
         ctx.overrideLastModified(template.LastModified)
         
         document = node.handle(ctx)
-        resultTree = template.apply(self, ctx, document)
+        resultTree = template.final(self, ctx, document)
         
         message = Message.XHTMLMessage(resultTree)
         message.LastModified = document.lastModified

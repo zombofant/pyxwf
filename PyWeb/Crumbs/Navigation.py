@@ -38,11 +38,13 @@ class Navigation(Crumbs.CrumbBase):
     names = ["crumb"]
 
     def __init__(self, site, node):
+        depthRange = Types.NumericRange(int, 0, None)
         super(Navigation, self).__init__(site, node)
         self.root = site.getNode(node.get("root"))
         self.showRoot = Types.DefaultForNone(False, Types.Typecasts.bool)\
                                             (node.get("show-root"))
-        self.maxDepth = int(node.get("max-depth", 0))
+        self.maxDepth = depthRange(node.get("max-depth", 0))
+        self.minDepth = depthRange(node.get("min-depth", self.maxDepth))
         self.activeClass = node.get("active-class", "nav-active")
         self.childActiveClass = node.get("child-active-class")
 
@@ -56,7 +58,7 @@ class Navigation(Crumbs.CrumbBase):
             eNode = eNode.getparent()
             cls = self.childActiveClass
     
-    def _navTree(self, parent, ctx, info, depth=0):
+    def _navTree(self, parent, ctx, info, depth=0, activeChain=set()):
         if self.maxDepth > 0 and depth > self.maxDepth:
             return
         nodeIterable = IteratorStack()
@@ -78,15 +80,19 @@ class Navigation(Crumbs.CrumbBase):
                 li = ET.SubElement(ul, NS.XHTML.li)
                 a = ET.SubElement(li, NS.PyWebXML.a, href=child.Path)
                 a.text = navInfo.getTitle()
-                subtree = self._navTree(li, ctx, navInfo, depth+1)
-                if navInfo.getRepresentative() is ctx.pageNode:
-                    self._propagateActive(li)
-                if subtree is not None:
-                    li.append(subtree)
+                if (depth < self.minDepth or
+                        child in activeChain):
+                    subtree = self._navTree(li, ctx, navInfo, depth+1, activeChain)
+                    if subtree is not None:
+                        li.append(subtree)
         return ul
 
     def render(self, ctx):
+        activeChain = frozenset(ctx.pageNode.iterUpwards())
+        print(activeChain)
         if self.showRoot:
-            return self._navTree(None, ctx, [self.root], depth=0)
+            return self._navTree(None, ctx, [self.root], depth=0,
+                activeChain=activeChain)
         else:
-            return self._navTree(None, ctx, self.root.getNavigationInfo(ctx))
+            return self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
+                activeChain=activeChain)

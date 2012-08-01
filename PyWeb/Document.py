@@ -2,6 +2,9 @@ import abc
 import os
 from datetime import datetime
 
+from PyWeb.utils import ET
+import PyWeb.utils as utils
+
 class DocumentBase(object):
     """
     Baseclass for Document type implementations. Derived classes should use
@@ -41,11 +44,15 @@ class Document(object):
     *etag* is a short string like specified in
     `RFC 2616, Section 14.19 <https://tools.ietf.org/html/rfc2616#section-14.19>`_.
     Can be *None* to prevent caching.
+
+    *ext* can be a element tree node which contains all nodes with foreign
+    namespaces which could not be interpreted by the document parser.
     """
-    
+
     def __init__(self, title, keywords, links, body,
             lastModified=None,
-            etag=None):
+            etag=None,
+            ext=None):
         super(Document, self).__init__()
         self.title = title
         self.keywords = keywords
@@ -53,8 +60,9 @@ class Document(object):
         self.body = body
         self.lastModified = lastModified
         self.etag = etag
+        self.ext = ET.Element("blank") if ext is None else ext
 
     def getTemplateArguments(self):
         return {
-            b"doc_title": self.title
+            b"doc_title": utils.unicodeToXPathStr(self.title)
         }

@@ -4,6 +4,7 @@ from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Cache as Cache
 import PyWeb.Namespaces as NS
+import PyWeb.Document as Document
 import PyWeb.Documents.PyWebXML as PyWebXML
 
 class Template(Cache.Cachable):
@@ -27,8 +28,38 @@ class Template(Cache.Cachable):
         pass
 
     @abc.abstractmethod
-    def apply(self, site, ctx, xhtmlBody):
+    def transform(self, body, templateArgs):
         pass
+
+    def final(self, site, ctx, document):
+        templateArgs = site.getTemplateArguments()
+        templateArgs.update(document.getTemplateArguments())
+        
+        newDoc = self.transform(document.body, templateArgs)
+        newDoc.links.extend(document.links)
+        newDoc.keywords.extend(document.keywords)
+        body = newDoc.body
+        
+        if body is None:
+            raise ValueError("Transform did not return a valid body.")
+        
+        ctx.body = body
+        site.transformPyNamespace(ctx, body)
+
+        html = ET.Element(NS.XHTML.html)
+        head = ET.SubElement(html, NS.XHTML.head)
+        ET.SubElement(head, NS.XHTML.title).text = newDoc.title or document.title
+        for link in newDoc.links:
+            site.transformHref(link)
+            head.append(link)
+        if len(newDoc.keywords) > 0:
+            ET.SubElement(head, NS.XHTML.meta, attrib={
+                "name": "keywords",
+                "content": " ".join(newDoc.keywords)
+            })
+        html.append(body)
+        
+        return ET.ElementTree(html)
 
 
 class XSLTTemplate(Template):
@@ -40,44 +71,18 @@ class XSLTTemplate(Template):
         self._parseTemplate()
 
     def _parseTemplate(self):
-        self.transform = ET.XSLT(ET.parse(self.fileName))
+        self.xsltTransform = ET.XSLT(ET.parse(self.fileName))
 
-    def apply(self, site, ctx, document):
-        links, keywords = document.links, document.keywords
-        
-        templateArgs = site.getTemplateArguments()
-        templateArgs.update(document.getTemplateArguments())
-        
-        newDoc = self.transform(document.body, **templateArgs)
-        
-        body = newDoc.find(NS.XHTML.body)
-        ctx.body = body
-        
-        site.transformPyNamespace(ctx, body)
-        
-        if body is None:
-            raise ValueError("Transform did not return a valid body.")
+    def transform(self, body, templateArgs, customBody=NS.XHTML.body):
+        newDoc = self.xsltTransform(body, **templateArgs)
         
         meta = newDoc.find(NS.PyWebXML.meta)
         if meta is not None:
-            addKeywords, addLinks = PyWebXML.PyWebXML.getLinksAndKeywords(meta)
-            links = itertools.chain(links, addLinks)
-            keywords = list(itertools.chain(keywords, addKeywords))
+            keywords, links = PyWebXML.PyWebXML.getKeywordsAndLinks(meta)
             title = unicode(meta.findtext(NS.PyWebXML.title) or document.title)
         else:
-            title = document.title
+            links, keywords = [], []
+            title = None
 
-        html = ET.Element(NS.XHTML.html)
-        head = ET.SubElement(html, NS.XHTML.head)
-        ET.SubElement(head, NS.XHTML.title).text = title
-        for link in links:
-            site.transformHref(link)
-            head.append(link)
-        if len(keywords) > 0:
-            ET.SubElement(head, NS.XHTML.meta, attrib={
-                "name": "keywords",
-                "content": " ".join(keywords)
-            })
-        html.append(body)
-        
-        return ET.ElementTree(html)
+        body = newDoc.find(customBody)
+        return Document.Document(title, keywords, links, body)

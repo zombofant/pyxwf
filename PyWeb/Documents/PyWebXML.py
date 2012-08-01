@@ -43,7 +43,7 @@ class PyWebXML(Document.DocumentBase):
         )
 
     @classmethod
-    def getLinksAndKeywords(cls, meta):
+    def getKeywordsAndLinks(cls, meta):
         keywords = list(map(lambda node: unicode(node.text), meta.findall(NS.PyWebXML.kw)))
         links = list(map(cls._linkFromNode, meta.findall(NS.PyWebXML.link)))
         return keywords, links
@@ -63,11 +63,13 @@ class PyWebXML(Document.DocumentBase):
         if title is None:
             raise ValueError("Title is missing.")
 
-        keywords, links = self.getLinksAndKeywords(meta)
+        keywords, links = self.getKeywordsAndLinks(meta)
 
         body = root.find(NS.XHTML.body)
         if body is None:
             raise ValueError("No body tag found")
+
+        ext = meta
         
         return Document.Document(title, keywords, links, body,
-            lastModified=lastModified)
+            lastModified=lastModified, ext=ext)

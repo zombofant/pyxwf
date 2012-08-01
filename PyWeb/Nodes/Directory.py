@@ -8,7 +8,7 @@ import PyWeb.Registry as Registry
 import PyWeb.Nodes as Nodes
 import PyWeb.Navigation as Navigation
 
-class Directory(Nodes.Node):
+class Directory(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     __metaclass__ = Registry.NodeMeta
 
     class NavigationInfo(Navigation.Info):
@@ -55,24 +55,14 @@ class Directory(Nodes.Node):
         except KeyError:
             raise ValueError("Directory requires index node (i.e. child node with unset or empty name)")
 
+    def _getChildNode(self, key):
+        return self.pathDict.get(key, None)
+
     def append(self, plugin):
         if plugin.Name in self.pathDict:
-            raise ValueError("Duplicate path name: {0}".format(plugin.name))
+            raise ValueError("Duplicate path name: {0}".format(plugin.Name))
         self.pathDict[plugin.Name] = plugin
         self.children.append(plugin)
-
-    def resolvePath(self, fullPath, relPath):
-        if fullPath[-1:] != "/" and len(relPath) == 0 and len(fullPath) > 0:
-            raise Errors.Found(newLocation=fullPath+"/")
-        try:
-            pathHere, relPath = relPath.split("/", 1)
-        except ValueError:
-            pathHere = relPath
-            relPath = ""
-        node = self.pathDict.get(pathHere, None)
-        if node is None:
-            raise Errors.NotFound()
-        return node.resolvePath(fullPath, relPath)
 
     def __iter__(self):
         return iter(self.children)

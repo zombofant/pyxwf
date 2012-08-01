@@ -55,3 +55,6 @@ def fileLastModified(fileref, floatTimes=False):
     else:
         mtime = int(st.st_mtime)
     return datetime.utcfromtimestamp(mtime)
+
+def unicodeToXPathStr(value):
+    return '"'+unicode(value).replace("\"", "\\\"")+'"'
