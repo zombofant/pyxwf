@@ -72,13 +72,9 @@ class Navigation(Crumbs.CrumbBase):
             ul = ET.Element(NS.XHTML.ul)
         
         for child in nodeIterable:
-            print(child)
-            print(child in activeChain)
             navInfo = child.getNavigationInfo(ctx)
             displayMode = navInfo.getDisplay()
-            print(displayMode)
             if displayMode is Nav.ReplaceWithChildren:
-                print("replace with children")
                 nodeIterable.push(iter(navInfo))
             elif displayMode is Nav.Show:
                 li = ET.SubElement(ul, NS.XHTML.li)
