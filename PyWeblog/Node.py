@@ -15,8 +15,9 @@ import PyWeb.Navigation as Navigation
 import PyWeb.Namespaces as NS
 import PyWeblog.Post as Post
 import PyWeblog.Directories as Directories
+import PyWeblog.LandingPage as LandingPage
 
-class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
+class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     __metaclass__ = Registry.NodeMeta
 
     namespace = unicode(NS.PyBlog)
@@ -31,16 +32,13 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
         self.navDisplay = Types.DefaultForNone(Navigation.Show,
             Navigation.DisplayMode)(node.get("nav-display"))
 
-        templateFmt = "templates/blog/{0}.xsl"
         templates = node.find(NS.PyBlog.templates)
         if templates is None:
             templates = ET.Element(NS.PyBlog.templates)
-        self.abstractListTemplate = \
-            self._loadTemplate(templates, "abstract-list", templateFmt)
-        self.abstractTemplate = \
-            self._loadTemplate(templates, "abstract", templateFmt)
-        self.postTemplate = \
-            self._loadTemplate(templates, "post", templateFmt)
+        self.abstractListTemplate = self._loadTemplate(templates, "abstract-list")
+        self.abstractTemplate = self._loadTemplate(templates, "abstract")
+        self.postTemplate = self._loadTemplate(templates, "post")
+        self.landingPageTemplate = self._loadTemplate(templates, "landing-page")
 
         structure = node.find(NS.PyBlog.structure)
         self.combinedStyle = Types.DefaultForNone(False, Types.EnumMap({
@@ -51,8 +49,15 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
             Types.Typecasts.bool
         )(structure.get("show-posts-in-nav"))
 
-    def _loadTemplate(self, node, attr, defaultFmt):
-        templateName = Types.DefaultForNone(defaultFmt.format(attr))\
+        landingPage = node.find(getattr(NS.PyBlog, "landing-page"))
+        if landingPage is None:
+            landingPage = ET.Element(NS.PyBlog, "landing-page")
+        landingPage.set("name", "")
+        self.landingPage = LandingPage.LandingPage(self, landingPage)
+
+    def _loadTemplate(self, node, attr):
+        templateFmt = "templates/blog/{0}.xsl"
+        templateName = Types.DefaultForNone(templateFmt.format(attr))\
                                         (node.get(attr))
         return self.site.getTemplate(templateName)
 
@@ -98,7 +103,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
 
     def _getChildNode(self, key):
         if key == "":
-            return self
+            return self.landingPage
         else:
             if not self._indexUpToDate():
                 self._createIndex()
@@ -112,22 +117,24 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
             except (ValueError, TypeError, KeyError):
                 return None
 
+    def iterRecent(self, count):
+        if not self._indexUpToDate():
+            self._createIndex()
+        return itertools.islice(self._allPosts, 0, count)
+
     def doGet(self, ctx):
         if not self._indexUpToDate():
             self._createIndex()
         raise Errors.Found(newLocation=self._years[0].Path)
 
     def getNavigationInfo(self, ctx):
-        return self
+        return self.landingPage.getNavigationInfo(ctx)
 
     def getTitle(self):
         return self.navTitle
 
     def getDisplay(self):
         return self.navDisplay
-
-    def getRepresentative(self):
-        return self
 
     def __iter__(self):
         if not self._indexUpToDate():
