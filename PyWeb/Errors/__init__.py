@@ -36,3 +36,10 @@ class MissingCrumbPlugin(MissingNamespacePlugin):
         super(MissingNodePlugin, self).__init__(ns, name,
             "No plugin for crumb {{{0}}}{1}"
         )
+
+class MissingTweakPlugin(MissingNamespacePlugin):
+    def __init__(self, ns, name):
+        super(MissingTweakPlugin, self).__init__(ns, name,
+            "No plugin for tweak {{{0}}}{1}"
+        )
+

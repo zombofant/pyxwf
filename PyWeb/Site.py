@@ -14,20 +14,18 @@ import PyWeb.Document as Document
 import PyWeb.Registry as Registry
 import PyWeb.Cache as Cache
 import PyWeb.Templates as Templates
+# import PyWeb.ImportSavepoints as ImportSavepoints
 
 class Site(object):
-    def __init__(self, sitemapFileLike=None, **kwargs):
+    def __init__(self, sitemapFile, **kwargs):
         super(Site, self).__init__(**kwargs)
         self.cache = Cache.Cache()
         self._templateCache = self.cache[(self, "templates")]
-        if sitemapFileLike is not None:
-            try:
-                self.loadSitemap(ET.parse(sitemapFileLike).getroot())
-            except:
-                self.clear()
-                raise
-        else:
-            self.clear()
+        # self.savepoint = ImportSavepoints.RollbackImporter()
+        try:
+            self.loadSitemap(sitemapFile)
+        except:
+            raise
 
     def _require(self, value, name):
         if value is None:
@@ -70,7 +68,7 @@ class Site(object):
         for plugin in plugins.findall(NS.Site.p):
             if not isinstance(plugin.tag, basestring):
                 continue
-            importlib.import_module(plugin.text)
+            module = importlib.import_module(plugin.text)
 
     def _loadTree(self, root):
         # find the tree root. This is kinda complicated as we do not
@@ -129,6 +127,11 @@ class Site(object):
             ns, name = utils.splitTag(child.tag)
             if ns == NS.Site.xmlns:
                 print("Warning: Unknown tweak parameter: {0}".format(name))
+            else:
+                try:
+                    Registry.TweakPlugins(child)
+                except Errors.MissingTweakPlugin as err:
+                    print("Warning: {0}".format(err))
         
     def _placeCrumb(self, ctx, crumbNode, crumb):
         tree = crumb.render(ctx)
@@ -223,12 +226,15 @@ class Site(object):
     def getNode(self, ID):
         return self.nodes[ID]
 
-    def loadSitemap(self, root):
+    def loadSitemap(self, sitemapFile):
+        self.sitemapFile = sitemapFile
+        self.sitemapTimestamp = utils.fileLastModified(sitemapFile)
+        root = ET.parse(sitemapFile).getroot()
         self._loadMeta(root)
+        self._loadPlugins(root)
         tweaks = root.find(NS.Site.tweaks)
         if tweaks is not None:
             self._loadTweaks(tweaks)
-        self._loadPlugins(root)
         self._loadTree(root)
         self._loadCrumbs(root)
 
@@ -238,6 +244,13 @@ class Site(object):
         self.licenseHref = None
 
     def handle(self, ctx, strip=True):
+        sitemapTimestamp = utils.fileLastModified(self.sitemapFile)
+        if sitemapTimestamp > self.sitemapTimestamp:
+            print("sitemap xml changed -- reloading COMPLETE site.")
+            # Registry.clearAll()
+            # self.savepoint.rollback()
+            self.loadSitemap(self.sitemapFile)
+        
         node, remPath = self._getNode(ctx.path, strip)
         ctx.pageNode = node
         template = self.getTemplate(node.Template)

@@ -74,9 +74,7 @@ class PyWebXML(Document.DocumentBase):
     @classmethod
     def getDate(cls, meta):
         datetext = meta.findtext(NS.PyWebXML.date)
-        if datetext is None:
-            return None
-        return datetime.strptime(datetext, "%Y-%m-%dT%H:%M:%S")
+        return utils.parseISODate(datetext)
 
     def parse(self, fileref):
         lastModified = utils.fileLastModified(fileref)

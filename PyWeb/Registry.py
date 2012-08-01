@@ -9,6 +9,7 @@ import itertools, abc
 import PyWeb.utils as utils
 import PyWeb.Nodes as Nodes
 import PyWeb.Errors as Errors
+import PyWeb.Tweaks as Tweaks
 
 class RegistryBase(dict):
     """
@@ -98,9 +99,28 @@ class _CrumbPlugins(NamespaceRegistry):
     def _getInstance(self, cls, node, site):
         return cls(site, node)
 
+class _TweakPlugins(NamespaceRegistry):
+    errorClass = Errors.MissingTweakPlugin
+
+    def __setitem__(self, key, cls):
+        container = Tweaks.TweakContainer()
+        cls._tweaks[key[1]] = container
+        super(_TweakPlugins, self).__setitem__(key, container)
+
+    def __call__(self, node):
+        ns, name = utils.splitTag(node.tag)
+        try:
+            container = self[(ns, name)]
+        except KeyError:
+            raise self.errorClass(ns, name)
+        container.append(node)
+
+    _getInstance = None
+
 NodePlugins = _NodePlugins()
 DocumentPlugins = _DocumentPlugins()
 CrumbPlugins = _CrumbPlugins()
+TweakPlugins = _TweakPlugins()
 
 class NamespaceMetaMixin(type):
     """
@@ -126,9 +146,33 @@ class NamespaceMetaMixin(type):
         if len(names) == 0:
             raise ValueError("Plugins must register for at least one name.")
 
-        cls = type.__new__(mcls, name, bases, dct)
+        cls = super(NamespaceMetaMixin, mcls).__new__(mcls, name, bases, dct)
         mcls.register(ns, names, cls)
         return cls
+
+class TweakMetaMixin(type):
+    """
+    Mixin for a metaclass which handles registration of tweak subscriptions,
+    based on namespace/tag name pairs.
+    """
+
+    def __new__(mcls, name, bases, dct):
+        ns = dct.get("tweakNamespace", dct.get("namespace", None))
+        try:
+            names = list(dct.get("tweakNames", None))
+        except TypeError:
+            names = []
+
+        dct.setdefault("_tweaks", {})
+
+        cls = super(TweakMetaMixin, mcls).__new__(mcls, name, bases, dct)
+        if ns is not None and len(names) > 0:
+            mcls.registerTweaks(ns, names, cls)
+        return cls
+
+    @classmethod
+    def registerTweaks(mcls, ns, names, cls):
+        TweakPlugins.register(ns, names, cls)
 
 class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
     """
@@ -139,7 +183,7 @@ class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
     def register(mcls, ns, names, cls):
         NodePlugins.register(ns, names, cls)
 
-class DocumentMeta(abc.ABCMeta):
+class DocumentMeta(abc.ABCMeta, TweakMetaMixin):
     """
     Metaclass for document types. Document type classes need to have a
     *mimeTypes* attribute which must be an iterable of strings reflecting the
@@ -150,8 +194,8 @@ class DocumentMeta(abc.ABCMeta):
         try:
             iterable = list(types)
         except TypeError:
-            raise TypeError("Plugin needs attribute namespace with a string assigned.")
-        cls = abc.ABCMeta.__new__(mcls, name, bases, dct)
+            raise TypeError("Plugin needs attribute mimeTypes which must be a sequence of strings.")
+        cls = super(DocumentMeta, mcls).__new__(mcls, name, bases, dct)
         DocumentPlugins.register(iterable, cls)
         return cls
 
@@ -163,3 +207,9 @@ class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
     @classmethod
     def register(mcls, ns, names, cls):
         CrumbPlugins.register(ns, names, cls)
+
+def clearAll():
+    NodePlugins.clear()
+    TweakPlugins.clear()
+    DocumentPlugins.clear()
+    CrumbPlugins.clear()

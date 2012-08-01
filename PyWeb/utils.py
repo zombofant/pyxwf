@@ -58,3 +58,8 @@ def fileLastModified(fileref, floatTimes=False):
 
 def unicodeToXPathStr(value):
     return '"'+unicode(value).replace("\"", "\\\"")+'"'
+
+def parseISODate(s):
+    if s is None:
+        return None
+    return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
