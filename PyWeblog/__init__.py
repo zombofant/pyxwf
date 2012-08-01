@@ -328,6 +328,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
             for filename in filenames:
                 fullFile = os.path.join(dirpath, filename)
                 post = BlogPost(self, fullFile)
+        self._allPosts.sort(key=lambda x: x.creationDate)
 
     def _getChildNode(self, key):
         if key == "":
