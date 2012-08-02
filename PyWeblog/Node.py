@@ -103,7 +103,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
 
     @property
     def TagDirTemplate(self):
-        return self.site.templateCache[tagDirTemplate]
+        return self.site.templateCache[self.tagDirTemplate]
 
     @property
     def LastModified(self):
