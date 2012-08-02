@@ -1,8 +1,9 @@
-import abc, itertools
+import abc, itertools, os
 
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Resource as Resource
+import PyWeb.Cache as Cache
 import PyWeb.Namespaces as NS
 import PyWeb.Document as Document
 import PyWeb.Parsers.PyWebXML as PyWebXML
@@ -86,3 +87,10 @@ class XSLTTemplate(Template):
 
         body = newDoc.find(customBody)
         return Document.Document(title, keywords, links, body)
+
+
+class XSLTTemplateCache(Cache.FileSourcedCache):
+    def _load(self, path):
+        return XSLTTemplate(path)
+
+    

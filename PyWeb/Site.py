@@ -23,7 +23,6 @@ class Site(Resource.Resource):
         self.startCWD = os.getcwd()
         self.defaultURLRoot = defaultURLRoot
         self.cache = Cache.Cache()
-        self._templateCache = self.cache[(self, "templates")]
         # self.savepoint = ImportSavepoints.RollbackImporter()
         try:
             self.loadSitemap(sitemapFile)
@@ -107,6 +106,10 @@ class Site(Resource.Resource):
         perf = workingCopy.find(NS.Site.performance)
         if perf is not None:
             workingCopy.remove(perf)
+            maxCache = Types.DefaultForNone(0,
+                Types.NumericRange(Types.Typecasts.int, 0, None)
+            )(perf.get("max-cache-items"))
+            self.cache.Limit = maxCache
 
         mimeMap = workingCopy.find(getattr(NS.Site, "mime-map"))
         mimetypes.init()
@@ -143,15 +146,6 @@ class Site(Resource.Resource):
         crumbParent = crumbNode.getparent()
         crumbNodeIdx = crumbParent.index(crumbNode)
         crumbParent[crumbNodeIdx] = tree
-
-    def getTemplate(self, templateFile):
-        try:
-            return self._templateCache[templateFile]
-        except KeyError as err:
-            templatePath = os.path.join(self.root, templateFile)
-            template = Templates.XSLTTemplate(templatePath)
-            self._templateCache[templateFile] = template
-            return template
 
     def transformReferences(self, ctx, tree):
         for author in tree.iter(NS.PyWebXML.author):
@@ -224,11 +218,25 @@ class Site(Resource.Resource):
     def getNode(self, ID):
         return self.nodes[ID]
 
+    def _setupCache(self, key, cls, *args):
+        try:
+            del self.cache[key]
+        except KeyError:
+            pass
+        return self.cache.specializedCache(key, cls, *args)
+
     def loadSitemap(self, sitemapFile):
         self.sitemapFile = sitemapFile
         self.sitemapTimestamp = utils.fileLastModified(sitemapFile)
+        
         root = ET.parse(sitemapFile).getroot()
         self._loadMeta(root)
+
+        self.templateCache = self._setupCache((self, "templates"),
+            Templates.XSLTTemplateCache, self.root)
+        self.fileDocumentCache = self._setupCache((self, "file-doc-cache"),
+            Document.FileDocumentCache, self.root)
+        
         self._loadPlugins(root)
         tweaks = root.find(NS.Site.tweaks)
         if tweaks is not None:
@@ -254,7 +262,7 @@ class Site(Resource.Resource):
         
         node = self._getNode(ctx)
         ctx._pageNode = node
-        template = self.getTemplate(node.Template)
+        template = self.templateCache[node.Template]
         ctx.useResource(template)
 
         ctx.checkNotModified()
@@ -263,4 +271,7 @@ class Site(Resource.Resource):
                 licenseFallback=self._license)
         
         message = Message.XHTMLMessage(resultTree)
+        # only enforce at the end of a request, otherwise things may become
+        # horribly slow if more resources are needed than the cache allows
+        self.cache.enforceLimit()  
         return message

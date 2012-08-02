@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import operator, abc
+import operator, abc, collections
 
 import PyWeb.Types as Types
 import PyWeb.Errors as Errors
@@ -165,6 +165,13 @@ class Context(object):
             else:
                 self._lastModified = lastModified
 
+    def useResources(self, resources):
+        """
+        Marks multiple resources for use. This requires *resources* to be an
+        iterable of Resources.
+        """
+        collections.deque(map(self.useResource, resources), 0)
+
     def iterResources(self):
         """
         Returns an iterator over the resources used to build the response.
@@ -181,9 +188,12 @@ class Context(object):
         is thrown.
         """
         if not self.Cachable:
+            print("response not cachable")
             return
         lastModified = self.LastModified
         if lastModified is None or self.IfModifiedSince is None:
+            print("not enough information for cache decision")
             return
         if self.LastModified <= self.IfModifiedSince:
+            print("not modified")
             raise Errors.NotModified()

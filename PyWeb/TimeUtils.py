@@ -37,4 +37,14 @@ def calendarTimeRange(year, month=None):
 def normalizeDate(dateTime):
     return datetime(year=dateTime.year, month=dateTime.month, day=dateTime.day)
 
+def stripMicroseconds(dateTime):
+    return datetime(
+        dateTime.year,
+        dateTime.month,
+        dateTime.day,
+        dateTime.hour,
+        dateTime.minute,
+        dateTime.second
+    )
+
 fromTimestamp = toDatetime

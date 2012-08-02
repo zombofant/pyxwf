@@ -14,7 +14,6 @@ class LandingPage(Nodes.Node, Navigation.Info):
         if self._name != "":
             raise ValueError("Invalid landing page name.")
         self.blog = blog
-        self.template = blog.landingPageTemplate
         self.recentCount = Types.DefaultForNone(3,
             Types.NumericRange(Types.Typecasts.int, 1, None)
         )(node.get("post-count"))
@@ -23,7 +22,7 @@ class LandingPage(Nodes.Node, Navigation.Info):
         articles = ET.Element(getattr(NS.PyBlog, "abstract-list"))
         for recentPost in self.blog.iterRecent(self.recentCount):
             articles.append(recentPost.getAbstract(ctx))
-        return self.template.transform(articles, {})
+        return self.blog.LandingPageTemplate.transform(articles, {})
 
     def getNavigationInfo(self, ctx):
         return self

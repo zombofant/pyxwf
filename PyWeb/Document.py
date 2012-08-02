@@ -7,6 +7,7 @@ import PyWeb.Namespaces as NS
 import PyWeb.Resource as Resource
 import PyWeb.Errors as Errors
 import PyWeb.Registry as Registry
+import PyWeb.Cache as Cache
 
 class Author(object):
     @classmethod
@@ -155,9 +156,7 @@ class FileDocument(DocumentResource):
         if mimeType is None:
             mimeType, _ = mimetypes.guess_type(fileName, strict=False)
             if mimeType is None:
-                raise ValueError("No idea what type that file is: {0}".format(
-                    fileName
-                ))
+                raise Errors.UnknownMIMEType(fileName)
         self._parser = Registry.ParserPlugins(mimeType)
         self._reload()
 
@@ -175,3 +174,12 @@ class FileDocument(DocumentResource):
         if self._lastModified < lastModified:
             self._lastModified = lastModified
             self._reload()
+
+
+class FileDocumentCache(Cache.FileSourcedCache):
+    def _load(self, path, overrideMIME=None):
+        return FileDocument(path, overrideMIME=overrideMIME)
+
+    def get(self, key, overrideMIME=None):
+        return super(FileDocumentCache, self).__getitem__(key,
+                overrideMIME=overrideMIME)

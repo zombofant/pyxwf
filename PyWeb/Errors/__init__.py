@@ -16,7 +16,7 @@ class MissingPlugin(Exception):
 class MissingParserPlugin(MissingPlugin):
     def __init__(self, mime):
         msg = "No parser for MIME type: {0}".format(mime)
-        super(MissingDocumentPlugin, self).__init__(msg)
+        super(MissingParserPlugin, self).__init__(msg)
         self.mime = mime
 
 class MissingNamespacePlugin(MissingPlugin):
@@ -50,5 +50,13 @@ class ResourceLost(Exception):
         basename = os.path.basename(fileName)
         super(ResourceGone, self).__init__(
             "Resource at {0} cannot be found anymore.".format(basename)
+        )
+        self.path = fileName
+
+class UnknownMIMEType(Exception):
+    def __init__(self, fileName):
+        basename = os.path.basename(fileName)
+        super(UnknownMIMEType, self).__init__(
+            "No idea what type that file is: {0}".format(basename)
         )
         self.path = fileName

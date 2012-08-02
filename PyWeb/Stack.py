@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import os, warnings
+import os, warnings, gc
 from wsgiref.handlers import format_date_time
 from datetime import datetime
 
@@ -45,10 +45,8 @@ class WebStackContext(Context.Context):
     def _requirePost(self):
         raise NotImplemented()
 
-    def sendResponse(self, message):
+    def _setCacheHeaders(self):
         tx = self._transaction
-        tx.rollback()
-        tx.set_content_type(ContentType(message.MIMEType, message.Encoding))
         if self.Cachable:
             lastModified = self.LastModified
             if lastModified is not None:
@@ -57,6 +55,12 @@ class WebStackContext(Context.Context):
             tx.set_header_value("Cache-Control", "must-revalidate")
         else:
             tx.set_header_value("Cache-Control", "no-cache")
+
+    def sendResponse(self, message):
+        tx = self._transaction
+        tx.rollback()
+        tx.set_content_type(ContentType(message.MIMEType, message.Encoding))
+        self._setCacheHeaders()
         self.Out.write(message.getEncodedBody())
 
 class WebStackSite(Site.Site):
@@ -75,6 +79,7 @@ class WebStackSite(Site.Site):
             return
         except Errors.NotModified as status:
             transaction.set_response_code(status.statusCode)
+            ctx._setCacheHeaders()
             return
         except Errors.HTTPRedirection as status:
             loc = status.newLocation
@@ -87,3 +92,4 @@ class WebStackSite(Site.Site):
             transaction.set_response_code(status.statusCode)
             return
         ctx.sendResponse(message)
+        gc.collect()

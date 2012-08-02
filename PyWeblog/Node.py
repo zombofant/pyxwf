@@ -13,13 +13,15 @@ import PyWeb.Errors as Errors
 import PyWeb.Nodes as Nodes
 import PyWeb.Navigation as Navigation
 import PyWeb.Namespaces as NS
+import PyWeb.Resource as Resource
+import PyWeb.TimeUtils as TimeUtils
 
 import PyWeblog.Post as Post
 import PyWeblog.Directories as Directories
 import PyWeblog.LandingPage as LandingPage
 import PyWeblog.TagPages as TagPages
 
-class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
+class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
     __metaclass__ = Registry.NodeMeta
 
     namespace = unicode(NS.PyBlog)
@@ -40,11 +42,11 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         templates = node.find(NS.PyBlog.templates)
         if templates is None:
             templates = ET.Element(NS.PyBlog.templates)
-        self.abstractListTemplate = self._loadTemplate(templates, "abstract-list")
-        self.abstractTemplate = self._loadTemplate(templates, "abstract")
-        self.postTemplate = self._loadTemplate(templates, "post")
-        self.landingPageTemplate = self._loadTemplate(templates, "landing-page")
-        self.tagDirTemplate = self._loadTemplate(templates, "tag-dir")
+        self.abstractListTemplate = self._cfgTemplate(templates, "abstract-list")
+        self.abstractTemplate = self._cfgTemplate(templates, "abstract")
+        self.postTemplate = self._cfgTemplate(templates, "post")
+        self.landingPageTemplate = self._cfgTemplate(templates, "landing-page")
+        self.tagDirTemplate = self._cfgTemplate(templates, "tag-dir")
 
         structure = node.find(NS.PyBlog.structure)
         self.combinedStyle = Types.DefaultForNone(False, Types.EnumMap({
@@ -75,17 +77,44 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         if not os.path.isfile(self._reloadTrigger):
             open(self._reloadTrigger, "w").close()
 
-    def _loadTemplate(self, node, attr):
-        templateFmt = "templates/blog/{0}.xsl"
-        templateName = Types.DefaultForNone(templateFmt.format(attr))\
-                                        (node.get(attr))
-        return self.site.getTemplate(templateName)
+        self._lastIndexUpdate = None
+        self._lastTrigger = None
 
-    def _indexUpToDate(self):
-        if not hasattr(self, "_allPosts"):
-            return False
+    def _cfgTemplate(self, node, attr):
+        templateFmt = "templates/{0}/{1}.xsl"
+        return Types.DefaultForNone(templateFmt.format(self.Name, attr))\
+                (node.get(attr))
+
+    @property
+    def AbstractListTemplate(self):
+        return self.site.templateCache[self.abstractListTemplate]
+
+    @property
+    def AbstractTemplate(self):
+        return self.site.templateCache[self.abstractTemplate]
+
+    @property
+    def PostTemplate(self):
+        return self.site.templateCache[self.postTemplate]
+
+    @property
+    def LandingPageTemplate(self):
+        return self.site.templateCache[self.landingPageTemplate]
+
+    @property
+    def TagDirTemplate(self):
+        return self.site.templateCache[tagDirTemplate]
+
+    @property
+    def LastModified(self):
+        return self._lastIndexUpdate
+
+    def update(self):
         indexTriggerDate = utils.fileLastModified(self._reloadTrigger)
-        return indexTriggerDate <= self._lastIndexUpdate
+        if self._lastTrigger is None or \
+                indexTriggerDate > self._lastTrigger:
+            self._lastTrigger = indexTriggerDate
+            self._createIndex()
 
     def addToIndex(self, post):
         year = post.creationDate.year
@@ -101,6 +130,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         self._allPosts.append(post)
         for tag in post.tags:
             self._tagCloud.setdefault(tag, []).append(post)
+        self._lastIndexUpdate = TimeUtils.stripMicroseconds(datetime.utcnow())
         return monthDir
 
     def removeFromIndex(self, post):
@@ -110,6 +140,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         yearDir.remove(post)
         for tag in post.tags:
             self._tagCloud[tag].remove(post)
+        self._lastIndexUpdate = TimeUtils.stripMicroseconds(datetime.utcnow())
 
     def _clearIndex(self):
         self._allPosts = []
@@ -120,13 +151,12 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
     def _createIndex(self):
         self._clearIndex()
-        self._lastIndexUpdate = datetime.utcnow()
         for dirpath, dirnames, filenames in os.walk(self.entriesDir):
             for filename in filenames:
                 fullFile = os.path.join(dirpath, filename)
                 try:
                     post = Post.BlogPost(self, fullFile)
-                except Errors.MissingDocumentPlugin:
+                except (Errors.MissingParserPlugin, Errors.UnknownMIMEType):
                     pass
         self._allPosts.sort(key=lambda x: x.creationDate, reverse=True)
 
@@ -135,8 +165,6 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
             return self._pathDict[key]
         except KeyError:
             pass
-        if not self._indexUpToDate():
-            self._createIndex()
         try:
             year = int(key)
             if str(year) != key:
@@ -147,36 +175,30 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         except (ValueError, TypeError, KeyError):
             return None
 
+    def resolvePath(self, ctx, relPath):
+        ctx.useResource(self)  # as even 404 may be dependent on our index state
+        return super(Blog, self).resolvePath(ctx, relPath)
+
     def iterRecent(self, count):
-        if not self._indexUpToDate():
-            self._createIndex()
         return itertools.islice(self._allPosts, 0, count)
 
     def getTagPath(self, tag):
         return self.tagDir.Path + "/" + tag
 
     def getTagsByPostCount(self):
-        if not self._indexUpToDate():
-            self._createIndex()
         return sorted(self._tagCloud.viewitems(),
             key=lambda x: len(x[1]), reverse=True)
 
     def getPostsByTag(self, tag):
-        if not self._indexUpToDate():
-            self._createIndex()
         try:
             return self._tagCloud[tag]
         except KeyError:
             return []
 
     def viewTagPosts(self):
-        if not self._indexUpToDate():
-            self._createIndex()
         return self._tagCloud.viewitems()
 
     def doGet(self, ctx):
-        if not self._indexUpToDate():
-            self._createIndex()
         raise Errors.Found(newLocation=self._years[0].Path)
 
     def getNavigationInfo(self, ctx):
@@ -189,8 +211,6 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         return self.navDisplay
 
     def __iter__(self):
-        if not self._indexUpToDate():
-            self._createIndex()
         return itertools.chain(
             self._years,
             self._navChildren

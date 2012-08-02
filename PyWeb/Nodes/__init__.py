@@ -168,4 +168,4 @@ class DirectoryResolutionBehaviour(object):
         if node is not self:
             return node.resolvePath(ctx, relPath)
         else:
-            return node, relPath
+            return node

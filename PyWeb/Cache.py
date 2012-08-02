@@ -1,4 +1,4 @@
-import abc, functools, time
+import abc, functools, time, os
 
 import PyWeb.Nodes as Nodes
 import PyWeb.Errors as Errors
@@ -74,17 +74,6 @@ class Cache(object):
         self._limit = 0
         self.Limit = limit
 
-    def _enforceLimit(self):
-        """
-        Remove those entries with the oldest lastAccess from the cache.
-        """
-        tooMany = len(self.entries) - self.limit
-        if tooMany > 0:
-            overflow = self.entries[:tooMany]
-            self.entries = self.entries[tooMany:]
-            for entry in overflow:
-                entry._cache_subcache._kill(entry)
-
     def _add(self, cachable):
         if self._limit:
             self.entries.append(cachable)
@@ -109,6 +98,19 @@ class Cache(object):
             subCache = SubCache(self)
             self.subCaches[key] = subCache
             return subCache
+
+    def __delitem__(self, key):
+        cache = self.subCaches[key]
+        for entry in cache.entries.values():
+            entry.uncache()
+        del self.subCaches[key]
+
+    def specializedCache(self, key, cls, *args, **kwargs):
+        cache = cls(self, *args, **kwargs)
+        if key in self.subCaches:
+            raise KeyError("SubCache key already in use: {0}".format(key))
+        self.subCaches[key] = cache
+        return cache
         
     def remove(self, cachable):
         """
@@ -116,6 +118,19 @@ class Cache(object):
         :meth:`CacheEntry.delete`, which does the same thing.
         """
         self._remove(cachable)
+
+    def enforceLimit(self):
+        """
+        Remove those entries with the oldest lastAccess from the cache.
+        """
+        if not self._limit:
+            return
+        tooMany = len(self.entries) - self._limit
+        if tooMany > 0:
+            overflow = self.entries[:tooMany]
+            self.entries = self.entries[tooMany:]
+            for entry in overflow:
+                entry._cache_subcache._kill(entry)
 
     @property
     def Limit(self):
@@ -141,9 +156,38 @@ class Cache(object):
         if value == 0:
             del self.heap
         else:
-            self.heap = []
+            self.entries = []
             for cache in self.subCaches.viewvalues():
-                self.heap.extend(cache.entries.viewvalues())
-            heapq.heapify(self.heap)
-            self._enforceLimit()
+                self.entries.extend(cache.entries.viewvalues())
+            self.entries.sort()
+            self.enforceLimit()
         self._limit = value
+
+
+class FileSourcedCache(SubCache):
+    __metaclass__ = abc.ABCMeta
+    
+    def __init__(self, master, rootPath):
+        super(FileSourcedCache, self).__init__(master)
+        self.rootPath = rootPath
+
+    @abc.abstractmethod
+    def _load(self, path):
+        """
+        Derived classes have to implement this method. It must return the loaded
+        object behind *path* or raise.
+        """
+
+    def _transformKey(self, key):
+        return os.path.join(self.rootPath, key)
+
+    def __getitem__(self, key, **kwargs):
+        path = self._transformKey(key)
+        try:
+            return super(FileSourcedCache, self).__getitem__(path)
+        except KeyError:
+            obj = self._load(path, **kwargs)
+            super(FileSourcedCache, self).__setitem__(path, obj)
+            return obj
+    
+    __setitem__ = None
