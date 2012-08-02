@@ -20,7 +20,7 @@ class BlogPost(Nodes.Node, Navigation.Info):
 
     def _processFile(self, fileName):
         mimeType, encoding = mimetypes.guess_type(fileName, strict=False)
-        documentHandler = Registry.DocumentPlugins(mimeType)
+        documentHandler = Registry.ParserPlugins(mimeType)
         return documentHandler.parse(fileName)
 
     def _processDocument(self, doc):

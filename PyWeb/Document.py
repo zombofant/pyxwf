@@ -7,13 +7,13 @@ import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
 import PyWeb.Resource as Resource
 
-class DocumentBase(Resource):
+class ParserBase(Resource):
     """
-    Baseclass for Document type implementations. Derived classes should use
-    :cls:`PyWeb.Registry.DocumentMeta` as metaclass to automatically register
+    Baseclass for Parser implementations. Derived classes should use
+    :cls:`PyWeb.Registry.ParserMeta` as metaclass to automatically register
     with the doctype registry. See there for further documentation.
 
-    Documents have to implement the `parse` method.
+    Parsers have to implement the `parse` method.
     """
     __metaclass__ = abc.ABCMeta
     

@@ -11,9 +11,9 @@ class MalformedHTTPRequset(ValueError):
 class MissingPlugin(Exception):
     pass
 
-class MissingDocumentPlugin(MissingPlugin):
+class MissingParserPlugin(MissingPlugin):
     def __init__(self, mime):
-        msg = "No Document handler for MIME type: {0}".format(mime)
+        msg = "No parser for MIME type: {0}".format(mime)
         super(MissingDocumentPlugin, self).__init__(msg)
         self.mime = mime
 

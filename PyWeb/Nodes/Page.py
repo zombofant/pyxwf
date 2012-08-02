@@ -18,7 +18,7 @@ class Page(Nodes.Node, Navigation.Info):
             default=Navigation.Show)
         self.mimeType = node.get("type")
 
-        documentHandler = Registry.DocumentPlugins(self.mimeType)
+        documentHandler = Registry.ParserPlugins(self.mimeType)
         f = open(os.path.join(site.root, self.src), "r")
         try:
             self.doc = documentHandler.parse(f)

@@ -72,11 +72,11 @@ class _NodePlugins(NamespaceRegistry):
     def _getInstance(self, cls, node, site, parent):
         return cls(site, parent, node)
 
-class _DocumentPlugins(RegistryBase):
+class _ParserPlugins(RegistryBase):
     keyDescription = "MIME type"
     
     def __init__(self):
-        super(_DocumentPlugins, self).__init__()
+        super(_ParserPlugins, self).__init__()
         self.instances = {}
     
     def getPluginInstance(self, mime):
@@ -85,7 +85,7 @@ class _DocumentPlugins(RegistryBase):
             return inst
         cls = self.get(mime, None)
         if cls is None:
-            raise Errors.MissingDocumentPlugin(mime)
+            raise Errors.MissingParserPlugin(mime)
         inst = cls(mime)
         self.instances[mime] = inst
         return inst
@@ -118,7 +118,7 @@ class _TweakPlugins(NamespaceRegistry):
     _getInstance = None
 
 NodePlugins = _NodePlugins()
-DocumentPlugins = _DocumentPlugins()
+ParserPlugins = _ParserPlugins()
 CrumbPlugins = _CrumbPlugins()
 TweakPlugins = _TweakPlugins()
 
@@ -183,9 +183,9 @@ class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
     def register(mcls, ns, names, cls):
         NodePlugins.register(ns, names, cls)
 
-class DocumentMeta(abc.ABCMeta, TweakMetaMixin):
+class ParserMeta(abc.ABCMeta, TweakMetaMixin):
     """
-    Metaclass for document types. Document type classes need to have a
+    Metaclass for parsers. Parser classes need to have a
     *mimeTypes* attribute which must be an iterable of strings reflecting the
     mime types the class is able to handle.
     """
@@ -195,8 +195,8 @@ class DocumentMeta(abc.ABCMeta, TweakMetaMixin):
             iterable = list(types)
         except TypeError:
             raise TypeError("Plugin needs attribute mimeTypes which must be a sequence of strings.")
-        cls = super(DocumentMeta, mcls).__new__(mcls, name, bases, dct)
-        DocumentPlugins.register(iterable, cls)
+        cls = super(ParserMeta, mcls).__new__(mcls, name, bases, dct)
+        ParserPlugins.register(iterable, cls)
         return cls
 
 class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
@@ -211,5 +211,5 @@ class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
 def clearAll():
     NodePlugins.clear()
     TweakPlugins.clear()
-    DocumentPlugins.clear()
+    ParserPlugins.clear()
     CrumbPlugins.clear()
