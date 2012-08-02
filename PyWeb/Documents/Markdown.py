@@ -120,4 +120,4 @@ class Markdown(Document.DocumentBase):
             node.text = value
 
         return Document.Document(title, keywords, [], body,
-            authors=authors, lastModified=lastModified, ext=ext)
+            authors=authors, lastModified=lastModified, ext=ext, date=date)

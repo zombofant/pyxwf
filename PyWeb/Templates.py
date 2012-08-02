@@ -45,6 +45,7 @@ class Template(Cache.Cachable):
         newDoc = self.transform(page, templateArgs)
         newDoc.links.extend(document.links)
         newDoc.keywords.extend(document.keywords)
+        newDoc.title = newDoc.title or document.title
         body = newDoc.body
         
         if body is None:
@@ -86,7 +87,7 @@ class XSLTTemplate(Template):
         meta = newDoc.find(NS.PyWebXML.meta)
         if meta is not None:
             keywords, links = PyWebXML.PyWebXML.getKeywordsAndLinks(meta)
-            title = unicode(meta.findtext(NS.PyWebXML.title) or document.title)
+            title = meta.findtext(NS.PyWebXML.title)
         else:
             links, keywords = [], []
             title = None
