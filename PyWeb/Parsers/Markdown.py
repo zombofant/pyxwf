@@ -9,6 +9,7 @@ import markdown2
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Registry as Registry
+import PyWeb.Parsers as Parsers
 import PyWeb.Document as Document
 import PyWeb.Namespaces as NS
 import PyWeb.Types as Types
@@ -17,8 +18,8 @@ class _NS(object):
     __metaclass__ = NS.__metaclass__
     xmlns = "http://pyweb.zombofant.net/xmlns/documents/markdown"
 
-class Markdown(Document.DocumentBase):
-    __metaclass__ = Registry.DocumentMeta
+class Markdown(Parsers.ParserBase):
+    __metaclass__ = Registry.ParserMeta
 
     namespace = str(_NS)
     tweakNames = ["tweaks", "nsdecl"]
@@ -84,7 +85,6 @@ class Markdown(Document.DocumentBase):
         return items
         
     def parse(self, fileref):
-        lastModified = utils.fileLastModified(fileref)
         if isinstance(fileref, basestring):
             f = open(fileref, "r")
         else:
@@ -120,4 +120,4 @@ class Markdown(Document.DocumentBase):
             node.text = value
 
         return Document.Document(title, keywords, [], body,
-            authors=authors, lastModified=lastModified, ext=ext, date=date)
+            authors=authors, ext=ext, date=date)

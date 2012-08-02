@@ -2,6 +2,7 @@ import abc, collections
 
 import PyWeb.utils as utils
 import PyWeb.Errors as Errors
+import PyWeb.Types as Types
 
 class NodeMeta(abc.ABCMeta):
     def _raiseNoValidRequestHandlers(mcls):
@@ -43,6 +44,8 @@ class NodeMeta(abc.ABCMeta):
 
 class Node(object):
     __metaclass__ = NodeMeta
+
+    _navTitleWithNoneType = Types.DefaultForNone(None, Types.Typecasts.unicode)
     
     def __init__(self, site, parent, node):
         super(Node, self).__init__()

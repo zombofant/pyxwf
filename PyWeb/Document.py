@@ -1,34 +1,12 @@
-import abc
-import os
+import abc, os, mimetypes
 from datetime import datetime
 
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
 import PyWeb.Resource as Resource
-
-class ParserBase(Resource):
-    """
-    Baseclass for Parser implementations. Derived classes should use
-    :cls:`PyWeb.Registry.ParserMeta` as metaclass to automatically register
-    with the doctype registry. See there for further documentation.
-
-    Parsers have to implement the `parse` method.
-    """
-    __metaclass__ = abc.ABCMeta
-    
-    def __init__(self):
-        pass
-
-    @abc.abstractmethod
-    def parse(self, fileref):
-        """
-        Take a file name or filelike in *fileref* and parse the hell out of it.
-        Return a :cls:`Document` instance with all data filled out.
-        
-        Derived classes must implement this.
-        """
-
+import PyWeb.Errors as Errors
+import PyWeb.Registry as Registry
 
 class Author(object):
     @classmethod
@@ -114,7 +92,6 @@ class Document(object):
     """
 
     def __init__(self, title, keywords, links, body,
-            lastModified=None,
             etag=None,
             ext=None,
             authors=None,
@@ -126,7 +103,6 @@ class Document(object):
         self.keywords = keywords
         self.links = links
         self.body = body
-        self.lastModified = lastModified
         self.etag = etag
         self.date = date
         self.license = license
@@ -164,3 +140,38 @@ class Document(object):
         return {
             b"doc_title": utils.unicodeToXPathStr(self.title)
         }
+
+
+class DocumentResource(Resource.Resource):
+    pass
+
+
+class FileDocument(DocumentResource):
+    def __init__(self, fileName, overrideMIME=None):
+        super(FileDocument, self).__init__()
+        self._lastModified = utils.fileLastModified(fileName)
+        self._fileName = fileName
+        mimeType = overrideMIME
+        if mimeType is None:
+            mimeType, _ = mimetypes.guess_type(fileName, strict=False)
+            if mimeType is None:
+                raise ValueError("No idea what type that file is: {0}".format(
+                    fileName
+                ))
+        self._parser = Registry.ParserPlugins(mimeType)
+        self._reload()
+
+    def _reload(self):
+        self.doc = self._parser.parse(self._fileName)
+
+    @property
+    def LastModified(self):
+        return self._lastModified
+
+    def update(self):
+        lastModified = utils.fileLastModified(self._fileName)
+        if lastModified is None:
+            raise Errors.ResourceLost(self._fileName)
+        if self._lastModified < lastModified:
+            self._lastModified = lastModified
+            self._reload()

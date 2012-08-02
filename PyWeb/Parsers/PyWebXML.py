@@ -7,6 +7,7 @@ from datetime import datetime
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Registry as Registry
+import PyWeb.Parsers as Parsers
 import PyWeb.Document as Document
 import PyWeb.Namespaces as NS
 
@@ -37,8 +38,8 @@ class Link(object):
             raise KeyError("Unknown link relation: {0}".format(rel))
 
 
-class PyWebXML(Document.DocumentBase):
-    __metaclass__ = Registry.DocumentMeta
+class PyWebXML(Parsers.ParserBase):
+    __metaclass__ = Registry.ParserMeta
 
     mimeTypes = ["application/x-pyweb-xml"]
     
@@ -77,7 +78,6 @@ class PyWebXML(Document.DocumentBase):
         return utils.parseISODate(datetext)
 
     def parse(self, fileref):
-        lastModified = utils.fileLastModified(fileref)
         tree = ET.parse(fileref)
         root = tree.getroot()
         if root.tag != NS.PyWebXML.page:
@@ -103,4 +103,4 @@ class PyWebXML(Document.DocumentBase):
         ext = meta
         
         return Document.Document(title, keywords, links, body,
-            lastModified=lastModified, ext=ext, date=date, authors=authors)
+            ext=ext, date=date, authors=authors)

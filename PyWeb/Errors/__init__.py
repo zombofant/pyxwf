@@ -1,5 +1,7 @@
 from HTTP import *
 
+import os
+
 class InternalRedirect(Exception):
     def __init__(self, to):
         self.to = to
@@ -43,3 +45,10 @@ class MissingTweakPlugin(MissingNamespacePlugin):
             "No plugin for tweak {{{0}}}{1}"
         )
 
+class ResourceLost(Exception):
+    def __init__(self, fileName):
+        basename = os.path.basename(fileName)
+        super(ResourceGone, self).__init__(
+            "Resource at {0} cannot be found anymore.".format(basename)
+        )
+        self.path = fileName

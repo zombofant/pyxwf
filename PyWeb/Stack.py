@@ -2,15 +2,17 @@ from __future__ import unicode_literals
 
 import os, warnings
 from wsgiref.handlers import format_date_time
+from datetime import datetime
 
 import WebStack
-from WebStack.Generic import EndOfResponse
+from WebStack.Generic import EndOfResponse, ContentType
 
 from PyWeb.utils import ET
 import PyWeb.Errors as Errors
 import PyWeb.Site as Site
 import PyWeb.Context as Context
 import PyWeb.HTTPUtils as HTTPUtils
+import PyWeb.TimeUtils as TimeUtils
 
 class WebStackContext(Context.Context):
     def __init__(self, transaction):
@@ -20,6 +22,10 @@ class WebStackContext(Context.Context):
             transaction.get_response_stream())
         self._transaction = transaction
         self._parseIfModifiedSince()
+
+    @property
+    def Out(self):
+        return self._transaction.get_response_stream()
 
     def _parseIfModifiedSince(self):
         values = self._transaction.get_header_values("If-Modified-Since")
@@ -40,15 +46,18 @@ class WebStackContext(Context.Context):
         raise NotImplemented()
 
     def sendResponse(self, message):
-        tx = self.transaction
+        tx = self._transaction
         tx.rollback()
         tx.set_content_type(ContentType(message.MIMEType, message.Encoding))
         if self.Cachable:
             lastModified = self.LastModified
             if lastModified is not None:
-                transaction.set_header_value("Last-Modified",
+                tx.set_header_value("Last-Modified",
                     format_date_time(TimeUtils.toTimestamp(lastModified)))
-        self._outfile.write(message.getEncodedBody())
+            tx.set_header_value("Cache-Control", "must-revalidate")
+        else:
+            tx.set_header_value("Cache-Control", "no-cache")
+        self.Out.write(message.getEncodedBody())
 
 class WebStackSite(Site.Site):
     def __init__(self, sitemapFile, **kwargs):

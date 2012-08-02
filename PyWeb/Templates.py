@@ -5,7 +5,7 @@ import PyWeb.utils as utils
 import PyWeb.Resource as Resource
 import PyWeb.Namespaces as NS
 import PyWeb.Document as Document
-import PyWeb.Documents.PyWebXML as PyWebXML
+import PyWeb.Parsers.PyWebXML as PyWebXML
 
 class Template(Resource.Resource):
     __metaclass__ = abc.ABCMeta

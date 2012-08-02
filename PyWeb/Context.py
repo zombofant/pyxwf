@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import operator, abc
 
 import PyWeb.Types as Types
+import PyWeb.Errors as Errors
 
 class Context(object):
     """
@@ -22,7 +23,7 @@ class Context(object):
         self._postData = None
         self._cachePath = path
         self._cacheTokens = set()
-        self._forceNoCache = True
+        self._forceNoCache = False
         self._cachable = True
         self._ifModifiedSince = None
         self._pageNode = None
@@ -182,7 +183,7 @@ class Context(object):
         if not self.Cachable:
             return
         lastModified = self.LastModified
-        if lastModified is None:
+        if lastModified is None or self.IfModifiedSince is None:
             return
         if self.LastModified <= self.IfModifiedSince:
-            raise Errors.HTTP.NotModified()
+            raise Errors.NotModified()

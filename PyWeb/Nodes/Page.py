@@ -3,6 +3,7 @@ import os
 import PyWeb.Nodes as Nodes
 import PyWeb.Registry as Registry
 import PyWeb.Navigation as Navigation
+import PyWeb.Document as Document
 
 class Page(Nodes.Node, Navigation.Info):
     __metaclass__ = Registry.NodeMeta
@@ -14,29 +15,25 @@ class Page(Nodes.Node, Navigation.Info):
         super(Page, self).__init__(site, parent, node)
 
         self.src = node.get("src")
+        self.navTitle = self._navTitleWithNoneType(node.get("nav-title"))
         self.navDisplay = Navigation.DisplayMode(node.get("nav-display"),
             default=Navigation.Show)
         self.mimeType = node.get("type")
 
-        documentHandler = Registry.ParserPlugins(self.mimeType)
-        f = open(os.path.join(site.root, self.src), "r")
-        try:
-            self.doc = documentHandler.parse(f)
-        finally:
-            f.close()
+        fileName = os.path.join(site.root, self.src)
+        self.docRef = Document.FileDocument(fileName,
+            overrideMIME=self.mimeType)
     
     def doGet(self, ctx):
-        return self.doc
+        return self.docRef.doc
 
     def resolvePath(self, ctx, relPath):
-        super(Page, self).resolvePath(ctx, relPath)
-        ctx.useResource(self.doc)
-
-    def _nodeTreeEntry(self):
-        return """<Page title="{0}">""".format(self.doc.title)
+        result = super(Page, self).resolvePath(ctx, relPath)
+        ctx.useResource(self.docRef)
+        return result
 
     def getTitle(self):
-        return self.doc.title
+        return self.navTitle or self.docRef.doc.title
 
     def getDisplay(self):
         return self.navDisplay

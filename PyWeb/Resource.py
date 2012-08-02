@@ -2,7 +2,9 @@ from __future__ import unicode_literals, print_function
 
 import abc
 
-class Resource(object):
+import PyWeb.Cache as Cache
+
+class Resource(Cache.Cachable):
     """
     Resources represent data which was loaded and can be reloaded from an
     original source. Resource derivates must implement :prop:`LastModified`

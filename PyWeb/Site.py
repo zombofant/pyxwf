@@ -8,15 +8,16 @@ import PyWeb.Types as Types
 import PyWeb.Errors as Errors
 import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
-import PyWeb.Documents.PyWebXML as PyWebXML
+import PyWeb.Parsers.PyWebXML as PyWebXML
 import PyWeb.Message as Message
 import PyWeb.Document as Document
 import PyWeb.Registry as Registry
 import PyWeb.Cache as Cache
 import PyWeb.Templates as Templates
+import PyWeb.Resource as Resource
 # import PyWeb.ImportSavepoints as ImportSavepoints
 
-class Site(object):
+class Site(Resource.Resource):
     def __init__(self, sitemapFile, defaultURLRoot=None, **kwargs):
         super(Site, self).__init__(**kwargs)
         self.startCWD = os.getcwd()
@@ -28,6 +29,10 @@ class Site(object):
             self.loadSitemap(sitemapFile)
         except:
             raise
+
+    @property
+    def LastModified(self):
+        return self.sitemapTimestamp
 
     def _require(self, value, name):
         if value is None:
@@ -102,9 +107,6 @@ class Site(object):
         perf = workingCopy.find(NS.Site.performance)
         if perf is not None:
             workingCopy.remove(perf)
-            self.templateCache = \
-                Types.DefaultForNone(True, Types.Typecasts.bool)\
-                (perf.get("template-cache"))
 
         mimeMap = workingCopy.find(getattr(NS.Site, "mime-map"))
         mimetypes.init()
@@ -143,16 +145,13 @@ class Site(object):
         crumbParent[crumbNodeIdx] = tree
 
     def getTemplate(self, templateFile):
-        if self.templateCache:
-            cached = self._templateCache.getDefault(templateFile, None)
-        else:
-            cached = None
-        if not cached:
+        try:
+            return self._templateCache[templateFile]
+        except KeyError as err:
             templatePath = os.path.join(self.root, templateFile)
             template = Templates.XSLTTemplate(templatePath)
-            self._templateCache.add(templatePath, template)
+            self._templateCache[templateFile] = template
             return template
-        return cached
 
     def transformReferences(self, ctx, tree):
         for author in tree.iter(NS.PyWebXML.author):
@@ -242,23 +241,26 @@ class Site(object):
         self.licenseName = None
         self.licenseHref = None
 
-    def handle(self, ctx):
+    def update(self):
         sitemapTimestamp = utils.fileLastModified(self.sitemapFile)
         if sitemapTimestamp > self.sitemapTimestamp:
             print("sitemap xml changed -- reloading COMPLETE site.")
             # Registry.clearAll()
             # self.savepoint.rollback()
             self.loadSitemap(self.sitemapFile)
+
+    def handle(self, ctx):
+        ctx.useResource(self)
         
         node = self._getNode(ctx)
         ctx._pageNode = node
         template = self.getTemplate(node.Template)
         ctx.useResource(template)
-        
+
+        ctx.checkNotModified()
         document = node.handle(ctx)
         resultTree = template.final(self, ctx, document,
                 licenseFallback=self._license)
         
         message = Message.XHTMLMessage(resultTree)
-        message.LastModified = document.lastModified
         return message

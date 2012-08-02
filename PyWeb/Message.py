@@ -9,12 +9,8 @@ instance.
 
 import abc
 
-from WebStack.Generic import Transaction, ContentType
-
 import PyWeb.ContentTypes as ContentTypes
 from PyWeb.utils import ET
-from datetime import datetime
-import PyWeb.TimeUtils as TimeUtils
 
 class Message(object):
     """
@@ -33,20 +29,6 @@ class Message(object):
         self._mimeType = mimeType
         self._encoding = None
         self._lastModified = None
-
-    @property
-    def LastModified(self):
-        """
-        :cls:`datetime.datetime` instance representing the last modification of
-        the messages contents. This can be None if unknown or not well defined.
-        """
-        return self._lastModified
-
-    @LastModified.setter
-    def LastModified(self, value):
-        if value is None:
-            self._lastModified = None
-        self._lastModified = value
 
     @property
     def MIMEType(self):
