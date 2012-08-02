@@ -24,7 +24,7 @@ class TagPage(Nodes.Node, Navigation.Info):
 
     def doGet(self, ctx):
         posts = self.getPosts()
-        lastModified = Directories.lastModifiedFromPosts(ctx, posts)
+        ctx.useResources(list(posts))
         if len(posts) == 0:
             # this _might_ have changed after reload
             posts = self.getPosts()
@@ -44,7 +44,6 @@ class TagPage(Nodes.Node, Navigation.Info):
         for post in sorted(posts, key=lambda x: x.creationDate, reverse=True):
             abstractList.append(post.getAbstract(ctx))
         doc = self.blog.AbstractListTemplate.transform(abstractList, {})
-        doc.lastModified = lastModified
         return doc
 
     def __len__(self):
