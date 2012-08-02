@@ -74,17 +74,17 @@ class Node(object):
 
     def handle(self, ctx):
         try:
-            handler = self.requestHandlers[ctx.method]
+            handler = self.requestHandlers[ctx.Method]
         except KeyError:
-            raise Errors.MethodNotAllowed(ctx.method)
+            raise Errors.MethodNotAllowed(ctx.Method)
         except TypeError:
             return self.requestHandlers(ctx)
         return handler(self, ctx)
 
-    def resolvePath(self, fullPath, relPath):
+    def resolvePath(self, ctx, relPath):
         if relPath == "":
-            return (self, relPath)
-        raise Errors.NotFound(resourceName=fullPath)
+            return self
+        raise Errors.NotFound(resourceName=ctx.Path)
 
     @property
     def Template(self):
@@ -143,7 +143,8 @@ class DirectoryResolutionBehaviour(object):
         correct paths.
         """
 
-    def resolvePath(self, fullPath, relPath):
+    def resolvePath(self, ctx, relPath):
+        fullPath = ctx.Path
         if fullPath[-1:] != "/" and len(relPath) == 0 and len(fullPath) > 0:
             raise Errors.Found(newLocation=fullPath+"/")
         try:
@@ -162,6 +163,6 @@ class DirectoryResolutionBehaviour(object):
         if node is None:
             raise Errors.NotFound()
         if node is not self:
-            return node.resolvePath(fullPath, relPath)
+            return node.resolvePath(ctx, relPath)
         else:
             return node, relPath

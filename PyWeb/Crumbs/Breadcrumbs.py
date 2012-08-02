@@ -24,12 +24,13 @@ class Breadcrumbs(Crumbs.CrumbBase):
     def render(self, ctx):
         ul = ET.Element(NS.XHTML.ul)
         hadNodes = set()
-        for node in ctx.pageNode.iterUpwards():
+        pageNode = ctx.PageNode
+        for node in pageNode.iterUpwards():
             if node is self.root:
                 break
             navInfo = node.getNavigationInfo(ctx)
             if navInfo.getDisplay() != Navigation.Show and (
-                    node is not ctx.pageNode or not self.forceShowCurrent):
+                    node is not pageNode or not self.forceShowCurrent):
                 continue
 
             representative = navInfo.getRepresentative()
@@ -38,7 +39,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
             
             hadNodes.add(representative)
             li = ET.Element(NS.XHTML.li)
-            if node is not ctx.pageNode:
+            if node is not pageNode:
                 a = ET.SubElement(li, NS.PyWebXML.a, href=representative.Path)
                 a.text = navInfo.getTitle()
             else:

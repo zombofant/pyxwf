@@ -25,13 +25,13 @@ class RedirectBase(Nodes.Node):
     def redirect(self, ctx):
         raise self.method(self.Target)
 
-    def resolvePath(self, fullPath, relPath):
+    def resolvePath(self, ctx, relPath):
         if relPath != "":
             raise Errors.NotFound(resource=fullPath)
         if self.method is Errors.InternalRedirect:
             raise self.method(self.Target)
         else:
-            return (self, relPath)
+            return self
         
     requestHandlers = redirect
 

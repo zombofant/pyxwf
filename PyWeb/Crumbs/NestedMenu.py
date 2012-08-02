@@ -88,7 +88,7 @@ class Navigation(Crumbs.CrumbBase):
         return ul
 
     def render(self, ctx):
-        activeChain = frozenset(ctx.pageNode.iterUpwards())
+        activeChain = frozenset(ctx.PageNode.iterUpwards())
         if self.showRoot:
             return self._navTree(None, ctx, [self.root], depth=0,
                 activeChain=activeChain)

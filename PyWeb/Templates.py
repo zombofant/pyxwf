@@ -2,12 +2,12 @@ import abc, itertools
 
 from PyWeb.utils import ET
 import PyWeb.utils as utils
-import PyWeb.Cache as Cache
+import PyWeb.Resource as Resource
 import PyWeb.Namespaces as NS
 import PyWeb.Document as Document
 import PyWeb.Documents.PyWebXML as PyWebXML
 
-class Template(Cache.Cachable):
+class Template(Resource.Resource):
     __metaclass__ = abc.ABCMeta
     
     def __init__(self, fileName):
@@ -17,15 +17,7 @@ class Template(Cache.Cachable):
 
     @property
     def LastModified(self):
-        lastModified = utils.fileLastModified(self.fileName)
-        if self._lastModified != lastModified:
-            self._reload()
-            self._lastModified = lastModified
         return self._lastModified
-
-    @abc.abstractmethod
-    def _reload(self):
-        pass
 
     @abc.abstractmethod
     def transform(self, body, templateArgs):
@@ -51,7 +43,6 @@ class Template(Cache.Cachable):
         if body is None:
             raise ValueError("Transform did not return a valid body.")
         
-        ctx.body = body
         site.transformPyNamespace(ctx, body)
 
         html = ET.Element(NS.XHTML.html)
@@ -75,7 +66,8 @@ class XSLTTemplate(Template):
         super(XSLTTemplate, self).__init__(fileName)
         self._parseTemplate()
 
-    def _reload(self):
+    def update(self):
+        self._lastModified = utils.fileLastModified(self.fileName)
         self._parseTemplate()
 
     def _parseTemplate(self):

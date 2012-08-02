@@ -26,8 +26,11 @@ class Page(Nodes.Node, Navigation.Info):
             f.close()
     
     def doGet(self, ctx):
-        ctx.checkNotModified(self.doc.lastModified)
         return self.doc
+
+    def resolvePath(self, ctx, relPath):
+        super(Page, self).resolvePath(ctx, relPath)
+        ctx.useResource(self.doc)
 
     def _nodeTreeEntry(self):
         return """<Page title="{0}">""".format(self.doc.title)

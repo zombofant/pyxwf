@@ -14,7 +14,6 @@ from WebStack.Generic import Transaction, ContentType
 import PyWeb.ContentTypes as ContentTypes
 from PyWeb.utils import ET
 from datetime import datetime
-from wsgiref.handlers import format_date_time
 import PyWeb.TimeUtils as TimeUtils
 
 class Message(object):
@@ -75,20 +74,6 @@ class Message(object):
 
         Derived classes must implement this method.
         """
-
-    def sendInTransaction(self, transaction):
-        transaction.rollback()
-        transaction.set_content_type(ContentType(self.MIMEType, self.Encoding))
-        lastModified = self.LastModified
-        if lastModified is not None:
-            transaction.set_header_value("Last-Modified",
-                format_date_time(TimeUtils.toTimestamp(lastModified)))
-            
-        transaction.get_response_stream().write(self.getEncodedBody())
-
-    def sendInContext(self, ctx):
-        self.sendInTransaction(ctx.transaction)
-
 
 class XHTMLMessage(Message):
     """

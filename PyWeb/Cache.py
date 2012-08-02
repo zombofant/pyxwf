@@ -1,7 +1,4 @@
-import abc
-import functools
-import time
-import heapq
+import abc, functools, time
 
 import PyWeb.Nodes as Nodes
 import PyWeb.Errors as Errors
@@ -38,6 +35,9 @@ class CacheEntry(object):
     def touch(self):
         self.lastAccess = time.time()
         self.cacheObj.master.changed(self)
+
+    def delete(self):
+        self.cacheObj.master.remove(self)
 
     @property
     def LastModified(self):
@@ -108,31 +108,50 @@ class Cache(object):
         return cache
 
     def _enforceLimit(self):
-        tooMany = len(self.heap) - self.limit
-        while tooMany > 0:
-            entry = heapq.heappop(self.heap)
-            entry.cache._kill(entry)
-            tooMany -= 1
+        """
+        Remove those entries with the oldest lastAccess from the cache.
+        """
+        tooMany = len(self.entries) - self.limit
+        if tooMany > 0:
+            overflow = self.entries[:tooMany]
+            self.entries = self.entries[tooMany:]
+            for entry in overflow:
+                entry.cacheObj._kill(entry)
 
     def add(self, entry):
+        """
+        Add an object to the cache.
+        """
         if not self._limit:
             return
-        heapq.heappush(self.heap, entry)
+        self.entries.append(entry)
+        self.entries.sort()
         self._enforceLimit()
         
     def changed(self, entry):
         if not self._limit:
             return
-        heapq.heapify(self.heap)
+        self.entries.sort()
 
     def remove(self, entry):
-        if not self._limit:
-            return
-        self.heap(remove, entry)
-        heapq.heapify(self.heap)
+        """
+        Remove one entry from the cache. You can either use this or
+        :meth:`CacheEntry.delete`, which does the same thing.
+        """
+        if self._limit:
+            # no need to resort here
+            self.entries.remove(entry)
+        entry.cacheObj._kill(entry)
 
     @property
     def Limit(self):
+        """
+        How many cache entries are kept at max. This does not differentiate
+        between different sub-caches and is a global hard-limit. If this limit
+        is exceeded, old (i.e. not used for some time) entries are purged.
+
+        Setting this limit to 0 will disable limiting.
+        """
         return self.limit
 
     @Limit.setter

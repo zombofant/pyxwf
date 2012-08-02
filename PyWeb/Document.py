@@ -5,8 +5,9 @@ from datetime import datetime
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
+import PyWeb.Resource as Resource
 
-class DocumentBase(object):
+class DocumentBase(Resource):
     """
     Baseclass for Document type implementations. Derived classes should use
     :cls:`PyWeb.Registry.DocumentMeta` as metaclass to automatically register

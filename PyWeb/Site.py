@@ -199,20 +199,16 @@ class Site(object):
             return
         node.set(attrName, os.path.join(self.urlRoot, v))
 
-    def _getNode(self, path, strip=True):
-        if strip:
-            if not path.startswith(self.urlRoot):
-                raise Errors.NotFound(path)
-            path = path[len(self.urlRoot):]
+    def _getNode(self, ctx):
+        path = ctx.Path
         if len(path) > 0 and path[0] == "/":
             path = path[1:]
-        while True:
-            try:
-                node, remPath = self.tree.resolvePath(path, path)
-                break
-            except Errors.InternalRedirect as redirect:
-                path = redirect.to
-        return node, remPath
+        try:
+            node = self.tree.resolvePath(ctx, path)
+        except Errors.InternalRedirect as redirect:
+            ctx.Path = redirect.newLocation
+            return self._getNode(ctx)
+        return node
     
     def addCrumb(self, crumb):
         if crumb.ID is None:
@@ -246,7 +242,7 @@ class Site(object):
         self.licenseName = None
         self.licenseHref = None
 
-    def handle(self, ctx, strip=True):
+    def handle(self, ctx):
         sitemapTimestamp = utils.fileLastModified(self.sitemapFile)
         if sitemapTimestamp > self.sitemapTimestamp:
             print("sitemap xml changed -- reloading COMPLETE site.")
@@ -254,11 +250,10 @@ class Site(object):
             # self.savepoint.rollback()
             self.loadSitemap(self.sitemapFile)
         
-        node, remPath = self._getNode(ctx.path, strip)
-        ctx.pageNode = node
+        node = self._getNode(ctx)
+        ctx._pageNode = node
         template = self.getTemplate(node.Template)
-        ctx.template = template
-        ctx.overrideLastModified(template.LastModified)
+        ctx.useResource(template)
         
         document = node.handle(ctx)
         resultTree = template.final(self, ctx, document,
