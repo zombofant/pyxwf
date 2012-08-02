@@ -39,6 +39,8 @@ def _boolHelper(value):
             return boolNames[value.lower()]
         except KeyError:
             pass
+    elif isinstance(value, bool):
+        return value
     raise ValueError("Not a valid boolean: {0!r}".format(value))
 
 def _emptyHelper(value):
