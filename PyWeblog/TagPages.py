@@ -36,14 +36,14 @@ class TagPage(Nodes.Node, Navigation.Info):
                     "in-tag": self.tag
                 }
             )
-            return self.blog.noPostsTemplate.transform(error, {})
+            return self.blog.NoPostsTemplate.transform(error, {})
         abstractList = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
             "kind": "tag",
             "title": self.tag
         })
         for post in sorted(posts, key=lambda x: x.creationDate, reverse=True):
             abstractList.append(post.getAbstract(ctx))
-        doc = self.blog.abstractListTemplate.transform(abstractList, {})
+        doc = self.blog.AbstractListTemplate.transform(abstractList, {})
         doc.lastModified = lastModified
         return doc
 
@@ -108,7 +108,7 @@ class TagDir(Directories.BlogFakeDir):
                 "post-count": unicode(len(posts))
             })
             tagEl.text = tag
-        return self.blog.tagDirTemplate.transform(tagList, {})
+        return self.blog.TagDirTemplate.transform(tagList, {})
 
     def __len__(self):
         return len(self.blog._tagCloud)
