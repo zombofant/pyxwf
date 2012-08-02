@@ -37,10 +37,14 @@ class Markdown(Document.DocumentBase):
         tweaks = self._tweaks["tweaks"].find(self.NS.tweaks)
         if tweaks is None:
             tweaks = ET.Element(self.NS.tweaks)
-        
+
+        if not self._allowHtmlType(tweaks.get("allow-html")):
+            safe_mode = "escape"
+        else:
+            safe_mode = "false"
         self.md = markdown2.Markdown(
             extras=["metadata"],
-            safe_mode=not self._allowHtmlType(tweaks.get("allow-html"))
+            safe_mode=safe_mode
         )
 
         self._namespaces = {}
