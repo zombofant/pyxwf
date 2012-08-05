@@ -24,7 +24,7 @@ class TagPage(Nodes.Node, Navigation.Info):
 
     def doGet(self, ctx):
         posts = self.getPosts()
-        lastModified = Directories.lastModifiedFromPosts(ctx, posts)
+        ctx.useResources(list(posts))
         if len(posts) == 0:
             # this _might_ have changed after reload
             posts = self.getPosts()
