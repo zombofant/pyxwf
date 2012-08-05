@@ -44,7 +44,6 @@ class TagPage(Nodes.Node, Navigation.Info):
         for post in sorted(posts, key=lambda x: x.creationDate, reverse=True):
             abstractList.append(post.getAbstract(ctx))
         doc = self.blog.AbstractListTemplate.transform(abstractList, {})
-        doc.lastModified = lastModified
         return doc
 
     def __len__(self):
