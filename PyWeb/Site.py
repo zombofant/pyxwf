@@ -1,7 +1,7 @@
 # encoding=utf-8
 from __future__ import unicode_literals
 
-import itertools, os, importlib, copy, mimetypes
+import itertools, os, importlib, copy, mimetypes, warnings
 
 from PyWeb.utils import ET
 import PyWeb.Types as Types
@@ -128,6 +128,17 @@ class Site(Resource.Resource):
             shortDate = formatting.get("short-date-format") or shortDate
         self.longDateFormat = longDate
         self.shortDateFormat = shortDate
+        
+        self.notFoundTemplate = "templates/errors/not-found.xsl"
+        self.defaultTemplate = None
+        
+        templates = workingCopy.find(NS.Site.templates)
+        if templates is not None:
+            workingCopy.remove(templates)
+            self.notFoundTemplate = templates.get("not-found", 
+                    self.notFoundTemplate)
+            self.defaultTemplate = templates.get("default", 
+                    self.defaultTemplate)
 
         for child in workingCopy:
             if child.tag is ET.Comment:
@@ -145,7 +156,10 @@ class Site(Resource.Resource):
         tree = crumb.render(ctx)
         crumbParent = crumbNode.getparent()
         crumbNodeIdx = crumbParent.index(crumbNode)
-        crumbParent[crumbNodeIdx] = tree
+        if tree is not None:
+            crumbParent[crumbNodeIdx] = tree
+        else:
+            del crumbParent[crumbNodeIdx]
 
     def transformReferences(self, ctx, tree):
         for author in tree.iter(NS.PyWebXML.author):
@@ -242,6 +256,8 @@ class Site(Resource.Resource):
         if tweaks is not None:
             self._loadTweaks(tweaks)
         self._loadTree(root)
+        if self.defaultTemplate is None:
+            self.defaultTemplate = self.tree.Template or "templates/default.xsl"
         self._loadCrumbs(root)
 
     def clear(self):
@@ -256,17 +272,55 @@ class Site(Resource.Resource):
             # Registry.clearAll()
             # self.savepoint.rollback()
             self.loadSitemap(self.sitemapFile)
+            
+    def handleNotFound(self, ctx, resourceName):
+        try:
+            tpl = self.templateCache[self.notFoundTemplate]
+        except Exception as err:
+            warnings.warn(str(err))
+            body = ET.Element(NS.XHTML.body)
+            section = ET.SubElement(body, NS.XHTML.section)
+            header = ET.SubElement(section, NS.XHTML.header)
+            h2 = ET.SubElement(header, NS.XHTML.h2)
+            h2.text = "Resource not found"
+            p = ET.SubElement(section, NS.XHTML.p)
+            p.text = "The resource {0} could not be found.".format(resourceName)
+            p = ET.SubElement(section, NS.XHTML.p)
+            p.text = "Additionally, the specified (or fallback) error template\
+ at {0} could not be loaded: {1}.".format(self.notFoundTemplate, 
+                type(err).__name__)
+            return Document.Document("Not found", [], [], body)
+        else:
+            err = ET.Element(NS.PyWebXML.error, attrib={
+                "type": "not-found"
+            })
+            ET.SubElement(err, NS.PyWebXML.resource).text = resourceName
+            return tpl.transform(err, {})
+        
 
     def handle(self, ctx):
         ctx.useResource(self)
         
-        node = self._getNode(ctx)
-        ctx._pageNode = node
-        template = self.templateCache[node.Template]
-        ctx.useResource(template)
+        try:
+            node = self._getNode(ctx)
+        except Errors.HTTP.NotFound as err:
+            if err.document is not None:
+                document = err.document
+                template = err.template
+            else:
+                document = self.handleNotFound(ctx, 
+                        err.resourceName or ctx.Path)
+                template = None
+            if template is None:
+                template = self.templateCache[self.defaultTemplate]
+        else:
+            ctx._pageNode = node
+            template = self.templateCache[node.Template]
+            ctx.useResource(template)
 
-        ctx.checkNotModified()
-        document = node.handle(ctx)
+            ctx.checkNotModified()
+            document = node.handle(ctx)
+        
         resultTree = template.final(self, ctx, document,
                 licenseFallback=self._license)
         

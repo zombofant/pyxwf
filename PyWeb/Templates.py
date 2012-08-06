@@ -48,14 +48,15 @@ class Template(Resource.Resource):
 
         html = ET.Element(NS.XHTML.html)
         head = ET.SubElement(html, NS.XHTML.head)
-        ET.SubElement(head, NS.XHTML.title).text = newDoc.title or document.title
+        ET.SubElement(head, NS.XHTML.title).text = \
+                newDoc.title or document.title
         for link in newDoc.links:
             site.transformHref(link)
             head.append(link)
         if len(newDoc.keywords) > 0:
             ET.SubElement(head, NS.XHTML.meta, attrib={
                 "name": "keywords",
-                "content": " ".join(newDoc.keywords)
+                "content": ",".join(newDoc.keywords)
             })
         html.append(body)
         

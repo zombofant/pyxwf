@@ -53,12 +53,12 @@ __all__ = [
 from WebStack.Generic import EndOfResponse
 
 class HTTPException(EndOfResponse):
-    def __init__(self, statusCode, message=None, statusCodeTitle=None, body=None, html=None, solutions=[]):
+    def __init__(self, statusCode, message=None, statusCodeTitle=None, document=None, template=None, solutions=[]):
         super(HTTPException, self).__init__(message)
         self.statusCode = statusCode
         self.statusCodeTitle = statusCodeTitle
-        self.body = body
-        self.html = html
+        self.document = None
+        self.template = None
         self.solutions = list(solutions)
     
     def fillWithDefaults(self, trans):
