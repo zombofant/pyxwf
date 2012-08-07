@@ -59,6 +59,7 @@ class WebStackContext(Context.Context):
     def sendResponse(self, message):
         tx = self._transaction
         tx.rollback()
+        tx.set_response_code(message.StatusCode)
         tx.set_content_type(ContentType(message.MIMEType, message.Encoding))
         self._setCacheHeaders()
         self.Out.write(message.getEncodedBody())
