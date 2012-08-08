@@ -134,6 +134,13 @@ def EnumMap(mapping):
             ))
     return WrapFunction(tc, "one of {0}".format(validValues()))
 
+def _NotNoneHelper(v):
+    if v is None:
+        raise ValueError("Value is None")
+    return v
+
+NotNone = WrapFunction(_NotNoneHelper, "not none")
+
 class Typecasts(object):
     int = WrapFunction(int, "integer number")
     long = WrapFunction(long, "integer number")
