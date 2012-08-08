@@ -106,9 +106,10 @@ PartialContent = HTTP206
 
 
 class HTTPRedirection(HTTPException):
-    def __init__(self, statusCode, newLocation=None, **kwargs):
+    def __init__(self, statusCode, newLocation=None, local=True, **kwargs):
         super(HTTPRedirection, self).__init__(statusCode, **kwargs)
         self.newLocation = newLocation
+        self.local = local
 
 class HTTP300(HTTPRedirection):
     def __init__(self, statusCodeTitle="Multiple Choices", **kwargs):
