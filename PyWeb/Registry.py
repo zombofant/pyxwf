@@ -4,7 +4,7 @@ defined are the metaclasses responsible for validating and registering plugin
 classes and the registries themselves.
 """
 
-import itertools, abc
+import itertools, abc, operator, collections
 
 import PyWeb.utils as utils
 import PyWeb.Nodes as Nodes
@@ -117,10 +117,43 @@ class _TweakPlugins(NamespaceRegistry):
 
     _getInstance = None
 
+
+class HookRegistry(object):
+    def __init__(self):
+        super(HookRegistry, self).__init__()
+        self.hookDict = {}
+
+    def register(self, hookName, handler, priority=0):
+        hookList = self.hookDict.setdefault(hookName, [])
+        hookList.append((priority, handler))
+        hookList.sort(key=operator.itemgetter(0))
+
+    def call(self, hookName, *args):
+        handlers = self.hookDict.get(hookName, [])
+        collections.deque((handler(*args) for priority, handler in handlers), 0)
+
+
+class SitletonRegistry(object):
+    def __init__(self):
+        super(SitletonRegistry, self).__init__()
+        self.classes = set()
+
+    def register(self, cls):
+        if cls in self.classes:
+            raise ValueError("Class {0} already registered as singleton."\
+                .format(cls))
+        self.classes.add(cls)
+
+    def instanciate(self, site):
+        return [cls(site) for cls in self.classes]
+
+
 NodePlugins = _NodePlugins()
 ParserPlugins = _ParserPlugins()
 CrumbPlugins = _CrumbPlugins()
 TweakPlugins = _TweakPlugins()
+Sitletons = SitletonRegistry()
+Singletons = dict()
 
 class NamespaceMetaMixin(type):
     """
@@ -207,6 +240,19 @@ class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
     @classmethod
     def register(mcls, ns, names, cls):
         CrumbPlugins.register(ns, names, cls)
+
+
+class SitletonMeta(abc.ABCMeta, TweakMetaMixin):
+    """
+    A class using this metaclass will have exactly one instance per running
+    site. Thus, this metaclass is useful for use with hook classes which
+    register hooks on a site and do nothing else.
+    """
+
+    def __new__(mcls, name, bases, dct):
+        cls = super(SitletonMeta, mcls).__new__(mcls, name, bases, dct)
+        Sitletons.register(cls)
+        return cls
 
 def clearAll():
     NodePlugins.clear()

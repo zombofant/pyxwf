@@ -23,11 +23,13 @@ class Site(Resource.Resource):
         self.startCWD = os.getcwd()
         self.defaultURLRoot = defaultURLRoot
         self.cache = Cache.Cache()
+        self.hooks = Registry.HookRegistry()
         # self.savepoint = ImportSavepoints.RollbackImporter()
         try:
             self.loadSitemap(sitemapFile)
         except:
             raise
+        self.sitletons = Registry.Sitletons.instanciate(self)
 
     @property
     def LastModified(self):
