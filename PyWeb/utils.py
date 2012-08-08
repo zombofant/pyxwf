@@ -6,7 +6,7 @@ import lxml.etree as ET
 class NoInstance(type):
     def _notInstanciable(*args):
         raise TypeError("Cannot instanciate {0}".format(cls.__name__))
-        
+
     def __new__(mcls, name, bases, dct):
         dct["__new__"] = mcls._notInstanciable
         return super(NoInstance, mcls).__new__(mcls, name, bases, dct)

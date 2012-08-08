@@ -83,7 +83,7 @@ class Markdown(Parsers.ParserBase):
             items = filter(lambda x: bool(x),
                     (item.strip() for item in s.split()))
         return items
-        
+
     def parse(self, fileref):
         if isinstance(fileref, basestring):
             f = open(fileref, "r")
@@ -94,12 +94,12 @@ class Markdown(Parsers.ParserBase):
 
         converted = self.md.convert(source)
         metadata = converted.metadata
-        
+
         html = self._template.format(converted)
         body = ET.XML(html)
         self.transformHeaders(body)
         self.transformUrls(body)
-        
+
         title = metadata.get("Title", None)
         date = utils.parseISODate(metadata.get("Date", None))
         authors = metadata.get("Authors", None)

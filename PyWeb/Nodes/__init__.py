@@ -7,7 +7,7 @@ import PyWeb.Types as Types
 class NodeMeta(abc.ABCMeta):
     def _raiseNoValidRequestHandlers(mcls):
         raise TypeError("{0} requires requestHandlers as dict (or dict-compatible) or callable".format(name))
-    
+
     def __new__(mcls, name, bases, dct):
         try:
             requestHandlers = dct["requestHandlers"]
@@ -34,7 +34,7 @@ class NodeMeta(abc.ABCMeta):
                     mcls._raiseNoValidRequestHandlers(mcls)
         else:
             requestHandlers = collections.defaultdict(lambda x: requestHandlers)
-            
+
 
         for val in requestHandlers.viewvalues():
             if not hasattr(val, "__call__"):
@@ -46,7 +46,7 @@ class Node(object):
     __metaclass__ = NodeMeta
 
     _navTitleWithNoneType = Types.DefaultForNone(None, Types.Typecasts.unicode)
-    
+
     def __init__(self, site, parent, node):
         super(Node, self).__init__()
         self.parent = parent
@@ -62,7 +62,7 @@ class Node(object):
             self._name = None
             self._template = None
             self._path = None
-        
+
         if self.ID is not None:
             site.registerNodeID(self.ID, self)
 
@@ -71,7 +71,7 @@ class Node(object):
         while node is not None and node is not stopAt:
             yield node
             node = node.parent
-    
+
     def nodeTree(self):
         yield self._nodeTreeEntry()
 
@@ -95,19 +95,19 @@ class Node(object):
         if template is None and self.parent is not None:
             template = self.parent.Template
         return template
-    
+
     @Template.setter
     def Template(self, value):
         self._template = value
-        
+
     @property
     def Name(self):
         return self._name
-        
+
     @property
     def Path(self):
         return self._path
-            
+
     @property
     def ID(self):
         return self._id
@@ -115,7 +115,7 @@ class Node(object):
     @abc.abstractmethod
     def getNavigationInfo(self, ctx):
         pass
-    
+
     requestHandlers = {}
 
 

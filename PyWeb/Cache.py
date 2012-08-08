@@ -52,7 +52,7 @@ class SubCache(object):
             raise KeyError("Cache key already in use: {0}".format(key))
         self.entries[key] = cachable
         self.reverseMap[cachable] = key
-        
+
         self.master._add(cachable)
         cachable._cache_master = self.master
         cachable._cache_subcache = self
@@ -66,7 +66,7 @@ class SubCache(object):
 
     def __len__(self):
         return len(self.entries)
-    
+
 
 class Cache(object):
     def __init__(self, limit=0):
@@ -77,7 +77,7 @@ class Cache(object):
     def _add(self, cachable):
         if self._limit:
             self.entries.append(cachable)
-        
+
     def _changed(self, entry):
         if not self._limit:
             return
@@ -111,7 +111,7 @@ class Cache(object):
             raise KeyError("SubCache key already in use: {0}".format(key))
         self.subCaches[key] = cache
         return cache
-        
+
     def remove(self, cachable):
         """
         Remove one entry from the cache. You can either use this or
@@ -152,7 +152,7 @@ class Cache(object):
             return
         if value < 0:
             raise ValueError("Cache limit must be non-negative.")
-        
+
         if value == 0:
             del self.heap
         else:
@@ -166,7 +166,7 @@ class Cache(object):
 
 class FileSourcedCache(SubCache):
     __metaclass__ = abc.ABCMeta
-    
+
     def __init__(self, master, rootPath):
         super(FileSourcedCache, self).__init__(master)
         self.rootPath = rootPath
@@ -189,5 +189,5 @@ class FileSourcedCache(SubCache):
             obj = self._load(path, **kwargs)
             super(FileSourcedCache, self).__setitem__(path, obj)
             return obj
-    
+
     __setitem__ = None

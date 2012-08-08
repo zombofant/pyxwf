@@ -38,7 +38,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
             representative = navInfo.getRepresentative()
             if representative in hadNodes:
                 continue
-            
+
             hadNodes.add(representative)
             li = ET.Element(NS.XHTML.li)
             if node is not pageNode:

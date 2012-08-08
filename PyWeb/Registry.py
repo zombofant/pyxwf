@@ -19,9 +19,9 @@ class RegistryBase(dict):
     Developers may want to subclass this one if they *really* need to introduce
     a new registry to PyWeb.
     """
-    
+
     keyDescription = "key"
-    
+
     def __setitem__(self, key, cls):
         if key in self:
             raise ValueError("Conflicting {2}: {0} already taken by {1}".format(key, self[key], self.keyDescription))
@@ -41,7 +41,7 @@ class RegistryBase(dict):
                 for key in itertools.takewhile(lambda x: x is not lastSuccessful, keys):
                     del self[key]
             raise
-            
+
     def __call__(self, *args, **kwargs):
         return self.getPluginInstance(*args, **kwargs)
 
@@ -51,7 +51,7 @@ class NamespaceRegistry(RegistryBase):
     pairs for XML nodes.
     """
     keyDescription = "namespace/name pair"
-    
+
     def getPluginInstance(self, node, *args):
         ns, name = utils.splitTag(node.tag)
         cls = self.get((ns, name), None)
@@ -68,17 +68,17 @@ class NamespaceRegistry(RegistryBase):
 
 class _NodePlugins(NamespaceRegistry):
     errorClass = Errors.MissingNodePlugin
-    
+
     def _getInstance(self, cls, node, site, parent):
         return cls(site, parent, node)
 
 class _ParserPlugins(RegistryBase):
     keyDescription = "MIME type"
-    
+
     def __init__(self):
         super(_ParserPlugins, self).__init__()
         self.instances = {}
-    
+
     def getPluginInstance(self, mime):
         inst = self.instances.get(mime, None)
         if inst is not None:
@@ -95,7 +95,7 @@ class _ParserPlugins(RegistryBase):
 
 class _CrumbPlugins(NamespaceRegistry):
     errorClass = Errors.MissingCrumbPlugin
-    
+
     def _getInstance(self, cls, node, site):
         return cls(site, node)
 
@@ -134,7 +134,7 @@ class NamespaceMetaMixin(type):
     The class will be registered for all names in the given namespace.
     """
     defaultNames = []
-    
+
     def __new__(mcls, name, bases, dct):
         ns = dct.get("namespace", None)
         try:

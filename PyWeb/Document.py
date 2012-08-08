@@ -16,7 +16,7 @@ class Author(object):
         eMail = node.get("email")
         pageHref = node.get("href")
         return cls(fullName, eMail, pageHref, id=node.get("id"))
-    
+
     def __init__(self, fullName, eMail, pageHref, id=None):
         super(Author, self).__init__()
         self.fullName = fullName

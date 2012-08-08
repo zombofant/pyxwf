@@ -31,13 +31,13 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
         docRef = self._getDocRef()
         if self._lastModified is None or \
                 self._lastModified < docRef.LastModified:
-            
+
             self._lastModified = docRef.LastModified
             self.title = self.navTitle or docRef.doc.title
 
     def _getDocRef(self):
         return self.site.fileDocumentCache.get(self.fileName, self.mimeType)
-    
+
     def doGet(self, ctx):
         return self._getDocRef().doc
 
@@ -59,7 +59,7 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
         if self.title is None:
             self.update()
         return self
-        
+
     requestHandlers = {
         "GET": doGet
     }

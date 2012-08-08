@@ -33,7 +33,7 @@ class IteratorStack(object):
 
 class Navigation(Crumbs.CrumbBase):
     __metaclass__ = Registry.CrumbMeta
-    
+
     namespace = "http://pyweb.zombofant.net/xmlns/crumbs/navigation"
     names = ["crumb"]
 
@@ -57,7 +57,7 @@ class Navigation(Crumbs.CrumbBase):
                 return
             eNode = eNode.getparent()
             cls = self.childActiveClass
-    
+
     def _navTree(self, parent, ctx, info, depth=0, activeChain=set()):
         if self.maxDepth > 0 and depth > self.maxDepth:
             return
@@ -70,7 +70,7 @@ class Navigation(Crumbs.CrumbBase):
             ul = ET.SubElement(parent, NS.XHTML.ul)
         else:
             ul = ET.Element(NS.XHTML.ul)
-        
+
         for child in nodeIterable:
             navInfo = child.getNavigationInfo(ctx)
             displayMode = navInfo.getDisplay()

@@ -4,14 +4,14 @@ __all__ = [
     "HTTPException",
 
     "HTTPSuccessful",
-    "HTTP200", "OK", 
+    "HTTP200", "OK",
     "HTTP201", "Created",
     "HTTP202", "Accepted",
     "HTTP203", "NonAuthorativeInformation",
     "HTTP204", "NoContent",
     "HTTP205", "ResetContent",
     "HTTP206", "PartialContent",
-    
+
     "HTTPRedirection",
     "HTTP300", "MultipleChoices",
     "HTTP301", "MovedPermanently",
@@ -21,7 +21,7 @@ __all__ = [
     "HTTP305", "UseProxy",
     # "HTTP306", "Unused",
     "HTTP307", "TemporaryRedirect",
-    
+
     "HTTPClientError",
     "HTTP400", "BadRequest",
     "HTTP401", "Unauthorized",
@@ -40,7 +40,7 @@ __all__ = [
     "HTTP414", "RequestURITooLong",
     "HTTP415", "RequestedRangeNotSatisfiable",
     "HTTP416", "ExpectationFailed",
-    
+
     "HTTPServerError",
     "HTTP500", "InternalServerError",
     "HTTP501", "NotImplemented",
@@ -60,10 +60,10 @@ class HTTPException(EndOfResponse):
         self.document = None
         self.template = None
         self.solutions = list(solutions)
-    
+
     def fillWithDefaults(self, trans):
         pass
-        
+
 class HTTPSuccessful(HTTPException):
     def __init__(self, statusCode, **kwargs):
         super(HTTPSuccessful, self).__init__(statusCode, message=None, **kwargs)
@@ -150,94 +150,94 @@ TemporaryRedirect = HTTP307
 class HTTPClientError(HTTPException):
     def __init__(self, statusCode, **kwargs):
         super(HTTPClientError, self).__init__(statusCode, **kwargs)
-    
+
 class HTTP400(HTTPClientError):
     def __init__(self, statusCodeTitle="Bad Request", **kwargs):
         super(HTTP400, self).__init__(400, statusCodeTitle=statusCodeTitle, **kwargs)
 BadRequest = HTTP400
-    
+
 class HTTP401(HTTPClientError):
     def __init__(self, statusCodeTitle="Unauthorized", **kwargs):
         super(HTTP401, self).__init__(401, statusCodeTitle=statusCodeTitle, **kwargs)
 Unauthorized = HTTP401
-    
+
 class HTTP402(HTTPClientError):
     def __init__(self, statusCodeTitle="Payment Required", **kwargs):
         super(HTTP402, self).__init__(402, statusCodeTitle=statusCodeTitle, **kwargs)
 PaymentRequired = HTTP402
-    
+
 class HTTP403(HTTPClientError):
     def __init__(self, statusCodeTitle="Forbidden", **kwargs):
         super(HTTP403, self).__init__(403, statusCodeTitle=statusCodeTitle, **kwargs)
 Forbidden = HTTP403
-    
+
 class HTTP404(HTTPClientError):
     def __init__(self, resourceName=None, statusCodeTitle="Not Found", **kwargs):
         super(HTTP404, self).__init__(404, message=resourceName, statusCodeTitle=statusCodeTitle, **kwargs)
         self.resourceName = resourceName
 NotFound = HTTP404
-    
+
 class HTTP405(HTTPClientError):
     def __init__(self, methodName=None, statusCodeTitle="Method Not Allowed", **kwargs):
         super(HTTP405, self).__init__(405, statusCodeTitle=statusCodeTitle, **kwargs)
         self.methodName = methodName
 MethodNotAllowed = HTTP405
-    
+
 class HTTP406(HTTPClientError):
     def __init__(self, statusCodeTitle="Not Acceptable", **kwargs):
         super(HTTP406, self).__init__(406, statusCodeTitle=statusCodeTitle, **kwargs)
 NotAcceptable = HTTP406
-    
+
 class HTTP407(HTTPClientError):
     def __init__(self, statusCodeTitle="Proxy Authentication Required", **kwargs):
         super(HTTP407, self).__init__(407, statusCodeTitle=statusCodeTitle, **kwargs)
 ProxyAuthenticationRequired = HTTP407
-    
+
 class HTTP408(HTTPClientError):
     def __init__(self, statusCodeTitle="Request Timeout", **kwargs):
         super(HTTP408, self).__init__(408, statusCodeTitle=statusCodeTitle, **kwargs)
 RequestTimeout = HTTP408
-    
+
 class HTTP409(HTTPClientError):
     def __init__(self, statusCodeTitle="Conflict", **kwargs):
         super(HTTP409, self).__init__(409, statusCodeTitle=statusCodeTitle, **kwargs)
 Conflict = HTTP409
-    
+
 class HTTP410(HTTPClientError):
     def __init__(self, statusCodeTitle="Gone", **kwargs):
         super(HTTP410, self).__init__(410, statusCodeTitle=statusCodeTitle, **kwargs)
 Gone = HTTP410
-    
+
 class HTTP411(HTTPClientError):
     def __init__(self, statusCodeTitle="Length Required", **kwargs):
         super(HTTP411, self).__init__(411, statusCodeTitle=statusCodeTitle, **kwargs)
 LengthRequired = HTTP411
-    
+
 class HTTP412(HTTPClientError):
     def __init__(self, statusCodeTitle="Precondition Failed", **kwargs):
         super(HTTP412, self).__init__(412, statusCodeTitle=statusCodeTitle, **kwargs)
 PreconditionFailed = HTTP412
-    
+
 class HTTP413(HTTPClientError):
     def __init__(self, statusCodeTitle="Request Entity Too Large", **kwargs):
         super(HTTP413, self).__init__(413, statusCodeTitle=statusCodeTitle, **kwargs)
 RequestEntityTooLarge = HTTP413
-    
+
 class HTTP414(HTTPClientError):
     def __init__(self, statusCodeTitle="Request URI Too Long", **kwargs):
         super(HTTP414, self).__init__(414, statusCodeTitle=statusCodeTitle, **kwargs)
 RequestURITooLong = HTTP414
-    
+
 class HTTP415(HTTPClientError):
     def __init__(self, statusCodeTitle="Unsupported Media Type", **kwargs):
         super(HTTP415, self).__init__(415, statusCodeTitle=statusCodeTitle, **kwargs)
 UnsupportedMediaType = HTTP415
-    
+
 class HTTP416(HTTPClientError):
     def __init__(self, statusCodeTitle="Requested Range Not Satisfiable", **kwargs):
         super(HTTP416, self).__init__(416, statusCodeTitle=statusCodeTitle, **kwargs)
 RequestedRangeNotSatisfiable = HTTP416
-    
+
 class HTTP417(HTTPClientError):
     def __init__(self, statusCodeTitle="Expectation Failed", **kwargs):
         super(HTTP400, self).__init__(417, statusCodeTitle=statusCodeTitle, **kwargs)
@@ -247,32 +247,32 @@ ExpectationFailed = HTTP417
 class HTTPServerError(HTTPException):
     def __init__(self, statusCode, **kwargs):
         super(HTTPServerError, self).__init__(statusCode, **kwargs)
-    
+
 class HTTP500(HTTPClientError):
     def __init__(self, statusCodeTitle="Internal Server Error", **kwargs):
         super(HTTP500, self).__init__(500, statusCodeTitle=statusCodeTitle, **kwargs)
 InternalServerError = HTTP500
-    
+
 class HTTP501(HTTPClientError):
     def __init__(self, statusCodeTitle="Not Implemented", **kwargs):
         super(HTTP501, self).__init__(501, statusCodeTitle=statusCodeTitle, **kwargs)
 NotImplemented = HTTP501
-    
+
 class HTTP502(HTTPClientError):
     def __init__(self, statusCodeTitle="Bad Gateway", **kwargs):
         super(HTTP502, self).__init__(502, statusCodeTitle=statusCodeTitle, **kwargs)
 BadGateway = HTTP502
-    
+
 class HTTP503(HTTPClientError):
     def __init__(self, statusCodeTitle="Service Unavailable", **kwargs):
         super(HTTP503, self).__init__(503, statusCodeTitle=statusCodeTitle, **kwargs)
 ServiceUnavailable = HTTP503
-    
+
 class HTTP504(HTTPClientError):
     def __init__(self, statusCodeTitle="Gateway Timeout", **kwargs):
         super(HTTP504, self).__init__(504, statusCodeTitle=statusCodeTitle, **kwargs)
 GatewayTimeout = HTTP504
-    
+
 class HTTP505(HTTPClientError):
     def __init__(self, statusCodeTitle="HTTP Version Not Supported", **kwargs):
         super(HTTP500, self).__init__(505, statusCodeTitle=statusCodeTitle, **kwargs)

@@ -8,7 +8,7 @@ import PyWeblog.Directories as Directories
 
 class TagPage(Nodes.Node, Navigation.Info):
     __metaclass__ = Nodes.NodeMeta
-    
+
     def __init__(self, tagDir, tag):
         super(TagPage, self).__init__(tagDir.site, tagDir, None)
         self.blog = tagDir.blog
@@ -67,7 +67,7 @@ class TagPage(Nodes.Node, Navigation.Info):
 
 class TagDir(Directories.BlogFakeDir):
     __metaclass__ = Nodes.NodeMeta
-    
+
     def __init__(self, blog, node):
         super(TagDir, self).__init__(blog, blog, node=node)
         self._tagPages = {}

@@ -10,7 +10,7 @@ import PyWeb.Parsers.PyWebXML as PyWebXML
 
 class Template(Resource.Resource):
     __metaclass__ = abc.ABCMeta
-    
+
     def __init__(self, fileName):
         super(Template, self).__init__()
         self.fileName = fileName
@@ -34,16 +34,16 @@ class Template(Resource.Resource):
         if licenseFallback is not None and page.find(licensePath) is None:
             page.find(metaPath).append(licenseFallback.toNode())
         site.transformReferences(ctx, page)
-        
+
         newDoc = self.transform(page, templateArgs)
         newDoc.links.extend(document.links)
         newDoc.keywords.extend(document.keywords)
         newDoc.title = newDoc.title or document.title
         body = newDoc.body
-        
+
         if body is None:
             raise ValueError("Transform did not return a valid body.")
-        
+
         site.transformPyNamespace(ctx, body)
 
         html = ET.Element(NS.XHTML.html)
@@ -59,7 +59,7 @@ class Template(Resource.Resource):
                 "content": ",".join(newDoc.keywords)
             })
         html.append(body)
-        
+
         return ET.ElementTree(html)
 
 
@@ -77,7 +77,7 @@ class XSLTTemplate(Template):
 
     def transform(self, body, templateArgs, customBody=NS.XHTML.body):
         newDoc = self.xsltTransform(body, **templateArgs)
-        
+
         meta = newDoc.find(NS.PyWebXML.meta)
         if meta is not None:
             keywords, links = PyWebXML.PyWebXML.getKeywordsAndLinks(meta)
@@ -94,4 +94,4 @@ class XSLTTemplateCache(Cache.FileSourcedCache):
     def _load(self, path):
         return XSLTTemplate(path)
 
-    
+

@@ -35,18 +35,18 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
             self.blog.removeFromIndex(self)
         docRef = self.site.fileDocumentCache[self.fileName]
         self._processDocument(docRef)
-        
+
         urlName = os.path.basename(self.fileName)
         self._name = os.path.splitext(urlName)[0]
-        
+
         parent = self.blog.addToIndex(self)
-        
+
         self._path = parent.Path + "/" + self._name
         self.post = None
         self.abstract = None
         self._createBlogTree(docRef.doc)
         self._lastModified = docRef.LastModified
-        
+
         return parent, self._name, self._path
 
     def __init__(self, blog, fileName):

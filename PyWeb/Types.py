@@ -11,20 +11,20 @@ class WrapFunction(object):
     def __init__(self, func, description):
         self.func = func
         self.description = description
-    
+
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
-    
+
     def __str__(self):
         return str(self.description)
-        
+
     def __unicode__(self):
         return self.description
 
 boolNames = {
     "false": False,
     "no": False,
-    "off": False, 
+    "off": False,
     "true": True,
     "yes": True,
     "on": True

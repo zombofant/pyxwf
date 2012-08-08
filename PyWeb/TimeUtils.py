@@ -5,13 +5,13 @@ monthname = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct
 
 def toTimestamp(datetime):
     return timegm(datetime.utctimetuple())
-    
+
 def toDatetime(timestamp):
     return datetime.utcfromtimestamp(timestamp)
-    
+
 def nowDate():
     return datetime.utcnow()
-    
+
 def now():
     return toTimestamp(nowDate())
 
@@ -33,7 +33,7 @@ def calendarTimeRange(year, month=None):
         return monthTimeRange(year, month)
     else:
         return yearTimeRange(year)
-        
+
 def normalizeDate(dateTime):
     return datetime(year=dateTime.year, month=dateTime.month, day=dateTime.day)
 

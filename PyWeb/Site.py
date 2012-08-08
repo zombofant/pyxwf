@@ -86,13 +86,13 @@ class Site(Resource.Resource):
                 break
         else:
             raise ValueError("No tree node.")
-    
+
     def _loadCrumbs(self, root):
         self.crumbs = {}
         crumbs = root.find(NS.Site.crumbs)
         for crumb in crumbs:
             if not isinstance(crumb.tag, basestring):
-                continue 
+                continue
             self.addCrumb(Registry.CrumbPlugins(crumb, self))
 
     def _loadMimeMap(self, mimeMap):
@@ -128,16 +128,16 @@ class Site(Resource.Resource):
             shortDate = formatting.get("short-date-format") or shortDate
         self.longDateFormat = longDate
         self.shortDateFormat = shortDate
-        
+
         self.notFoundTemplate = "templates/errors/not-found.xsl"
         self.defaultTemplate = None
-        
+
         templates = workingCopy.find(NS.Site.templates)
         if templates is not None:
             workingCopy.remove(templates)
-            self.notFoundTemplate = templates.get("not-found", 
+            self.notFoundTemplate = templates.get("not-found",
                     self.notFoundTemplate)
-            self.defaultTemplate = templates.get("default", 
+            self.defaultTemplate = templates.get("default",
                     self.defaultTemplate)
 
         for child in workingCopy:
@@ -151,7 +151,7 @@ class Site(Resource.Resource):
                     Registry.TweakPlugins(child)
                 except Errors.MissingTweakPlugin as err:
                     print("Warning: {0}".format(err))
-        
+
     def _placeCrumb(self, ctx, crumbNode, crumb):
         tree = crumb.render(ctx)
         crumbParent = crumbNode.getparent()
@@ -195,7 +195,7 @@ class Site(Resource.Resource):
             del localImg.attrib["href"]
 
     def getTemplateArguments(self):
-        # XXX: This will possibly explode one day ... 
+        # XXX: This will possibly explode one day ...
         return {
             b"site_title": utils.unicodeToXPathStr(self.title)
         }
@@ -216,19 +216,19 @@ class Site(Resource.Resource):
             ctx.Path = redirect.newLocation
             return self._getNode(ctx)
         return node
-    
+
     def addCrumb(self, crumb):
         if crumb.ID is None:
             raise ValueError("Crumb declared without id.")
         if crumb.ID in self.crumbs:
             raise ValueError("Duplicate crumb id: {0}".format(crumb.ID))
         self.crumbs[crumb.ID] = crumb
-        
+
     def registerNodeID(self, ID, node):
         if ID in self.nodes:
             raise ValueError("Duplicate node id: {0}".format(ID))
         self.nodes[ID] = node
-        
+
     def getNode(self, ID):
         return self.nodes[ID]
 
@@ -242,7 +242,7 @@ class Site(Resource.Resource):
     def loadSitemap(self, sitemapFile):
         self.sitemapFile = sitemapFile
         self.sitemapTimestamp = utils.fileLastModified(sitemapFile)
-        
+
         root = ET.parse(sitemapFile).getroot()
         self._loadMeta(root)
 
@@ -250,7 +250,7 @@ class Site(Resource.Resource):
             Templates.XSLTTemplateCache, self.root)
         self.fileDocumentCache = self._setupCache((self, "file-doc-cache"),
             Document.FileDocumentCache, self.root)
-        
+
         self._loadPlugins(root)
         tweaks = root.find(NS.Site.tweaks)
         if tweaks is not None:
@@ -272,7 +272,7 @@ class Site(Resource.Resource):
             # Registry.clearAll()
             # self.savepoint.rollback()
             self.loadSitemap(self.sitemapFile)
-            
+
     def handleNotFound(self, ctx, resourceName):
         try:
             tpl = self.templateCache[self.notFoundTemplate]
@@ -287,7 +287,7 @@ class Site(Resource.Resource):
             p.text = "The resource {0} could not be found.".format(resourceName)
             p = ET.SubElement(section, NS.XHTML.p)
             p.text = "Additionally, the specified (or fallback) error template\
- at {0} could not be loaded: {1}.".format(self.notFoundTemplate, 
+ at {0} could not be loaded: {1}.".format(self.notFoundTemplate,
                 type(err).__name__)
             return Document.Document("Not found", [], [], body)
         else:
@@ -296,10 +296,11 @@ class Site(Resource.Resource):
             })
             ET.SubElement(err, NS.PyWebXML.resource).text = resourceName
             return tpl.transform(err, {})
-        
+
 
     def handle(self, ctx):
         ctx.useResource(self)
+        self.hooks.call("handle.pre-lookup", ctx)
         status = 200
         try:
             node = self._getNode(ctx)
@@ -308,7 +309,7 @@ class Site(Resource.Resource):
                 document = err.document
                 template = err.template
             else:
-                document = self.handleNotFound(ctx, 
+                document = self.handleNotFound(ctx,
                         err.resourceName or ctx.Path)
                 template = None
             if template is None:
@@ -321,10 +322,10 @@ class Site(Resource.Resource):
 
             ctx.checkNotModified()
             document = node.handle(ctx)
-        
+
         resultTree = template.final(self, ctx, document,
                 licenseFallback=self._license)
-        
+
         message = Message.XHTMLMessage(resultTree, statusCode=status)
         # only enforce at the end of a request, otherwise things may become
         # horribly slow if more resources are needed than the cache allows
