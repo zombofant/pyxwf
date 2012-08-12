@@ -67,12 +67,10 @@ class WebStackContext(Context.Context):
         prefs = self.parsePreferencesList(
             ",".join(tx.get_header_values("Accept"))
         )
-        print(prefs)
         xhtmlContentType = self.getContentTypeToUse(
-            prefs, ["application/xhtml+xml", "application/xml"])
-        htmlContentType = self.getContentTypeToUse(prefs, ["text/html"])
+            prefs, ["text/html", "application/xhtml+xml", "application/xml"])
 
-        self._canUseXHTML = xhtmlContentType is not None
+        self._canUseXHTML = xhtmlContentType != "text/html"
 
     def _requireQuery(self):
         raise NotImplemented()
