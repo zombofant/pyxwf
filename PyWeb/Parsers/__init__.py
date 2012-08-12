@@ -1,4 +1,6 @@
-import abc
+import abc, itertools
+
+import PyWeb.Namespaces as NS
 
 class ParserBase(object):
     """
@@ -12,6 +14,20 @@ class ParserBase(object):
     
     def __init__(self):
         pass
+
+    @classmethod
+    def transformHeaders(cls, body, headerOffset):
+        headers = reversed(xrange(1,7))
+        matches = (getattr(NS.XHTML, "h{0}".format(i)) for i in headers)
+        iterator = itertools.chain(*itertools.imap(body.iter, matches))
+        for hX in iterator:
+            i = int(hX.tag[-1:])
+            i += headerOffset
+            if i > 6:
+                tag = "p"
+            else:
+                tag = "h"+str(i)
+            hX.tag = getattr(NS.XHTML, tag)
 
     @abc.abstractmethod
     def parse(self, fileref):

@@ -77,7 +77,7 @@ class PyWebXML(Parsers.ParserBase):
         datetext = meta.findtext(NS.PyWebXML.date)
         return utils.parseISODate(datetext)
 
-    def parse(self, fileref):
+    def parse(self, fileref, headerOffset=1):
         tree = ET.parse(fileref)
         root = tree.getroot()
         if root.tag != NS.PyWebXML.page:
@@ -96,6 +96,7 @@ class PyWebXML(Parsers.ParserBase):
         body = root.find(NS.XHTML.body)
         if body is None:
             raise ValueError("No body tag found")
+        self.transformHeaders(body, headerOffset)
 
         date = self.getDate(meta)
         authors = self.getAuthors(meta)

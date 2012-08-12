@@ -54,15 +54,6 @@ class Markdown(Parsers.ParserBase):
             xmlns = self._xmlnsType(nsdecl.get("ns"))
             self._namespaces[prefix] = xmlns
 
-    def transformHeaders(self, body):
-        headers = reversed(xrange(1,7))
-        matches = (getattr(NS.XHTML, "h{0}".format(i)) for i in headers)
-        iterator = itertools.chain(*itertools.imap(body.iter, matches))
-        for hX in iterator:
-            i = int(hX.tag[-1:])
-            i += 1
-            hX.tag = getattr(NS.XHTML, "h"+str(i))
-
     def transformUrls(self, body):
         for a in body.iter(NS.XHTML.a):
             a.tag = NS.PyWebXML.a
@@ -84,7 +75,7 @@ class Markdown(Parsers.ParserBase):
                     (item.strip() for item in s.split()))
         return items
 
-    def parse(self, fileref):
+    def parse(self, fileref, headerOffset=1):
         if isinstance(fileref, basestring):
             f = open(fileref, "r")
         else:
@@ -97,7 +88,7 @@ class Markdown(Parsers.ParserBase):
 
         html = self._template.format(converted)
         body = ET.XML(html)
-        self.transformHeaders(body)
+        self.transformHeaders(body, headerOffset)
         self.transformUrls(body)
 
         title = metadata.get("Title", None)
