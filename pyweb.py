@@ -2,18 +2,27 @@
 # encoding=utf-8
 from __future__ import unicode_literals, print_function
 
-APPDIR = "/var/www/docroot/horazont/projects/pyweb"
-
 import sys, os
-sys.path.append("/var/www/docroot/horazont/projects/pyweb")
-os.chdir(APPDIR)
 
-import PyWeb.Stack
-import PyWeb.Documents.PyWebXML
+sys.path.append("/etc")
+from webconf.pyweb import conf
+sys.path.remove("/etc")
 
-from PyWeb.utils import ET
+try:
+    sys.path.extend(conf["pythonpath"])
+except KeyError:
+    pass
+os.chdir(conf["datapath"])
 
 import WebStack
 from WebStack.Adapters.WSGI import WSGIAdapter
+import PyWeb.Stack
 
-application = WSGIAdapter(PyWeb.Stack.WebStackSite("site/sitemap.xml"), handle_errors=0)
+sitemapFile = os.path.join(conf["datapath"], "sitemap.xml")
+
+application = WSGIAdapter(PyWeb.Stack.WebStackSite(
+	sitemapFile,
+	defaultURLRoot=conf.get("urlroot")
+    ),
+    handle_errors=0
+)
