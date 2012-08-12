@@ -75,6 +75,11 @@ class XHTMLMessage(Message):
     def __init__(self, docTree, **kwargs):
         super(XHTMLMessage, self).__init__(ContentTypes.xhtml, **kwargs)
         self._docTree = docTree
+        try:
+            # this is only available with lxml backend
+            ET.cleanup_namespaces(self._docTree)
+        except AttributeError:
+            pass
 
     @property
     def DocTree(self):
@@ -113,6 +118,11 @@ class HTMLMessage(Message):
         """
         docTree = copy.copy(docTree)
         utils.XHTMLToHTML(docTree)
+        try:
+            # this is only available with lxml backend
+            ET.cleanup_namespaces(docTree)
+        except AttributeError:
+            pass
         return cls(docTree, version=version, **kwargs)
 
     def __init__(self, docTree, version="HTML5", **kwargs):
