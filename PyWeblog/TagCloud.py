@@ -33,6 +33,7 @@ class TagCloud(Crumbs.CrumbBase):
 
     def render(self, ctx):
         ul = ET.Element(NS.XHTML.ul)
+        ctx.useResource(self.blog)
         tags = ((tag, len(posts)) for tag, posts in
                             self.blog.viewTagPosts())
         tags = itertools.ifilter(lambda x: x[1], tags)  # remove empty tags

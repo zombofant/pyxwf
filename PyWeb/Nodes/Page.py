@@ -47,9 +47,8 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
         return self._getDocRef().doc
 
     def resolvePath(self, ctx, relPath):
-        result = super(Page, self).resolvePath(ctx, relPath)
         ctx.useResource(self)
-        return result
+        return super(Page, self).resolvePath(ctx, relPath)
 
     def getTitle(self):
         return self.title
