@@ -38,7 +38,7 @@ class Info(object):
         index node or redirects).
         """
         return None
-    
+
 class Hidden(object):
     """
     Special value for hidden display style of navigation entries.
@@ -50,7 +50,7 @@ class Show(object):
     Special value for shown navigation entries (default usually).
     """
     __metaclass__ = utils.NoInstance
-    
+
 class ReplaceWithChildren(object):
     """
     Special value to replace the navigation entry with its children.

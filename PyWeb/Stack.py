@@ -22,10 +22,20 @@ class WebStackContext(Context.Context):
             transaction.get_response_stream())
         self._transaction = transaction
         self._parseIfModifiedSince()
+        self._parseHostHeader()
+        self._parseEnvirenoment()
 
     @property
     def Out(self):
         return self._transaction.get_response_stream()
+
+    @property
+    def HostName(self):
+        return self._hostName
+
+    @property
+    def URLScheme(self):
+        return self._scheme
 
     def _parseIfModifiedSince(self):
         values = self._transaction.get_header_values("If-Modified-Since")
@@ -38,6 +48,17 @@ class WebStackContext(Context.Context):
             self._ifModifiedSince = HTTPUtils.parseHTTPDate(values[0])
         except Exception as err:
             warnings.warn(err)
+
+    def _parseHostHeader(self):
+        values = self._transaction.get_header_values("Host")
+        if len(values) > 1:
+            raise Errors.BadRequest(message="Too many host header fields.")
+        if len(values) == 0:
+            raise Errors.BadRequest(message="Sorry -- I need the Host header.")
+        self._hostName = values[0]
+
+    def _parseEnvirenoment(self):
+        self._scheme = self._transaction.env["wsgi.url_scheme"]
 
     def _requireQuery(self):
         raise NotImplemented()
@@ -59,6 +80,7 @@ class WebStackContext(Context.Context):
     def sendResponse(self, message):
         tx = self._transaction
         tx.rollback()
+        tx.set_response_code(message.StatusCode)
         tx.set_content_type(ContentType(message.MIMEType, message.Encoding))
         self._setCacheHeaders()
         self.Out.write(message.getEncodedBody())
@@ -83,13 +105,15 @@ class WebStackSite(Site.Site):
             return
         except Errors.HTTPRedirection as status:
             loc = status.newLocation
-            if len(loc) > 0 and loc[0] == "/":
-                loc = loc[1:]
-            loc = os.path.join(self.urlRoot, loc)
+            if status.local:
+                if len(loc) > 0 and loc[0] == "/":
+                    loc = loc[1:]
+                loc = os.path.join(self.urlRoot, loc)
             transaction.redirect(loc, status.statusCode)
             return
         except (Errors.HTTP200, EndOfResponse) as status:
             transaction.set_response_code(status.statusCode)
             return
         ctx.sendResponse(message)
+        transaction.commit()
         gc.collect()

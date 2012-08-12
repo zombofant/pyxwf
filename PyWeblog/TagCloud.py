@@ -36,7 +36,7 @@ class TagCloud(Crumbs.CrumbBase):
         tags = ((tag, len(posts)) for tag, posts in
                             self.blog.viewTagPosts())
         tags = itertools.ifilter(lambda x: x[1], tags)  # remove empty tags
-        
+
         # sort by count and remove those with lower counts
         tags = sorted(tags, key=operator.itemgetter(1), reverse=True)
         tags = tags[:self.maxTags]

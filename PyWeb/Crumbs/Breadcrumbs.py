@@ -22,6 +22,8 @@ class Breadcrumbs(Crumbs.CrumbBase):
             node.get("force-show-current", False))
 
     def render(self, ctx):
+        if not ctx.PageNode:
+            return None
         ul = ET.Element(NS.XHTML.ul)
         hadNodes = set()
         pageNode = ctx.PageNode
@@ -36,7 +38,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
             representative = navInfo.getRepresentative()
             if representative in hadNodes:
                 continue
-            
+
             hadNodes.add(representative)
             li = ET.Element(NS.XHTML.li)
             if node is not pageNode:

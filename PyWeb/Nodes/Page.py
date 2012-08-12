@@ -28,16 +28,21 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
         return self._lastModified
 
     def update(self):
-        docRef = self._getDocRef()
-        if self._lastModified is None or \
-                self._lastModified < docRef.LastModified:
-            
+        # this is pretty lazy; it will not load the document but only retrieve
+        # the datetime object from the file system
+        docLastModified = self.site.fileDocumentCache\
+                .getLastModified(self.fileName)
+        if self._lastModified is None or docLastModified is None or \
+                self._lastModified < docLastModified:
+
+            docRef = self._getDocRef()
+            docRef.update()
             self._lastModified = docRef.LastModified
             self.title = self.navTitle or docRef.doc.title
 
     def _getDocRef(self):
         return self.site.fileDocumentCache.get(self.fileName, self.mimeType)
-    
+
     def doGet(self, ctx):
         return self._getDocRef().doc
 
@@ -59,7 +64,7 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
         if self.title is None:
             self.update()
         return self
-        
+
     requestHandlers = {
         "GET": doGet
     }

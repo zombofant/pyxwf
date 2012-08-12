@@ -13,7 +13,7 @@ class Context(object):
     underscore, so you're safe to use all other names.
     """
     __metaclass__ = abc.ABCMeta
-    
+
     def __init__(self, method, path, outfile):
         self._method = method
         self._path = path

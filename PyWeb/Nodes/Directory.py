@@ -39,7 +39,7 @@ class Directory(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/directory"
     names = ["node"]
-    
+
     def __init__(self, site, parent, node):
         super(Directory, self).__init__(site, parent, node)
         self.pathDict = {}
@@ -75,7 +75,7 @@ class Directory(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
 class RootDirectory(Directory):
     __metaclass__ = Registry.NodeMeta
-    
+
     namespace = Directory.namespace
     names = ["tree"]
 

@@ -16,7 +16,7 @@ class Author(object):
         eMail = node.get("email")
         pageHref = node.get("href")
         return cls(fullName, eMail, pageHref, id=node.get("id"))
-    
+
     def __init__(self, fullName, eMail, pageHref, id=None):
         super(Author, self).__init__()
         self.fullName = fullName
@@ -110,6 +110,10 @@ class Document(object):
         self.ext = ET.Element("blank") if ext is None else ext
 
     def toPyWebXMLPage(self):
+        """
+        Wrap the documents body in an element tree which represents the document
+        as PyWebXML page. Return the pywebxml page root node.
+        """
         page = ET.Element(NS.PyWebXML.page)
         meta = ET.SubElement(page, NS.PyWebXML.meta)
 
@@ -148,6 +152,11 @@ class DocumentResource(Resource.Resource):
 
 
 class FileDocument(DocumentResource):
+    """
+    Load and hold the document referred to by *fileName* (optionally with a
+    fixed MIME type *overrideMIME*) in a cachable fashion. Provides the document
+    as *doc* attribute.
+    """
     def __init__(self, fileName, overrideMIME=None):
         super(FileDocument, self).__init__()
         self._lastModified = utils.fileLastModified(fileName)
@@ -177,6 +186,11 @@ class FileDocument(DocumentResource):
 
 
 class FileDocumentCache(Cache.FileSourcedCache):
+    """
+    A sub class of a :cls:`Cache.FileSourcedCache` which keeps
+    :cls:`FileDocument` instances.
+    """
+
     def _load(self, path, overrideMIME=None):
         return FileDocument(path, overrideMIME=overrideMIME)
 

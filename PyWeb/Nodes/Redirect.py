@@ -21,7 +21,7 @@ class RedirectBase(Nodes.Node):
     def __init__(self, site, parent, node):
         super(RedirectBase, self).__init__(site, parent, node)
         self.method = self.methods[node.get("method", self.defaultMethod)]
-    
+
     def redirect(self, ctx):
         raise self.method(self.Target)
 
@@ -32,12 +32,12 @@ class RedirectBase(Nodes.Node):
             raise self.method(self.Target)
         else:
             return self
-        
+
     requestHandlers = redirect
 
 class RedirectInternal(RedirectBase):
     __metaclass__ = Registry.NodeMeta
-    
+
     namespace = RedirectBase.namespace
     names = ["internal"]
 
@@ -56,8 +56,8 @@ class RedirectInternal(RedirectBase):
 
         def getRepresentative(self):
             return self.redirect
-            
-    
+
+
     def __init__(self, site, parent, node):
         super(RedirectInternal, self).__init__(site, parent, node)
         self.to = node.get("to")
@@ -72,7 +72,7 @@ class RedirectInternal(RedirectBase):
         else:
             self.targetNode = self.site.getNode(self.to)
             return self.targetNode
-        
+
     @property
     def Target(self):
         return self.TargetNode.Path

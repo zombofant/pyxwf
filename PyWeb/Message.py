@@ -23,12 +23,13 @@ class Message(object):
     *mimeType* is the MIME type according to RFC 2046.
     """
     __metaclass__ = abc.ABCMeta
-    
-    def __init__(self, mimeType):
+
+    def __init__(self, mimeType, statusCode=200):
         super(Message, self).__init__()
         self._mimeType = mimeType
         self._encoding = None
         self._lastModified = None
+        self._statusCode = statusCode
 
     @property
     def MIMEType(self):
@@ -57,15 +58,19 @@ class Message(object):
         Derived classes must implement this method.
         """
 
+    @property
+    def StatusCode(self):
+        return self._statusCode
+
 class XHTMLMessage(Message):
     """
     Represent an XHTML message. *docTree* must be a valid XHTML document tree
     as lxml.etree node. Conversion to bytes payload is handled by this class
     automatically.
     """
-    
-    def __init__(self, docTree):
-        super(XHTMLMessage, self).__init__(ContentTypes.xhtml)
+
+    def __init__(self, docTree, **kwargs):
+        super(XHTMLMessage, self).__init__(ContentTypes.xhtml, **kwargs)
         self._docTree = docTree
 
     @property
@@ -91,9 +96,9 @@ class TextMessage(Message):
     must be convertible into unicode using the default encoding) or a unicode
     instance.
     """
-    
-    def __init__(self, contents):
-        super(TextMessage, self).__init__(ContentTypes.plainText)
+
+    def __init__(self, contents, **kwargs):
+        super(TextMessage, self).__init__(ContentTypes.plainText, **kwargs)
         self.Contents = contents
 
     @property

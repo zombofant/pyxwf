@@ -11,7 +11,7 @@ class Resource(Cache.Cachable):
     and :meth:`update` to allow for precise caching and on-demand reload.
     """
     __metaclass__ = abc.ABCMeta
-    
+
     @abc.abstractproperty
     def LastModified(self):
         """
@@ -32,4 +32,4 @@ class Resource(Cache.Cachable):
         reload the data if neccessary. Should also update the value returned
         by LastModified.
         """
-    
+

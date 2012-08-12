@@ -24,7 +24,7 @@ class __metaclass__(utils.NoInstance):
             getattr(cls, entry)
         dct["cache"]["xmlns"] = dct["xmlns"]
         return cls
-    
+
     def __getattr__(cls, name):
         cache = cls.__dict__["cache"]
         try:
@@ -45,7 +45,7 @@ class XHTML(object):
     __metaclass__ = __metaclass__
     xmlns = "http://www.w3.org/1999/xhtml"
     cache = ["a", "head", "title", "body"]
-    
+
 xhtml = XHTML
 
 class PyWebXML(object):
