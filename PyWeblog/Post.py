@@ -78,6 +78,7 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
 
     def _createPost(self):
         date_long = self.creationDate.strftime(self.site.longDateFormat)
+        print(ET.tostring(self.article.find(NS.PyWebXML.meta)))
         self.post = self.blog.PostTemplate.transform(self.article, {
             b"date_long": utils.unicodeToXPathStr(date_long)
         })

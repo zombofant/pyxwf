@@ -72,6 +72,8 @@ def XHTMLToHTML(tree):
     import PyWeb.Namespaces as NS
     xhtmlNS = str(NS.XHTML)
     for item in tree.iter():
+        if not isinstance(item.tag, basestring):
+            continue
         ns, name = splitTag(item.tag)
         if ns != xhtmlNS:
             raise ValueError("tree contains non-xhtml elements")
