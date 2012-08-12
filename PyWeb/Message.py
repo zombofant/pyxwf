@@ -26,10 +26,10 @@ class Message(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, mimeType, statusCode=200):
+    def __init__(self, mimeType, statusCode=200, encoding=None):
         super(Message, self).__init__()
         self._mimeType = mimeType
-        self._encoding = None
+        self._encoding = encoding
         self._lastModified = None
         self._statusCode = statusCode
 

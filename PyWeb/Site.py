@@ -448,9 +448,10 @@ class Site(Resource.Resource):
 
         if not ctx.CanUseXHTML:
             message = Message.HTMLMessage.fromXHTMLTree(resultTree,
-                    statusCode=status)
+                    statusCode=status, encoding="utf-8")
         else:
-            message = Message.XHTMLMessage(resultTree, statusCode=status)
+            message = Message.XHTMLMessage(resultTree,
+                    statusCode=status, encoding="utf-8")
         # only enforce at the end of a request, otherwise things may become
         # horribly slow if more resources are needed than the cache allows
         self.cache.enforceLimit()
