@@ -41,8 +41,11 @@ class Preference(object):
         except AttributeError:
             return NotImplemented
 
-    def __str__(self):
+    def __unicode__(self):
         return "{0};q={1:.2f}".format(self.value, self.q)
+
+    def __repr__(self):
+        return unicode(self)
 
 class Context(object):
     """

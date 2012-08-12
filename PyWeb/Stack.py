@@ -67,6 +67,7 @@ class WebStackContext(Context.Context):
         prefs = self.parsePreferencesList(
             ",".join(tx.get_header_values("Accept"))
         )
+        print(prefs)
         xhtmlContentType = self.getContentTypeToUse(
             prefs, ["application/xhtml+xml", "application/xml"])
         htmlContentType = self.getContentTypeToUse(prefs, ["text/html"])
