@@ -95,6 +95,8 @@ class WebStackContext(Context.Context):
         tx.rollback()
         tx.set_response_code(message.StatusCode)
         tx.set_content_type(ContentType(message.MIMEType, message.Encoding))
+        print("response: {0}; charset={1}".format(message.MIMEType,
+            message.Encoding))
         self._setCacheHeaders()
         self.Out.write(message.getEncodedBody())
 
