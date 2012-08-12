@@ -64,6 +64,7 @@ class Message(object):
     def StatusCode(self):
         return self._statusCode
 
+
 class XHTMLMessage(Message):
     """
     Represent an XHTML message. *docTree* must be a valid XHTML document tree

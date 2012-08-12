@@ -402,7 +402,6 @@ class Site(Resource.Resource):
             ET.SubElement(err, NS.PyWebXML.resource).text = resourceName
             return tpl.transform(err, {})
 
-
     def handle(self, ctx):
         """
         Handle a request in the given Context *ctx*.
