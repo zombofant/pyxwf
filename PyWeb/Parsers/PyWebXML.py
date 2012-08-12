@@ -17,7 +17,7 @@ map = itertools.imap
 class Link(object):
     _linkTag = "{{{0}}}link".format(NS.xhtml)
     _scriptTag = "{{{0}}}script".format(NS.xhtml)
-    
+
     @classmethod
     def create(cls, rel, typeName, href, media=None):
         if rel == "stylesheet":
@@ -42,7 +42,7 @@ class PyWebXML(Parsers.ParserBase):
     __metaclass__ = Registry.ParserMeta
 
     mimeTypes = ["application/x-pyweb-xml"]
-    
+
     def __init__(self, mime):
         super(PyWebXML, self).__init__()
 
@@ -102,6 +102,6 @@ class PyWebXML(Parsers.ParserBase):
         authors = self.getAuthors(meta)
 
         ext = meta
-        
+
         return Document.Document(title, keywords, links, body,
             ext=ext, date=date, authors=authors)

@@ -11,7 +11,7 @@ class ParserBase(object):
     Parsers have to implement the `parse` method.
     """
     __metaclass__ = abc.ABCMeta
-    
+
     def __init__(self):
         pass
 
@@ -34,6 +34,6 @@ class ParserBase(object):
         """
         Take a file name or filelike in *fileref* and parse the hell out of it.
         Return a :cls:`Document` instance with all data filled out.
-        
+
         Derived classes must implement this.
         """
