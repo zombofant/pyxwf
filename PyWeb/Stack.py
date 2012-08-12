@@ -68,10 +68,10 @@ class WebStackContext(Context.Context):
             ",".join(tx.get_header_values("Accept"))
         )
         xhtmlContentType = self.getContentTypeToUse(
-            prefs, ["application/xhtml+xml", "application/xml", "text/html"])
+            prefs, ["application/xhtml+xml", "application/xml"])
         htmlContentType = self.getContentTypeToUse(prefs, ["text/html"])
 
-        self._canUseXHTML = xhtmlContentType != htmlContentType
+        self._canUseXHTML = xhtmlContentType is not None
 
     def _requireQuery(self):
         raise NotImplemented()

@@ -236,6 +236,7 @@ class Context(object):
         If this is False, the application handling the request represented by
         this Context, must not send XHTML responses.
         """
+        return self._canUseXHTML
 
     @abc.abstractmethod
     def sendResponse(self, message):
