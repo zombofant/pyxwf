@@ -198,18 +198,12 @@ class Site(Resource.Resource):
                 except Errors.MissingTweakPlugin as err:
                     print("Warning: {0}".format(err))
 
-    def _placeCrumb(self, ctx, crumbNode, crumb):
-        """
-        Replace *crumbNode* in its Etree with the breadcrumb referred to by
-        *crumb*.
-        """
-        tree = crumb.render(ctx)
-        crumbParent = crumbNode.getparent()
-        crumbNodeIdx = crumbParent.index(crumbNode)
-        if tree is not None:
-            crumbParent[crumbNodeIdx] = tree
+    def _replaceChild(self, parent, oldNode, newNode):
+        oldIdx = parent.index(oldNode)
+        if newNode is None:
+            del parent[oldIdx]
         else:
-            del crumbParent[crumbNodeIdx]
+            parent[oldIdx] = newNode
 
     def transformReferences(self, ctx, tree):
         """
@@ -232,16 +226,24 @@ class Site(Resource.Resource):
         includes transforming local a tags, local img tags and placing crumbs.
         """
         crumbs = True
+        if not hasattr(ctx, "crumbCache"):
+            ctx.crumbCache = {}
         while crumbs:
             crumbs = False
             for crumbNode in body.iter(NS.PyWebXML.crumb):
                 crumbs = True
                 crumbID = crumbNode.get("id")
                 try:
-                    crumb = self.crumbs[crumbID]
+                    crumbTree = ctx.crumbCache[crumbID]
                 except KeyError:
-                    raise ValueError("Invalid crumb id: {0!r}.".format(crumbID))
-                self._placeCrumb(ctx, crumbNode, crumb)
+                    try:
+                        crumb = self.crumbs[crumbID]
+                    except KeyError:
+                        raise ValueError("Invalid crumb id: {0!r}."\
+                                .format(crumbID))
+                    else:
+                        crumbTree = crumb.render(ctx)
+                self._replaceChild(crumbNode.getparent(), crumbNode, crumbTree)
         for localLink in body.iter(NS.PyWebXML.a):
             localLink.tag = NS.XHTML.a
             self.transformHref(localLink)
