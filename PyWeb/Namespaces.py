@@ -57,3 +57,5 @@ class Site(object):
     __metaclass__ = __metaclass__
     xmlns = "http://pyweb.zombofant.net/xmlns/site"
     cache = ["meta", "site", "tree"]
+
+utils.ET.register_namespace("h", str(xhtml))
