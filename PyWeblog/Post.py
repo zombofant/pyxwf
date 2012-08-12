@@ -71,6 +71,9 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         for kw in meta.findall(NS.PyWebXML.kw):
             kw.set("href", self.blog.getTagPath(kw.text))
 
+        self.nextET = ET.SubElement(meta, getattr(NS.PyBlog, "next-post"))
+        self.prevET = ET.SubElement(meta, getattr(NS.PyBlog, "prev-post"))
+
         self.article = article
 
     def _createPost(self):
@@ -87,6 +90,31 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         ).getroot()
         return self.abstract
 
+    def _relPostET(self, post, node):
+        node.set("href", post.Path)
+        node.set("title", post.getTitle())
+
+    def getPost(self):
+        meta = self.article.find(NS.PyWebXML.meta)
+        prevPost, nextPost = self.prevPost, self.nextPost
+        if prevPost is None:
+            try:
+                meta.remove(self.prevET)
+            except ValueError:
+                pass
+        else:
+            self._relPostET(prevPost, self.prevET)
+            meta.append(self.prevET)
+        if nextPost is None:
+            try:
+                meta.remove(self.nextET)
+            except ValueError:
+                pass
+        else:
+            self._relPostET(nextPost, self.nextET)
+            meta.append(self.nextET)
+        return self._createPost()
+
     @property
     def LastModified(self):
         return self._lastModified
@@ -95,17 +123,29 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         fileModified = utils.fileLastModified(self.fileName)
         if fileModified is None:  # deleted
             self.blog.delete(self)
-            return
+            raise Errors.ResourceLost(self.fileName)
         if fileModified > self._lastModified:
             parent, _, _ = self._reload()
             self._parent = parent
 
     def resolvePath(self, ctx, relPath):
         ctx.useResource(self)
+        ctx.useResource(self.blog.PostTemplate)
+        self.prevPost, self.nextPost = self.blog.getPreviousAndNext(self)
+        if self.prevPost is not None:
+            try:
+                ctx.useResource(self.prevPost)
+            except Errors.ResourceLost:
+                self.prevPost = None
+        if self.nextPost is not None:
+            try:
+                ctx.useResource(self.nextPost)
+            except Errors.ResourceLost:
+                self.nextPost = None
         return super(BlogPost, self).resolvePath(ctx, relPath)
 
     def doGet(self, ctx):
-        return self.post or self._createPost()
+        return self.getPost()
 
     def getAbstract(self, ctx):
         result = self.abstract
