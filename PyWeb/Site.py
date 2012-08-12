@@ -447,7 +447,11 @@ class Site(Resource.Resource):
         resultTree = template.final(self, ctx, document,
                 licenseFallback=self._license)
 
-        message = Message.XHTMLMessage(resultTree, statusCode=status)
+        if not ctx.CanUseXHTML:
+            message = Message.HTMLMessage.fromXHTMLTree(resultTree,
+                    statusCode=status)
+        else:
+            message = Message.XHTMLMessage(resultTree, statusCode=status)
         # only enforce at the end of a request, otherwise things may become
         # horribly slow if more resources are needed than the cache allows
         self.cache.enforceLimit()
