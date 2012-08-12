@@ -66,6 +66,10 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         nodePath.text = self.Path
         abstractText = ET.SubElement(meta, getattr(NS.PyBlog, "abstract-text"))
         abstractText.text = unicode(document.ext.findtext(NS.PyBlog.abstract))
+
+        for kw in meta.findall(NS.PyWebXML.kw):
+            kw.set("href", self.blog.getTagPath(kw.text))
+
         self.article = article
 
     def _createPost(self):
