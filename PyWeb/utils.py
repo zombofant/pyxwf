@@ -63,3 +63,16 @@ def parseISODate(s):
     if s is None:
         return None
     return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
+
+def XHTMLToHTML(tree):
+    """
+    Converts the given ETree *tree* from XHTML to HTML *in-place*. Raises
+    :cls:`ValueError` if a non-XHTML namespace is encountered.
+    """
+    import PyWeb.Namespaces as NS
+    xhtmlNS = str(NS.XHTML)
+    for item in tree.iter():
+        ns, name = splitTag(item.tag)
+        if ns != xhtmlNS:
+            raise ValueError("tree contains non-xhtml elements")
+        item.tag = name

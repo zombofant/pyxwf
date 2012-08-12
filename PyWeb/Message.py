@@ -7,10 +7,12 @@ the payload to a properly encoded bytes object for conversion in a MessageInfo
 instance.
 """
 
-import abc
+import abc, copy
 
-import PyWeb.ContentTypes as ContentTypes
 from PyWeb.utils import ET
+import PyWeb.utils as utils
+import PyWeb.Namespaces as NS
+import PyWeb.ContentTypes as ContentTypes
 
 class Message(object):
     """
@@ -87,6 +89,51 @@ class XHTMLMessage(Message):
             encoding=encoding,
             xml_declaration="yes",
             doctype="<!DOCTYPE html>"
+        )
+
+
+class HTMLMessage(Message):
+    """
+    Represent an HTML message. *docTree* must be a valid HTML document tree
+    (the same as the XHTML tree, but without namespaces) as lxml.etree node.
+    Conversion to bytes payload is handled by this class automatically.
+
+    You can specify the HTML version via *version*, which is currently
+    restricted to `HTML5`.
+    """
+
+    @classmethod
+    def fromXHTMLTree(cls, docTree, version="HTML5", **kwargs):
+        """
+        Return an :cls:`HTMLMessage` instance from the given XHTML *docTree*.
+        This performs automatic conversion by removing the XHTML namespace from
+        all elements. Raises :cls:`ValueError` if a non-xhtml namespace is
+        encountered.
+        """
+        docTree = copy.copy(docTree)
+        utils.XHTMLToHTML(docTree)
+        return cls(docTree, version=version, **kwargs)
+
+    def __init__(self, docTree, version="HTML5", **kwargs):
+        if version != "HTML5":
+            raise ValueError("Invalid HTMLMessage version: {0}".format(version))
+        super(HTMLMessage, self).__init__(ContentTypes.html, **kwargs)
+        self._docTree = docTree
+
+    @property
+    def DocTree(self):
+        return self._docTree
+
+    @DocTree.setter
+    def DocTree(self, value):
+        self._docTree = value
+
+    def getEncodedBody(self):
+        encoding = self.Encoding or "utf-8"
+        return ET.tostring(self.DocTree,
+            encoding=encoding,
+            doctype="<!DOCTYPE html>",
+            method="html"
         )
 
 
