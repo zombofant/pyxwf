@@ -21,6 +21,18 @@ import PyWeblog.Directories as Directories
 import PyWeblog.LandingPage as LandingPage
 import PyWeblog.TagPages as TagPages
 
+try:
+    from blist import sortedlist
+
+    class SortedPostList(sortedlist):
+        def __init__(self, iterable=[]):
+            super(SortedPostList, self).__init__(iterable)
+except ImportError:
+    class SortedPostList(list):
+        def add(self, post):
+            self.append(post)
+            self.sort()
+
 class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
     __metaclass__ = Registry.NodeMeta
 
@@ -127,7 +139,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
             self._years.sort(key=lambda x: x._year)
         monthDir = yearDir[month+1]
         monthDir.add(post)
-        self._allPosts.append(post)
+        self._allPosts.add(post)
         for tag in post.tags:
             self._tagCloud.setdefault(tag, []).append(post)
         self._lastIndexUpdate = TimeUtils.stripMicroseconds(datetime.utcnow())
@@ -143,7 +155,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
         self._lastIndexUpdate = TimeUtils.stripMicroseconds(datetime.utcnow())
 
     def _clearIndex(self):
-        self._allPosts = []
+        self._allPosts = SortedPostList()
         self._tagCloud = {}
         self._categories = {}
         self._calendary = {}
@@ -158,7 +170,6 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
                     post = Post.BlogPost(self, fullFile)
                 except (Errors.MissingParserPlugin, Errors.UnknownMIMEType):
                     pass
-        self._allPosts.sort(key=lambda x: x.creationDate, reverse=True)
 
     def _getChildNode(self, key):
         try:
@@ -194,6 +205,21 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
             return self._tagCloud[tag]
         except KeyError:
             return []
+
+    def getPreviousAndNext(self, post):
+        posts = self._allPosts
+        index = posts.index(post)
+        # cannot do try-except here, otherwise we get the last element from the
+        # list!
+        if index > 0:
+            next = posts[index-1]
+        else:
+            next = None
+        try:
+            prev = posts[index+1]
+        except IndexError:
+            prev = None
+        return (prev, next)
 
     def viewTagPosts(self):
         return self._tagCloud.viewitems()

@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import os, mimetypes, abc, itertools, copy
+import os, mimetypes, abc, itertools, copy, functools
 from datetime import datetime
 import time
 
@@ -16,6 +16,7 @@ import PyWeb.Navigation as Navigation
 import PyWeb.Namespaces as NS
 import PyWeb.Resource as Resource
 
+@functools.total_ordering
 class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
     __metaclass__ = Nodes.NodeMeta
 
@@ -123,6 +124,24 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
 
     def getNavigationInfo(self, ctx):
         return self
+
+    def __gt__(self, other):
+        try:
+            return self.creationDate < other.creationDate
+        except AttributeError:
+            return NotImplemented
+
+    def __ge__(self, other):
+        try:
+            return self.creationDate <= other.creationDate
+        except AttributeError:
+            return NotImplemented
+
+    def __eq__(self, other):
+        try:
+            return self.creationDate == other.creationDate
+        except AttributeError:
+            return NotImplemented
 
     requestHandlers = {
         "GET": doGet
