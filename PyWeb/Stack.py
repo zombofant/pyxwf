@@ -23,7 +23,8 @@ class WebStackContext(Context.Context):
         self._transaction = transaction
         self._parseIfModifiedSince()
         self._parseHostHeader()
-        self._parseEnvirenoment()
+        self._parseEnvironment()
+        self._parsePreferences()
 
     @property
     def Out(self):
@@ -57,8 +58,20 @@ class WebStackContext(Context.Context):
             raise Errors.BadRequest(message="Sorry -- I need the Host header.")
         self._hostName = values[0]
 
-    def _parseEnvirenoment(self):
+    def _parseEnvironment(self):
         self._scheme = self._transaction.env["wsgi.url_scheme"]
+
+    def _parsePreferences(self):
+        tx = self._transaction
+
+        prefs = self.parsePreferencesList(
+            ",".join(tx.get_header_values("Accept"))
+        )
+        xhtmlContentType = self.getContentTypeToUse(
+            prefs, ["application/xhtml+xml", "application/xml", "text/html"])
+        htmlContentType = self.getContentTypeToUse(prefs, ["text/html"])
+
+        self._canUseXHTML = xhtmlContentType != htmlContentType
 
     def _requireQuery(self):
         raise NotImplemented()

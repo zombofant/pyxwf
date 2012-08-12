@@ -1,9 +1,48 @@
 from __future__ import unicode_literals
 
-import operator, abc, collections
+import operator, abc, collections, functools
+from fnmatch import fnmatch
 
 import PyWeb.Types as Types
 import PyWeb.Errors as Errors
+
+@functools.total_ordering
+class Preference(object):
+    """
+    Represent a HTTP Header preference, for example:
+
+        text/html;q=0.9
+
+    would be constructed as:
+
+        Preference("text/html", 0.9)
+
+    Preference objects compare according to the q value assigned to them.
+    """
+    def __init__(self, value, q):
+        self.value = value
+        self.q = q
+
+    def __le__(self, other):
+        try:
+            return self.q <= other.q
+        except AttributeError:
+            return NotImplemented
+
+    def __lt__(self, other):
+        try:
+            return self.q < other.q
+        except AttributeError:
+            return NotImplemented
+
+    def __eq__(self, other):
+        try:
+            return self.q == other.q
+        except AttributeError:
+            return NotImplemented
+
+    def __str__(self):
+        return "{0};q={1:.2f}".format(self.value, self.q)
 
 class Context(object):
     """
@@ -29,6 +68,7 @@ class Context(object):
         self._pageNode = None
         self._usedResources = set()
         self._lastModified = None
+        self._canUseXHTML = False
 
     def _requireQuery(self):
         """
@@ -44,6 +84,56 @@ class Context(object):
         :prop:`PostData`. This disables caching of the response altogether.
         """
         self._forceNoCache = True
+
+    @classmethod
+    def parsePreferencesList(cls, preferences):
+        """
+        Parse a HTTP formatted list of preferences like the following:
+
+            text/html;q=1.0, application/xml;q=0.9, */*
+        """
+        prefs = (s.strip().lower().partition(';')
+                    for s in preferences.split(","))
+        prefs = (Preference(value, float(q[2:]) if len(q) > 0 else 1.0)
+                    for (value, sep, q) in prefs
+                    if not (len(q) > 0 and float(q[2:])==0) and len(value) > 0)
+        prefs = sorted(prefs, reverse=True)
+        return prefs
+
+    @classmethod
+    def getCharsetToUse(cls, prefList, ownPreferences):
+        use = None
+        q = None
+        if len(prefList) == 0:
+            return ownPreferences[0]
+        for item in prefList:
+            if q is None:
+                q = item.q
+            if use is None:
+                use = item.value
+            if item.q < q:
+                break
+            if item.value in ownPreferences:
+                return item.value
+            if item.value == "*" and use is None:
+                use = ownPreferences[0]
+        if use is None:
+            use = ownPreferences[0]
+        return use
+
+    @classmethod
+    def getContentTypeToUse(cls, prefList, ownPreferences):
+        use = None
+        if len(prefList) == 0:
+            return ownPreferences[0]
+
+        for pref in ownPreferences:
+            for item in prefList:
+                if item.value == pref:
+                    return item.value
+                if use is None and fnmatch(pref, item.value):
+                    use = pref
+        return use
 
     @property
     def Method(self):
@@ -135,6 +225,17 @@ class Context(object):
         uncachability).
         """
         return self._lastModified
+
+    @property
+    def CanUseXHTML(self):
+        """
+        Whether XHTML can be interpreted by the client. This is by default False
+        and shall be identified by the request headers sent by the requesting
+        entity.
+
+        If this is False, the application handling the request represented by
+        this Context, must not send XHTML responses.
+        """
 
     @abc.abstractmethod
     def sendResponse(self, message):
