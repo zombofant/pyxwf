@@ -15,13 +15,10 @@ import PyWeb.Namespaces as NS
 map = itertools.imap
 
 class Link(object):
-    _linkTag = "{{{0}}}link".format(NS.xhtml)
-    _scriptTag = "{{{0}}}script".format(NS.xhtml)
-
     @classmethod
     def create(cls, rel, typeName, href, media=None):
         if rel == "stylesheet":
-            link = ET.Element(cls._linkTag, attrib={
+            link = ET.Element(NS.xhtml.link, attrib={
                 "rel": "stylesheet",
                 "type": typeName,
                 "href": href
@@ -30,9 +27,14 @@ class Link(object):
                 link.set("media", media)
             return link
         elif rel == "script":
-            return ET.Element(cls._scriptTag, attrib={
+            return ET.Element(NS.xhtml.script, attrib={
                 "type": typeName,
                 "src": href
+            })
+        elif rel == "license":
+            return ET.Element(NS.xhtml.link, attrib={
+                "type": "license",
+                "href": href
             })
         else:
             raise KeyError("Unknown link relation: {0}".format(rel))
