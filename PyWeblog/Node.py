@@ -17,6 +17,7 @@ import PyWeb.Resource as Resource
 import PyWeb.TimeUtils as TimeUtils
 
 import PyWeblog.Post as Post
+import PyWeblog.Atom as Atom
 import PyWeblog.Directories as Directories
 import PyWeblog.LandingPage as LandingPage
 import PyWeblog.TagPages as TagPages
@@ -79,6 +80,12 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
         if tagDir is None:
             tagDir = ET.Element(getattr(NS.PyBlog, "tag-dir"))
         self.tagDir = TagPages.TagDir(self, tagDir)
+
+        atomFeed = node.find(getattr(NS.PyBlog, "atom"))
+        if atomFeed is None:
+            self.atomFeed = None
+        else:
+            self.atomFeed = Atom.AtomFeedRoot(atomFeed, self)
 
         self._pathDict = {
             "": self.landingPage,

@@ -95,6 +95,9 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         node.set("href", post.Path)
         node.set("title", post.getTitle())
 
+    def getArticle(self):
+        return self.article
+
     def getPost(self):
         meta = self.article.find(NS.PyWebXML.meta)
         prevPost, nextPost = self.prevPost, self.nextPost

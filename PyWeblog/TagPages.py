@@ -5,6 +5,7 @@ import PyWeb.Types as Types
 import PyWeb.Navigation as Navigation
 import PyWeb.Errors as Errors
 
+import PyWeblog.Atom as Atom
 import PyWeblog.Directories as Directories
 
 class TagPage(Nodes.Node, Navigation.Info):
@@ -15,6 +16,7 @@ class TagPage(Nodes.Node, Navigation.Info):
         self.blog = tagDir.blog
         self.tag = tag
         self._path = self.parent.Path + "/" + tag
+        self.feedNode = Atom.AtomFeedNode(self, self.tag, "tag")
 
     @property
     def Name(self):
@@ -31,7 +33,21 @@ class TagPage(Nodes.Node, Navigation.Info):
             ctx.useResources(self.posts)
         if len(self.posts) == 0:
             raise Errors.NotFound()
-        return super(TagPage, self).resolvePath(ctx, relPath)
+        if relPath == "":
+            queryInfo = ctx.QueryData
+            if "feed" in queryInfo:
+                feed = queryInfo["feed"]
+                if len(feed) > 1:
+                    raise Errors.BadRequest()
+                feed = feed[0]
+                if feed == "atom":
+                    return self.feedNode.resolvePath(ctx, "")
+                else:
+                    raise Errors.NotFound()
+            elif not queryInfo:
+                return super(TagPage, self).resolvePath(ctx, relPath)
+            else:
+                raise Errors.BadRequest()
 
     def doGet(self, ctx):
         posts = self.posts
