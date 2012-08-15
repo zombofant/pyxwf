@@ -73,7 +73,7 @@ class WebStackContext(Context.Context):
         self._canUseXHTML = xhtmlContentType != "text/html"
 
     def _requireQuery(self):
-        raise NotImplemented()
+        self._queryData = self._transaction.get_fields_from_path()
 
     def _requirePost(self):
         raise NotImplemented()
