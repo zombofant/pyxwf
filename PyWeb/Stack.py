@@ -20,6 +20,7 @@ class WebStackContext(Context.Context):
             transaction.get_request_method(),
             transaction.get_path_info(),
             transaction.get_response_stream())
+        self._fullURI = transaction.get_path()
         self._transaction = transaction
         self._parseIfModifiedSince()
         self._parseHostHeader()

@@ -153,6 +153,13 @@ class Context(object):
         """
         return self._path
 
+    @property
+    def FullURI(self):
+        """
+        The URL path for the request.
+        """
+        return self._fullURI
+
     Path = RequestPath
 
     @property
