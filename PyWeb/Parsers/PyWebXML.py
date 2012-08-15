@@ -14,31 +14,6 @@ import PyWeb.Namespaces as NS
 
 map = itertools.imap
 
-class Link(object):
-    @classmethod
-    def create(cls, rel, typeName, href, media=None):
-        if rel == "stylesheet":
-            link = ET.Element(NS.xhtml.link, attrib={
-                "rel": "stylesheet",
-                "type": typeName,
-                "href": href
-            })
-            if media:
-                link.set("media", media)
-            return link
-        elif rel == "script":
-            return ET.Element(NS.xhtml.script, attrib={
-                "type": typeName,
-                "src": href
-            })
-        elif rel == "license":
-            return ET.Element(NS.xhtml.link, attrib={
-                "type": "license",
-                "href": href
-            })
-        else:
-            raise KeyError("Unknown link relation: {0}".format(rel))
-
 
 class PyWebXML(Parsers.ParserBase):
     __metaclass__ = Registry.ParserMeta
@@ -56,7 +31,7 @@ class PyWebXML(Parsers.ParserBase):
 
     @classmethod
     def getLinks(cls, meta):
-        return list(map(cls._linkFromNode, meta.findall(NS.PyWebXML.link)))
+        return list(meta.findall(NS.PyWebXML.link))
 
     @classmethod
     def getKeywords(cls, meta):
