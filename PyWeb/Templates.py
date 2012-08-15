@@ -93,8 +93,11 @@ class XSLTTemplate(Template):
     def _parseTemplate(self):
         self.xsltTransform = ET.XSLT(ET.parse(self.fileName))
 
+    def rawTransform(self, body, templateArgs):
+        return self.xsltTransform(body, **templateArgs)
+
     def transform(self, body, templateArgs, customBody=NS.XHTML.body):
-        newDoc = self.xsltTransform(body, **templateArgs)
+        newDoc = self.rawTransform(body, templateArgs)
 
         meta = newDoc.find(NS.PyWebXML.meta)
         if meta is not None:
