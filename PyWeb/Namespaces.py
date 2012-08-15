@@ -58,4 +58,8 @@ class Site(object):
     xmlns = "http://pyweb.zombofant.net/xmlns/site"
     cache = ["meta", "site", "tree"]
 
+class Atom(object):
+    __metaclass__ = __metaclass__
+    xmlns = "http://www.w3.org/2005/Atom"
+
 utils.ET.register_namespace("h", str(xhtml))

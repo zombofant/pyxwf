@@ -12,6 +12,7 @@ from WebStack.Generic import ContentType
 xhtml = "application/xhtml+xml"
 html = "text/html"
 plainText = "text/plain"
+Atom = "application/atom+xml"
 
 normalization = {
     "application/xhtml+xml": xhtml,
