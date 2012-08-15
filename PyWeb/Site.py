@@ -220,12 +220,12 @@ class Site(Resource.Resource):
                     continue
                 authorObj.applyToNode(author)
 
-    def transformPyNamespace(self, ctx, body):
+    def transformPyNamespace(self, ctx, body, crumbs=True, a=True, link=True,
+            img=True):
         """
         Do PyWeb specific transformations on the XHTML body *body*. This
         includes transforming local a tags, local img tags and placing crumbs.
         """
-        crumbs = True
         if not hasattr(ctx, "crumbCache"):
             ctx.crumbCache = {}
         while crumbs:
@@ -244,14 +244,22 @@ class Site(Resource.Resource):
                     else:
                         crumbTree = crumb.render(ctx)
                 self._replaceChild(crumbNode.getparent(), crumbNode, crumbTree)
-        for localLink in body.iter(NS.PyWebXML.a):
-            localLink.tag = NS.XHTML.a
-            self.transformHref(localLink)
-        for localImg in body.iter(NS.PyWebXML.img):
-            localImg.tag = NS.XHTML.img
-            self.transformHref(localImg)
-            localImg.set("src", localImg.get("href"))
-            del localImg.attrib["href"]
+
+        if a:
+            for localLink in body.iter(NS.PyWebXML.a):
+                localLink.tag = NS.XHTML.a
+                self.transformHref(localLink)
+        if img:
+            for localImg in body.iter(NS.PyWebXML.img):
+                localImg.tag = NS.XHTML.img
+                self.transformHref(localImg)
+                localImg.set("src", localImg.get("href"))
+                del localImg.attrib["href"]
+        if link:
+            for localLink in body.iter(NS.PyWebXML.link):
+                localLink.tag = NS.XHTML.link
+                if localLink.get("href"):
+                    self.transformHref(localLink)
 
     def getTemplateArguments(self):
         # XXX: This will possibly explode one day ...
