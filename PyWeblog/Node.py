@@ -58,7 +58,6 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
         self.abstractListTemplate = self._cfgTemplate(templates, "abstract-list")
         self.abstractTemplate = self._cfgTemplate(templates, "abstract")
         self.postTemplate = self._cfgTemplate(templates, "post")
-        self.landingPageTemplate = self._cfgTemplate(templates, "landing-page")
         self.tagDirTemplate = self._cfgTemplate(templates, "tag-dir")
 
         structure = node.find(NS.PyBlog.structure)
