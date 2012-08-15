@@ -17,6 +17,7 @@ class TagPage(Nodes.Node, Navigation.Info):
         self.tag = tag
         self._path = self.parent.Path + "/" + tag
         self.feedNode = Atom.AtomFeedNode(self, self.tag, "tag")
+        self._feedTitle = tagDir._pageFeedTitle.format(tag=self.tag)
 
     @property
     def Name(self):
@@ -53,11 +54,17 @@ class TagPage(Nodes.Node, Navigation.Info):
         posts = self.posts
         abstractList = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
             "kind": "tag",
-            "title": self.tag
+            "title": self.tag,
+            "feed-path": self.Path + "?feed=atom"
         })
         for post in sorted(posts, key=lambda x: x.creationDate, reverse=True):
             abstractList.append(post.getAbstract(ctx))
         doc = self.blog.AbstractListTemplate.transform(abstractList, {})
+        if self.blog.atomFeed:
+            doc.links.append(self.blog.atomFeed.Link(
+                self.Path + "?feed=atom",
+                self._feedTitle
+            ))
         return doc
 
     def __len__(self):
@@ -89,6 +96,8 @@ class TagDir(Directories.BlogFakeDir):
             Types.Typecasts.unicode)(node.get("nav-title"))
         self._navDisplay = Types.DefaultForNone(Navigation.Hidden,
             Navigation.DisplayMode)(node.get("nav-display"))
+        self._pageFeedTitle = Types.DefaultForNone("Posts with tag \"{tag}\"",
+            Types.Typecasts.unicode)(node.get("page-feed-title"))
 
     def _getChildNode(self, key):
         if key == "":
