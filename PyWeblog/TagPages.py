@@ -8,7 +8,7 @@ import PyWeb.Errors as Errors
 import PyWeblog.Atom as Atom
 import PyWeblog.Directories as Directories
 
-class TagPage(Nodes.Node, Navigation.Info):
+class TagPage(Directories.WithFeedMixin, Nodes.Node, Navigation.Info):
     __metaclass__ = Nodes.NodeMeta
 
     def __init__(self, tagDir, tag):
@@ -34,21 +34,7 @@ class TagPage(Nodes.Node, Navigation.Info):
             ctx.useResources(self.posts)
         if len(self.posts) == 0:
             raise Errors.NotFound()
-        if relPath == "":
-            queryInfo = ctx.QueryData
-            if "feed" in queryInfo:
-                feed = queryInfo["feed"]
-                if len(feed) > 1:
-                    raise Errors.BadRequest()
-                feed = feed[0]
-                if feed == "atom":
-                    return self.feedNode.resolvePath(ctx, "")
-                else:
-                    raise Errors.NotFound()
-            elif not queryInfo:
-                return super(TagPage, self).resolvePath(ctx, relPath)
-            else:
-                raise Errors.BadRequest()
+        return super(TagPage, self).resolvePath(ctx, relPath)
 
     def doGet(self, ctx):
         posts = self.posts

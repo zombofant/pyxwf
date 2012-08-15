@@ -153,3 +153,22 @@ class BlogMonthDir(BlogFakeDir):
     requestHandlers = {
         "GET": doGet
     }
+
+
+class WithFeedMixin(Nodes.Node):
+    def resolvePath(self, ctx, relPath):
+        if relPath == "":
+            queryInfo = ctx.QueryData
+            if "feed" in queryInfo:
+                feed = queryInfo["feed"]
+                if len(feed) > 1:
+                    raise Errors.BadRequest()
+                feed = feed[0]
+                if feed == "atom":
+                    return self.feedNode.resolvePath(ctx, "")
+                else:
+                    raise Errors.NotFound()
+            elif not queryInfo:
+                return super(WithFeedMixin, self).resolvePath(ctx, relPath)
+            else:
+                raise Errors.BadRequest()
