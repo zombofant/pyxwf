@@ -31,7 +31,7 @@ class TagPage(Nodes.Node, Navigation.Info):
             ctx.useResources(self.posts)
         if len(self.posts) == 0:
             raise Errors.NotFound()
-        return super(TagPage, self).handle(ctx, relPath)
+        return super(TagPage, self).resolvePath(ctx, relPath)
 
     def doGet(self, ctx):
         posts = self.posts
