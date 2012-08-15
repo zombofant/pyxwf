@@ -3,6 +3,7 @@ import PyWeb.Namespaces as NS
 import PyWeb.Nodes as Nodes
 import PyWeb.Types as Types
 import PyWeb.Navigation as Navigation
+import PyWeb.Errors as Errors
 
 import PyWeblog.Directories as Directories
 
@@ -22,20 +23,18 @@ class TagPage(Nodes.Node, Navigation.Info):
     def getPosts(self):
         return self.blog.getPostsByTag(self.tag)
 
+    def handle(self, ctx):
+        self.posts = self.getPosts()
+        ctx.useResources(self.posts)
+        if len(self.posts) == 0:
+            self.posts = self.getPosts()
+            ctx.useResources(self.posts)
+        if len(self.posts) == 0:
+            raise Errors.NotFound()
+        return super(TagPage, self).handle(ctx)
+
     def doGet(self, ctx):
-        posts = self.getPosts()
-        if len(posts) == 0:
-            # this _might_ have changed after reload
-            posts = self.getPosts()
-        if len(posts) == 0:
-            error = ET.Element(NS.PyBlog.error)
-            noPosts = ET.SubElement(error, getattr(NS.PyBlog, "no-posts"),
-                attrib={
-                    "in-tag": self.tag
-                }
-            )
-            return self.blog.NoPostsTemplate.transform(error, {})
-        ctx.useResources(list(posts))
+        posts = self.posts
         abstractList = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
             "kind": "tag",
             "title": self.tag
