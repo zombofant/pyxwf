@@ -132,7 +132,7 @@ class Document(object):
 
         if self.date:
             date = ET.SubElement(meta, NS.PyWebXML.date)
-            date.text = self.date.isoformat()
+            date.text = self.date.isoformat() + "Z"
 
         if self.license:
             meta.append(self.license.toNode())

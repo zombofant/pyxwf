@@ -62,7 +62,7 @@ def unicodeToXPathStr(value):
 def parseISODate(s):
     if s is None:
         return None
-    return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S")
+    return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")
 
 def XHTMLToHTML(tree):
     """
