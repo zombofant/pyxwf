@@ -65,6 +65,42 @@ class Message(object):
         return self._statusCode
 
 
+class XMLMessage(Message):
+    """
+    Represent a generic XML message. *docTree* must be a valid lxml Element or
+    ElementTree. *contentType* must specify the MIME type of the document.
+
+    If cleanupNamespaces is True, :func:`lxml.etree.cleanup_namespaces` will be
+    called on the tree.
+    """
+
+    def __init__(self, docTree, contentType, cleanupNamespaces=False, **kwargs):
+        super(XMLMessage, self).__init__(contentType, **kwargs)
+        self._docTree = docTree
+        if cleanupNamespaces:
+            try:
+                # this is only available with lxml backend
+                ET.cleanup_namespaces(self._docTree)
+            except AttributeError:
+                pass
+    @property
+    def DocTree(self):
+        return self._docTree
+
+    @DocTree.setter
+    def DocTree(self, value):
+        self._docTree = value
+
+    def getEncodedBody(self, **kwargs):
+        simpleArgs = {
+            "encoding": self.Encoding or "utf-8",
+            "xml_declaration": "yes"
+        }
+        simpleArgs.update(kwargs)
+        return ET.tostring(self.DocTree,
+            **simpleArgs
+        )
+
 class XHTMLMessage(Message):
     """
     Represent an XHTML message. *docTree* must be a valid XHTML document tree
@@ -75,27 +111,9 @@ class XHTMLMessage(Message):
     def __init__(self, docTree, **kwargs):
         super(XHTMLMessage, self).__init__(ContentTypes.xhtml, **kwargs)
         self._docTree = docTree
-        try:
-            # this is only available with lxml backend
-            ET.cleanup_namespaces(self._docTree)
-        except AttributeError:
-            pass
-
-    @property
-    def DocTree(self):
-        return self._docTree
-
-    @DocTree.setter
-    def DocTree(self, value):
-        self._docTree = value
 
     def getEncodedBody(self):
-        encoding = self.Encoding or "utf-8"
-        return ET.tostring(self.DocTree,
-            encoding=encoding,
-            xml_declaration="yes",
-            doctype="<!DOCTYPE html>"
-        )
+        super(XHTMLMessage, self).getEncodedBody(doctype="<!DOCTYPE html>")
 
 
 class HTMLMessage(Message):
