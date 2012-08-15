@@ -76,5 +76,5 @@ def XHTMLToHTML(tree):
             continue
         ns, name = splitTag(item.tag)
         if ns != xhtmlNS:
-            raise ValueError("tree contains non-xhtml elements: {0}".format(ns))
+            raise ValueError("tree contains non-xhtml elements: {0}:{1}".format(ns, name))
         item.tag = name
