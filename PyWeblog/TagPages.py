@@ -24,11 +24,9 @@ class TagPage(Nodes.Node, Navigation.Info):
 
     def doGet(self, ctx):
         posts = self.getPosts()
-        ctx.useResources(list(posts))
         if len(posts) == 0:
             # this _might_ have changed after reload
             posts = self.getPosts()
-            lastModified = Directories.lastModifiedFromPosts(ctx, posts)
         if len(posts) == 0:
             error = ET.Element(NS.PyBlog.error)
             noPosts = ET.SubElement(error, getattr(NS.PyBlog, "no-posts"),
@@ -37,6 +35,7 @@ class TagPage(Nodes.Node, Navigation.Info):
                 }
             )
             return self.blog.NoPostsTemplate.transform(error, {})
+        ctx.useResources(list(posts))
         abstractList = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
             "kind": "tag",
             "title": self.tag
