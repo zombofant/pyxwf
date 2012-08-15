@@ -302,3 +302,6 @@ class Context(object):
         if self.LastModified <= self.IfModifiedSince:
             print("not modified")
             raise Errors.NotModified()
+
+    def checkAcceptable(self, contentType):
+        pass

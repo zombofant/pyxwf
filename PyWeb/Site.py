@@ -419,10 +419,10 @@ class Site(Resource.Resource):
             node = self._getNode(ctx)
         except Errors.HTTP.NotFound as err:
             if err.document is not None:
-                document = err.document
+                data = err.document
                 template = err.template
             else:
-                document = self.handleNotFound(ctx,
+                data = self.handleNotFound(ctx,
                         err.resourceName or ctx.Path)
                 template = None
             if template is None:
@@ -435,23 +435,36 @@ class Site(Resource.Resource):
             template = self.templateCache[node.Template]
             ctx.useResource(template)
 
+            contentType = node.getContentType(ctx)
+            ctx.checkAcceptable(contentType)
+
             # raise NotModified if the result will be available on the client
             # side
             ctx.checkNotModified()
 
             # otherwise, create the document and return it
-            document = node.handle(ctx)
+            data = node.handle(ctx)
 
-        # do the final transformation on the content fetched from the node
-        resultTree = template.final(self, ctx, document,
-                licenseFallback=self._license)
+        if isinstance(data, Document.Document):
+            # do the final transformation on the content fetched from the node
+            resultTree = template.final(self, ctx, data,
+                    licenseFallback=self._license)
 
-        if not ctx.CanUseXHTML:
-            message = Message.HTMLMessage.fromXHTMLTree(resultTree,
+            if not ctx.CanUseXHTML:
+                message = Message.HTMLMessage.fromXHTMLTree(resultTree,
+                        statusCode=status, encoding="utf-8")
+            else:
+                message = Message.XHTMLMessage(resultTree,
+                        statusCode=status, encoding="utf-8")
+        elif isinstance(data, (ET._Element, ET._ElementTree)):
+            message = Message.XMLMessage(data, contentType,
+                    statusCode=status, encoding="utf-8", cleanupNamespaces=True)
+        elif isinstance(data, basestring):
+            message = Message.TextMessage(data, contentType,
                     statusCode=status, encoding="utf-8")
         else:
-            message = Message.XHTMLMessage(resultTree,
-                    statusCode=status, encoding="utf-8")
+            print("Cannot process node result: {0}".format(type(data)))
+            raise Errors.InternalServerError()
         # only enforce at the end of a request, otherwise things may become
         # horribly slow if more resources are needed than the cache allows
         self.cache.enforceLimit()

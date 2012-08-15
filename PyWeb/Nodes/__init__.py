@@ -3,6 +3,7 @@ import abc, collections
 import PyWeb.utils as utils
 import PyWeb.Errors as Errors
 import PyWeb.Types as Types
+import PyWeb.ContentTypes as ContentTypes
 
 class NodeMeta(abc.ABCMeta):
     def _raiseNoValidRequestHandlers(mcls):
@@ -88,6 +89,9 @@ class Node(object):
         if relPath == "":
             return self
         raise Errors.NotFound(resourceName=ctx.Path)
+
+    def getContentType(self, ctx):
+        return ContentTypes.xhtml
 
     @property
     def Template(self):
