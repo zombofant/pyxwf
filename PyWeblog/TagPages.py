@@ -23,7 +23,7 @@ class TagPage(Nodes.Node, Navigation.Info):
     def getPosts(self):
         return self.blog.getPostsByTag(self.tag)
 
-    def handle(self, ctx):
+    def resolvePath(self, ctx, relPath):
         self.posts = self.getPosts()
         ctx.useResources(self.posts)
         if len(self.posts) == 0:
@@ -31,7 +31,7 @@ class TagPage(Nodes.Node, Navigation.Info):
             ctx.useResources(self.posts)
         if len(self.posts) == 0:
             raise Errors.NotFound()
-        return super(TagPage, self).handle(ctx)
+        return super(TagPage, self).handle(ctx, relPath)
 
     def doGet(self, ctx):
         posts = self.posts
