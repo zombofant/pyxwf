@@ -51,15 +51,12 @@ class Template(Resource.Resource):
         site.transformReferences(ctx, page)
 
         newDoc = self.transform(page, templateArgs)
-        newDoc.links.extend(document.links)
-        newDoc.keywords.extend(document.keywords)
         newDoc.title = newDoc.title or document.title
         body = newDoc.body
 
         if body is None:
             raise ValueError("Transform did not return a valid body.")
 
-        site.transformPyNamespace(ctx, body)
 
         html = ET.Element(NS.XHTML.html)
         head = ET.SubElement(html, NS.XHTML.head)
@@ -74,6 +71,7 @@ class Template(Resource.Resource):
                 "content": ",".join(newDoc.keywords)
             })
         html.append(body)
+        site.transformPyNamespace(ctx, html)
 
         return ET.ElementTree(html)
 
