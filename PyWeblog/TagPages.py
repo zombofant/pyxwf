@@ -34,6 +34,7 @@ class TagPage(Directories.WithFeedMixin, Nodes.Node, Navigation.Info):
             ctx.useResources(self.posts)
         if len(self.posts) == 0:
             raise Errors.NotFound()
+        ctx.useResource(self.blog.AbstractListTemplate)
         return super(TagPage, self).resolvePath(ctx, relPath)
 
     def doGet(self, ctx):
@@ -92,6 +93,12 @@ class TagDir(Directories.BlogFakeDir):
             return self.getTagPage(key)
         except KeyError:
             return None
+
+    def resolvePath(self, ctx, relPath):
+        result = super(TagDir, self).resolvePath(ctx, relPath)
+        if result is self:
+            ctx.useResource(self.blog.TagDirTemplate)
+        return result
 
     def getTagPage(self, tag):
         try:
