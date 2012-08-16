@@ -63,7 +63,6 @@ class Markdown(Parsers.ParserBase):
             del img.attrib["src"]
 
     def transformImages(self, body):
-        print(ET.tostring(body))
         pTag, imgTag, aTag = NS.XHTML.p, NS.XHTML.img, NS.XHTML.a
         for p in body.iter(pTag):
             if len(p) != 1:
