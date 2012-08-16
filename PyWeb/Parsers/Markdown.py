@@ -62,6 +62,26 @@ class Markdown(Parsers.ParserBase):
             img.set("href", img.get("src"))
             del img.attrib["src"]
 
+    def transformImages(self, body):
+        print(ET.tostring(body))
+        pTag, imgTag, aTag = NS.XHTML.p, NS.XHTML.img, NS.XHTML.a
+        for p in body.iter(pTag):
+            if len(p) != 1:
+                continue
+            aOrImg = p[0]
+            if aOrImg.tag == imgTag:
+                p.set("class", "imgbox")
+                continue
+            if aOrImg.tag != aTag:
+                continue
+            a = aOrImg
+            if len(a) != 1:
+                continue
+            img = a[0]
+            if img.tag == imgTag:
+                p.set("class", "imgbox")
+                p.tag = NS.XHTML.div
+
     def _authorFromId(self, id):
         return Document.Author(None, None, None, id=id)
 
@@ -88,6 +108,7 @@ class Markdown(Parsers.ParserBase):
         html = self._template.format(converted)
         body = ET.XML(html)
         self.transformHeaders(body, headerOffset)
+        self.transformImages(body)
         self.transformUrls(body)
 
         title = metadata.get("Title", None)
