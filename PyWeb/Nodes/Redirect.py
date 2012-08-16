@@ -5,6 +5,7 @@ import PyWeb.Errors as Errors
 import PyWeb.Nodes as Nodes
 import PyWeb.Registry as Registry
 import PyWeb.Navigation as Navigation
+import PyWeb.Types as Types
 
 class RedirectBase(Nodes.Node):
     namespace = "http://pyweb.zombofant.net/xmlns/nodes/redirect"
@@ -21,8 +22,11 @@ class RedirectBase(Nodes.Node):
     def __init__(self, site, parent, node):
         super(RedirectBase, self).__init__(site, parent, node)
         self.method = self.methods[node.get("method", self.defaultMethod)]
+        self.cachable = Types.Typecasts.bool(node.get("cachable", True))
 
     def redirect(self, ctx):
+        if self.Cachable:
+            ctx.addCacheControl("private")
         raise self.method(self.Target)
 
     def resolvePath(self, ctx, relPath):
@@ -32,6 +36,10 @@ class RedirectBase(Nodes.Node):
             raise self.method(self.Target)
         else:
             return self
+
+    @property
+    def Cachable(self):
+        return self.cachable
 
     requestHandlers = redirect
 
