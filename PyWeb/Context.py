@@ -304,11 +304,13 @@ class Context(object):
             self.addCacheControl("no-cache")
             return
         lastModified = self.LastModified
-        if lastModified is None or self.IfModifiedSince is None:
+        if lastModified is None:
+            return
+        self.addCacheControl("must-revalidate")
+        if self.IfModifiedSince is None:
             return
         if self.LastModified <= self.IfModifiedSince:
             raise Errors.NotModified()
-        self.addCacheControl("must-revalidate")
 
     def checkAcceptable(self, contentType):
         pass
