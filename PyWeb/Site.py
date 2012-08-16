@@ -5,7 +5,7 @@ and passes them through the tree defined in the sitemap xml.
 """
 from __future__ import unicode_literals
 
-import itertools, os, importlib, copy, mimetypes, warnings
+import itertools, os, importlib, copy, mimetypes, warnings, re
 
 from PyWeb.utils import ET
 import PyWeb.Types as Types
@@ -27,6 +27,8 @@ class Site(Resource.Resource):
     loaded from *sitemapFile*. Optionally, one can specify a *defaultURLRoot*
     which is used if no URL root is specified in the sitemap XML.
     """
+
+    urnScheme = re.compile("^\w+:")
 
     def __init__(self, sitemapFile, defaultURLRoot=None, **kwargs):
         super(Site, self).__init__(**kwargs)
@@ -275,7 +277,7 @@ class Site(Resource.Resource):
         current URL.
         """
         v = node.get(attrName)
-        if v is None or "://" in v or v.startswith("/"):  # non local href
+        if v is None or v.startswith("/") or self.urnScheme.search(v):  # non local href
             return
         node.set(attrName, os.path.join(self.urlRoot, v))
 
