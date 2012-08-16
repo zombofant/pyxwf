@@ -72,6 +72,7 @@ class Context(object):
         self._usedResources = set()
         self._lastModified = None
         self._canUseXHTML = False
+        self._cacheControl = set()
 
     def _requireQuery(self):
         """
@@ -300,15 +301,20 @@ class Context(object):
         is thrown.
         """
         if not self.Cachable:
-            print("response not cachable")
+            self.addCacheControl("no-cache")
             return
         lastModified = self.LastModified
         if lastModified is None or self.IfModifiedSince is None:
-            print("not enough information for cache decision")
             return
         if self.LastModified <= self.IfModifiedSince:
-            print("not modified")
             raise Errors.NotModified()
+        self.addCacheControl("must-revalidate")
 
     def checkAcceptable(self, contentType):
         pass
+
+    def addCacheControl(self, token):
+        """
+        Add *token* to the list of Cache-Control HTTP tokens.
+        """
+        self._cacheControl.add(token)

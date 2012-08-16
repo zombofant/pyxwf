@@ -86,9 +86,7 @@ class WebStackContext(Context.Context):
             if lastModified is not None:
                 tx.set_header_value("Last-Modified",
                     format_date_time(TimeUtils.toTimestamp(lastModified)))
-            tx.set_header_value("Cache-Control", "must-revalidate")
-        else:
-            tx.set_header_value("Cache-Control", "no-cache")
+        tx.set_header_value("Cache-Control", ",".join(self._cacheControl))
 
     def sendResponse(self, message):
         tx = self._transaction
@@ -113,22 +111,20 @@ class WebStackSite(Site.Site):
             message = self.handle(ctx)
         except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
             transaction.set_response_code(status.statusCode)
-            return
         except Errors.NotModified as status:
             transaction.set_response_code(status.statusCode)
             ctx._setCacheHeaders()
-            return
         except Errors.HTTPRedirection as status:
             loc = status.newLocation
             if status.local:
                 if len(loc) > 0 and loc[0] == "/":
                     loc = loc[1:]
                 loc = os.path.join(self.urlRoot, loc)
+            ctx._setCacheHeaders()
             transaction.redirect(loc, status.statusCode)
-            return
         except (Errors.HTTP200, EndOfResponse) as status:
             transaction.set_response_code(status.statusCode)
-            return
-        ctx.sendResponse(message)
+        else:
+            ctx.sendResponse(message)
         transaction.commit()
         gc.collect()
