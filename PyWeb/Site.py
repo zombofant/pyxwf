@@ -360,14 +360,17 @@ class Site(Resource.Resource):
             Templates.XSLTTemplateCache, self.root)
         self.fileDocumentCache = self._setupCache((self, "file-doc-cache"),
             Document.FileDocumentCache, self.root)
+        self.xmlDataCache = self._setupCache((self, "xml-data-cache"),
+            Resource.XMLFileCache, self.root)
 
         # load plugins
         self._loadPlugins(root)
 
         # load extended configuration
         tweaks = root.find(NS.Site.tweaks)
-        if tweaks is not None:
-            self._loadTweaks(tweaks)
+        if tweaks is None:
+            tweaks = ET.Element(NS.Site.tweaks)
+        self._loadTweaks(tweaks)
 
         # load site tree
         self._loadTree(root)
