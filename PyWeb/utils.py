@@ -1,4 +1,6 @@
-import abc, os
+# encoding=utf-8
+
+import abc, os, re
 from datetime import datetime
 
 import lxml.etree as ET
@@ -78,3 +80,44 @@ def XHTMLToHTML(tree):
         if ns != xhtmlNS:
             raise ValueError("tree contains non-xhtml elements: {0}:{1}".format(ns, name))
         item.tag = name
+
+
+userAgentRegexes = [
+    ("ie", re.compile("MSIE ([0-9.]+)")),
+    ("firefox", re.compile("Firefox/([0-9.]+)")),
+    ("safari", re.compile("Safari/([0-9.]+)")),
+    ("opera", re.compile("Opera/([0-9.]+)")),
+    ("lynx", re.compile("Lynx/([0-9.]+)")),
+    ("links", re.compile("Links ")),
+    ("wget", re.compile("[Ww]get/([0-9.]+)"))
+]
+
+def guessUserAgent(headerValue):
+    """
+    Return a tuple ``(userAgent, version)``, where *userAgent* is one of:
+
+    * ``ie`` for Internet Explorer™
+    * ``firefox`` for firefox
+    * ``mozilla`` for mozilla
+    * ``opera`` for opera
+    * ``safari`` for safari
+    * ``links`` for links
+    * ``lynx`` for lynx
+    * ``wget`` for wget
+    * None for each unknown user agent
+
+    *version* will be either the version number of the user agent or None if the
+    version could not be determined reliably. The version number is represented
+    as a floating point value.
+    """
+    for agentName, regex in userAgentRegexes:
+        m = regex.search(headerValue)
+        if m:
+            groups = m.groups()
+            if len(groups) > 0:
+                version = float(groups[0])
+            else:
+                version = None
+            return agentName, version
+    else:
+        return (None, None)

@@ -56,6 +56,14 @@ class Context(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    userAgentHTML5Support = {
+        "ie": 9.0,
+        "firefox": 4.0,
+        "chrome": 6.0,
+        "safari": 5.0,
+        "opera": 11.1
+    }
+
     def __init__(self, method, path, outfile):
         self._method = method
         self._path = path
@@ -73,6 +81,7 @@ class Context(object):
         self._lastModified = None
         self._canUseXHTML = False
         self._cacheControl = set()
+        self._html5Support = False
 
     def _requireQuery(self):
         """
@@ -138,6 +147,14 @@ class Context(object):
                 if use is None and fnmatch(pref, item.value):
                     use = pref
         return use
+
+    @classmethod
+    def userAgentSupportsHTML5(cls, userAgent, version):
+        try:
+            minVersion = cls.userAgentHTML5Support[userAgent]
+            return version >= minVersion
+        except KeyError:
+            return False
 
     @property
     def Method(self):
@@ -248,6 +265,14 @@ class Context(object):
         this Context, must not send XHTML responses.
         """
         return self._canUseXHTML
+
+    @property
+    def HTML5Support(self):
+        """
+        Return whether the User-Agent is supposed to support HTML5. This is
+        used by the site to determine whether to apply a to-html4 backtransform.
+        """
+        return self._html5Support
 
     @abc.abstractmethod
     def sendResponse(self, message):

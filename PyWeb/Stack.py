@@ -8,6 +8,7 @@ import WebStack
 from WebStack.Generic import EndOfResponse, ContentType
 
 from PyWeb.utils import ET
+import PyWeb.utils as utils
 import PyWeb.Errors as Errors
 import PyWeb.Site as Site
 import PyWeb.Context as Context
@@ -26,6 +27,7 @@ class WebStackContext(Context.Context):
         self._parseHostHeader()
         self._parseEnvironment()
         self._parsePreferences()
+        self._parseUserAgent()
 
     @property
     def Out(self):
@@ -72,6 +74,19 @@ class WebStackContext(Context.Context):
             prefs, ["text/html", "application/xhtml+xml", "application/xml"])
 
         self._canUseXHTML = xhtmlContentType != "text/html"
+
+    def _parseUserAgent(self):
+        tx = self._transaction
+        values = self._transaction.get_header_values("User-Agent")
+        if len(values) > 1:
+            raise Errors.BadRequest(message="Too many User-Agent header fields.")
+        if len(values) == 0:
+            self._html5Support = False
+            return
+
+        header = values[0]
+        userAgent, version = utils.guessUserAgent(header)
+        self._html5Support = self.userAgentSupportsHTML5(userAgent, version)
 
     def _requireQuery(self):
         self._queryData = self._transaction.get_fields_from_path()
