@@ -9,6 +9,7 @@ import itertools, os, importlib, copy, mimetypes, warnings, re
 
 from PyWeb.utils import ET
 import PyWeb.Types as Types
+import PyWeb.ContentTypes as ContentTypes
 import PyWeb.Errors as Errors
 import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
@@ -193,6 +194,13 @@ class Site(Resource.Resource):
                     self.notFoundTemplate)
             self.defaultTemplate = templates.get("default",
                     self.defaultTemplate)
+
+        compatibility = workingCopy.find(NS.Site.compatibility)
+        if compatibility is None:
+            compatibility = ET.Element(NS.Site.compatibility)
+        else:
+            workingCopy.remove(compatibility)
+        self.html4Transform = compatibility.get("html4-transform")
 
         # further information, warn about unknown tags in our namespace
         for child in workingCopy:
@@ -458,6 +466,10 @@ class Site(Resource.Resource):
             contentType = node.getContentType(ctx)
             ctx.checkAcceptable(contentType)
 
+            if contentType == ContentTypes.xhtml:
+                if not ctx.HTML5Support and self.html4Transform:
+                    ctx.useResource(self.templateCache[self.html4Transform])
+
             # raise NotModified if the result will be available on the client
             # side
             ctx.checkNotModified()
@@ -469,6 +481,10 @@ class Site(Resource.Resource):
             # do the final transformation on the content fetched from the node
             resultTree = template.final(self, ctx, data,
                     licenseFallback=self._license)
+
+            if not ctx.HTML5Support and self.html4Transform:
+                transform = self.templateCache[self.html4Transform]
+                resultTree = transform.rawTransform(resultTree, {})
 
             if not ctx.CanUseXHTML:
                 message = Message.HTMLMessage.fromXHTMLTree(resultTree,
