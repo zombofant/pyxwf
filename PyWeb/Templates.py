@@ -2,7 +2,7 @@
 A basic XSLT template implementation.
 """
 
-import abc, itertools, os
+import abc, itertools, os, copy
 
 from PyWeb.utils import ET
 import PyWeb.utils as utils
@@ -63,7 +63,18 @@ class Template(Resource.Resource):
         ET.SubElement(head, NS.XHTML.title).text = \
                 newDoc.title or document.title
         for link in newDoc.links:
-            site.transformHref(link)
+            ieLimit = link.get("ie-only")
+            if ieLimit is not None:
+                link = copy.copy(link)
+                site.transformHref(link)
+                link.tag = "link"
+                ET.cleanup_namespaces(link)
+                del link.attrib["ie-only"]
+                s = ET.tostring(link, method="html", xml_declaration="no", encoding="utf-8").decode("utf-8")
+                s = "[{0}]>{1}<![endif]".format(ieLimit, s)
+                link = ET.Comment()
+                link.text = s
+                link.tail = "\n"
             head.append(link)
         if len(newDoc.keywords) > 0:
             ET.SubElement(head, NS.XHTML.meta, attrib={
