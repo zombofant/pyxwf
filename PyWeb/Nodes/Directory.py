@@ -8,8 +8,7 @@ import PyWeb.Registry as Registry
 import PyWeb.Nodes as Nodes
 import PyWeb.Navigation as Navigation
 
-class Directory(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
-    __metaclass__ = Registry.NodeMeta
+class DirectoryBase(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
     class NavigationInfo(Navigation.Info):
         def __init__(self, ctx, directory):
@@ -37,16 +36,17 @@ class Directory(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
                 itertools.ifilter(lambda x: x is not self.index, self.children)
             ))
 
-    namespace = "http://pyweb.zombofant.net/xmlns/nodes/directory"
-    names = ["node"]
-
     def __init__(self, site, parent, node):
-        super(Directory, self).__init__(site, parent, node)
+        super(DirectoryBase, self).__init__(site, parent, node)
         self.pathDict = {}
         self.children = []
-        self.display = Navigation.DisplayMode(node.get("nav-display"),
+        self.display = Navigation.DisplayMode(
+            node.get("nav-display") if node is not None else None,
             default=Navigation.Show)
-        for child in node:
+
+    def _loadChildren(self, fromNode):
+        site = self.site
+        for child in fromNode:
             if child.tag is ET.Comment:
                 continue
             self.append(Registry.NodePlugins(child, site, self))
@@ -60,7 +60,7 @@ class Directory(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
     def append(self, plugin):
         if plugin.Name in self.pathDict:
-            raise ValueError("Duplicate path name: {0}".format(plugin.Name))
+            raise ValueError("Duplicate path name {0!r} in {1}".format(plugin.Name, self.Path))
         self.pathDict[plugin.Name] = plugin
         self.children.append(plugin)
 
@@ -72,6 +72,16 @@ class Directory(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
     def getNavigationInfo(self, ctx):
         return self.NavigationInfo(ctx, self)
+
+class Directory(DirectoryBase):
+    __metaclass__ = Registry.NodeMeta
+
+    namespace = "http://pyweb.zombofant.net/xmlns/nodes/directory"
+    names = ["node"]
+
+    def __init__(self, site, parent, node):
+        super(Directory, self).__init__(site, parent, node)
+        self._loadChildren(node)
 
 class RootDirectory(Directory):
     __metaclass__ = Registry.NodeMeta
