@@ -96,8 +96,10 @@ class XSLTTemplate(Template):
         self._parseTemplate()
 
     def update(self):
-        self._lastModified = utils.fileLastModified(self.fileName)
-        self._parseTemplate()
+        lastModified = utils.fileLastModified(self.fileName)
+        if lastModified > self._lastModified:
+            self._lastModified = lastModified
+            self._parseTemplate()
 
     def _parseTemplate(self):
         self.xsltTransform = ET.XSLT(ET.parse(self.fileName))
