@@ -2,6 +2,9 @@ from __future__ import unicode_literals, print_function
 
 import abc
 
+from PyWeb.utils import ET
+import PyWeb.utils as utils
+import PyWeb.Errors as Errors
 import PyWeb.Cache as Cache
 
 class Resource(Cache.Cachable):
@@ -32,4 +35,42 @@ class Resource(Cache.Cachable):
         reload the data if neccessary. Should also update the value returned
         by LastModified.
         """
+
+
+class XMLTree(Resource):
+    """
+    Represent a file-backed XML tree resource. Load the XML tree from *fileName*
+    and watch out for modifications.
+    """
+
+    def __init__(self, fileName, **kwargs):
+        super(XMLTree, self).__init__(**kwargs)
+        self._tree = None
+        self._fileName = fileName
+        self._lastModified = utils.fileLastModified(fileName)
+        self._parse()
+
+    def _parse(self):
+        self._tree = ET.parse(self._fileName)
+
+    def LastModified(self):
+        return self._lastModified
+
+    def update(self):
+        fileModified = utils.fileLastModified(self._fileName)
+        if fileModified is None:
+            raise Errors.ResourceLost(self._fileName)
+        if fileModified > self._lastModified:
+            self._parse()
+            self._lastModified = fileModified
+
+    @property
+    def Tree(self):
+        return self._tree
+
+
+class XMLFileCache(Cache.FileSourcedCache):
+    def _load(self, path, **kwargs):
+        return XMLTree(path, **kwargs)
+
 
