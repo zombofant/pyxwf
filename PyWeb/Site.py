@@ -126,6 +126,8 @@ class Site(Resource.Resource):
         """
         self.crumbs = {}
         crumbs = root.find(NS.Site.crumbs)
+        if crumbs is None:
+            return
         for crumb in crumbs:
             if not isinstance(crumb.tag, basestring):
                 continue
