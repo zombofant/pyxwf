@@ -74,9 +74,11 @@ class XMLMessage(Message):
     called on the tree.
     """
 
-    def __init__(self, docTree, contentType, cleanupNamespaces=False, **kwargs):
+    def __init__(self, docTree, contentType, cleanupNamespaces=False,
+            prettyPrint=False, **kwargs):
         super(XMLMessage, self).__init__(contentType, **kwargs)
         self._docTree = docTree
+        self._prettyPrint = prettyPrint
         if cleanupNamespaces:
             try:
                 # this is only available with lxml backend
@@ -94,14 +96,15 @@ class XMLMessage(Message):
     def getEncodedBody(self, **kwargs):
         simpleArgs = {
             "encoding": self.Encoding or "utf-8",
-            "xml_declaration": "yes"
+            "xml_declaration": "yes",
+            "pretty_print": self._prettyPrint
         }
         simpleArgs.update(kwargs)
         return ET.tostring(self.DocTree,
             **simpleArgs
         )
 
-class XHTMLMessage(Message):
+class XHTMLMessage(XMLMessage):
     """
     Represent an XHTML message. *docTree* must be a valid XHTML document tree
     as lxml.etree node. Conversion to bytes payload is handled by this class
@@ -109,8 +112,8 @@ class XHTMLMessage(Message):
     """
 
     def __init__(self, docTree, **kwargs):
-        super(XHTMLMessage, self).__init__(ContentTypes.xhtml, **kwargs)
-        self._docTree = docTree
+        super(XHTMLMessage, self).__init__(docTree, ContentTypes.xhtml,
+            **kwargs)
 
     def getEncodedBody(self):
         super(XHTMLMessage, self).getEncodedBody(doctype="<!DOCTYPE html>")
@@ -143,11 +146,12 @@ class HTMLMessage(Message):
             pass
         return cls(docTree, version=version, **kwargs)
 
-    def __init__(self, docTree, version="HTML5", **kwargs):
+    def __init__(self, docTree, version="HTML5", prettyPrint=False, **kwargs):
         if version != "HTML5":
             raise ValueError("Invalid HTMLMessage version: {0}".format(version))
         super(HTMLMessage, self).__init__(ContentTypes.html, **kwargs)
         self._docTree = docTree
+        self._prettyPrint = prettyPrint
 
     @property
     def DocTree(self):
@@ -162,7 +166,8 @@ class HTMLMessage(Message):
         return ET.tostring(self.DocTree,
             encoding=encoding,
             doctype="<!DOCTYPE html>",
-            method="html"
+            method="html",
+            pretty_print=self._prettyPrint
         )
 
 

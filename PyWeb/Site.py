@@ -152,11 +152,16 @@ class Site(Resource.Resource):
         perf = workingCopy.find(NS.Site.performance)
         if perf is not None:
             workingCopy.remove(perf)
-            # cache limit
-            maxCache = Types.DefaultForNone(0,
-                Types.NumericRange(Types.Typecasts.int, 0, None)
-            )(perf.get("max-cache-items"))
-            self.cache.Limit = maxCache
+        else:
+            perf = ET.Element(NS.Site.performance)
+
+        # cache limit
+        maxCache = Types.DefaultForNone(0,
+            Types.NumericRange(Types.Typecasts.int, 0, None)
+        )(perf.get("max-cache-items"))
+        # xml pretty printing
+        self.cache.Limit = maxCache
+        self.prettyPrint = Types.Typecasts.bool(perf.get("pretty-print", False))
 
         # mime overrides
         mimeMap = workingCopy.find(getattr(NS.Site, "mime-map"))
@@ -464,13 +469,16 @@ class Site(Resource.Resource):
 
             if not ctx.CanUseXHTML:
                 message = Message.HTMLMessage.fromXHTMLTree(resultTree,
-                        statusCode=status, encoding="utf-8")
+                        statusCode=status, encoding="utf-8",
+                        prettyPrint=self.prettyPrint)
             else:
                 message = Message.XHTMLMessage(resultTree,
-                        statusCode=status, encoding="utf-8")
+                        statusCode=status, encoding="utf-8",
+                        prettyPrint=self.prettyPrint)
         elif isinstance(data, (ET._Element, ET._ElementTree)):
             message = Message.XMLMessage(data, contentType,
-                    statusCode=status, encoding="utf-8", cleanupNamespaces=True)
+                    statusCode=status, encoding="utf-8",
+                    cleanupNamespaces=True, prettyPrint=self.prettyPrint)
         elif isinstance(data, basestring):
             message = Message.TextMessage(data, contentType,
                     statusCode=status, encoding="utf-8")
