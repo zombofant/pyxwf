@@ -44,7 +44,8 @@ class Navigation(Crumbs.CrumbBase):
         self.showRoot = Types.DefaultForNone(False, Types.Typecasts.bool)\
                                             (node.get("show-root"))
         self.maxDepth = depthRange(node.get("max-depth", 0))
-        self.minDepth = depthRange(node.get("min-depth", self.maxDepth))
+        self.minDepth = Types.DefaultForNone(None, depthRange)\
+                                            (node.get("min-depth"))
         self.activeClass = node.get("active-class", "nav-active")
         self.childActiveClass = node.get("child-active-class")
 
@@ -80,7 +81,7 @@ class Navigation(Crumbs.CrumbBase):
                 li = ET.SubElement(ul, NS.XHTML.li)
                 a = ET.SubElement(li, NS.PyWebXML.a, href=child.Path)
                 a.text = navInfo.getTitle()
-                if (depth < self.minDepth or
+                if (self.minDepth is None or depth < self.minDepth or
                         child in activeChain):
                     subtree = self._navTree(li, ctx, navInfo, depth+1, activeChain)
                     if subtree is not None:
