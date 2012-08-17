@@ -145,6 +145,19 @@ class SubCache(object):
         """
         return self[key].LastModified
 
+    def update(self, key):
+        """
+        Call `update()` on the cache entry referenced by *key*, but only if
+        *key* references a valid entry. Otherwise, nothing happens. This is
+        used to ensure that cached entries are reloaded if they wouldn't be
+        reloaded anyways on the next access.
+        """
+        try:
+            entry = self.entries[key]
+        except KeyError:
+            return
+        entry.update()
+
 
 class Cache(object):
     """
@@ -312,5 +325,8 @@ class FileSourcedCache(SubCache):
         successfully.
         """
         return utils.fileLastModified(self._transformKey(key))
+
+    def update(self, key):
+        super(FileSourcedCache, self).update(self._transformKey(key))
 
     __setitem__ = None
