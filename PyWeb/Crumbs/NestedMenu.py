@@ -46,6 +46,7 @@ class Navigation(Crumbs.CrumbBase):
         self.maxDepth = depthRange(node.get("max-depth", 0))
         self.minDepth = Types.DefaultForNone(None, depthRange)\
                                             (node.get("min-depth"))
+        self.showHidden = Types.Typecasts.bool(node.get("show-hidden", False))
         self.activeClass = node.get("active-class", "nav-active")
         self.childActiveClass = node.get("child-active-class")
 
@@ -77,7 +78,7 @@ class Navigation(Crumbs.CrumbBase):
             displayMode = navInfo.getDisplay()
             if displayMode is Nav.ReplaceWithChildren:
                 nodeIterable.push(iter(navInfo))
-            elif displayMode is Nav.Show:
+            elif displayMode is Nav.Show or self.showHidden:
                 li = ET.SubElement(ul, NS.XHTML.li)
                 a = ET.SubElement(li, NS.PyWebXML.a, href=child.Path)
                 a.text = navInfo.getTitle()
