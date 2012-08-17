@@ -195,6 +195,11 @@ class Site(Resource.Resource):
             self.defaultTemplate = templates.get("default",
                     self.defaultTemplate)
 
+        self.htmlTransforms = []
+        for transform in list(workingCopy.findall(getattr(NS.Site, "html-transform"))):
+            workingCopy.remove(transform)
+            self.htmlTransforms.append(Types.NotNone(transform.get("transform")))
+
         compatibility = workingCopy.find(NS.Site.compatibility)
         if compatibility is None:
             compatibility = ET.Element(NS.Site.compatibility)
@@ -440,6 +445,10 @@ class Site(Resource.Resource):
         # call a hook used by some tweaks
         self.hooks.call("handle.pre-lookup", ctx)
 
+        # prepare iterable with loaded html transformations
+        htmlTransforms = itertools.imap(self.templateCache.__getitem__, \
+            self.htmlTransforms)
+
         # default status code
         status = 200
         try:
@@ -463,6 +472,11 @@ class Site(Resource.Resource):
             template = self.templateCache[node.Template]
             ctx.useResource(template)
 
+            # evaluate the iterable as we need the list multiple times in this
+            # code path
+            htmlTransforms = list(htmlTransforms)
+            ctx.useResources(htmlTransforms)
+
             contentType = node.getContentType(ctx)
             ctx.checkAcceptable(contentType)
 
@@ -481,6 +495,9 @@ class Site(Resource.Resource):
             # do the final transformation on the content fetched from the node
             resultTree = template.final(self, ctx, data,
                     licenseFallback=self._license)
+
+            for xslt in htmlTransforms:
+                resultTree = xslt.rawTransform(resultTree, {})
 
             if not ctx.HTML5Support and self.html4Transform:
                 transform = self.templateCache[self.html4Transform]
