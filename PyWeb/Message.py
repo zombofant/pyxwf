@@ -116,7 +116,7 @@ class XHTMLMessage(XMLMessage):
             **kwargs)
 
     def getEncodedBody(self):
-        super(XHTMLMessage, self).getEncodedBody(doctype="<!DOCTYPE html>")
+        return super(XHTMLMessage, self).getEncodedBody(doctype="<!DOCTYPE html>")
 
 
 class HTMLMessage(Message):
