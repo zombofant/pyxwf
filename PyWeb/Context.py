@@ -326,12 +326,10 @@ class Context(object):
         is thrown.
         """
         if not self.Cachable:
-            self.addCacheControl("no-cache")
             return
         lastModified = self.LastModified
         if lastModified is None:
             return
-        self.addCacheControl("must-revalidate")
         if self.IfModifiedSince is None:
             return
         if self.LastModified <= self.IfModifiedSince:

@@ -99,8 +99,11 @@ class WebStackContext(Context.Context):
         if self.Cachable:
             lastModified = self.LastModified
             if lastModified is not None:
+                self.addCacheControl("must-revalidate")
                 tx.set_header_value("Last-Modified",
                     format_date_time(TimeUtils.toTimestamp(lastModified)))
+        else:
+            self.addCacheControl("no-cache")
         tx.set_header_value("Cache-Control", ",".join(self._cacheControl))
 
     def sendResponse(self, message):
