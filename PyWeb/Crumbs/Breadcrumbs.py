@@ -20,6 +20,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
             self.root = None
         self.forceShowCurrent = Types.Typecasts.bool(
             node.get("force-show-current", False))
+        self.minDisplay = Types.Typecasts.int(node.get("min-display", 1))
 
     def render(self, ctx):
         if not ctx.PageNode:
@@ -31,8 +32,10 @@ class Breadcrumbs(Crumbs.CrumbBase):
             if node is self.root:
                 break
             navInfo = node.getNavigationInfo(ctx)
-            if navInfo.getDisplay() != Navigation.Show and (
-                    node is not pageNode or not self.forceShowCurrent):
+            display = navInfo.getDisplay()
+            if ((display is Navigation.ReplaceWithChildren
+                    or display < self.minDisplay)
+                and (node is not pageNode or not self.forceShowCurrent)):
                 continue
 
             representative = navInfo.getRepresentative()

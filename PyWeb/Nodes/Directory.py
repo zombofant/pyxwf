@@ -41,8 +41,7 @@ class DirectoryBase(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         self.pathDict = {}
         self.children = []
         self.display = Navigation.DisplayMode(
-            node.get("nav-display") if node is not None else None,
-            default=Navigation.Show)
+            node.get("nav-display", Navigation.Show) if node is not None else Navigation.Show)
 
     def _loadChildren(self, fromNode):
         site = self.site

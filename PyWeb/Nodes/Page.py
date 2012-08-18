@@ -16,8 +16,7 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
         super(Page, self).__init__(site, parent, node)
 
         self.navTitle = self._navTitleWithNoneType(node.get("nav-title"))
-        self.navDisplay = Navigation.DisplayMode(node.get("nav-display"),
-            default=Navigation.Show)
+        self.navDisplay = Navigation.DisplayMode(node.get("nav-display", Navigation.Show))
         self.mimeType = node.get("type")
         self.fileName = os.path.join(site.root, node.get("src"))
         self._lastModified = None

@@ -70,8 +70,7 @@ class RedirectInternal(RedirectBase):
         super(RedirectInternal, self).__init__(site, parent, node)
         self.to = node.get("to")
         self.navTitle = node.get("nav-title")
-        self.navDisplay = Navigation.DisplayMode(node.get("nav-display"),
-            default=Navigation.Show)
+        self.navDisplay = Navigation.DisplayMode(node.get("nav-display", Navigation.Show))
 
     @property
     def TargetNode(self):

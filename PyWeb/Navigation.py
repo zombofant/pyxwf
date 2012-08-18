@@ -39,28 +39,20 @@ class Info(object):
         """
         return None
 
-class Hidden(object):
-    """
-    Special value for hidden display style of navigation entries.
-    """
-    __metaclass__ = utils.NoInstance
-
-class Show(object):
-    """
-    Special value for shown navigation entries (default usually).
-    """
-    __metaclass__ = utils.NoInstance
-
 class ReplaceWithChildren(object):
     """
     Special value to replace the navigation entry with its children.
     """
     __metaclass__ = utils.NoInstance
 
-DisplayMode = Types.EnumMap(
+Show = 1
+Hidden = 0
+
+DisplayMode = Types.AllowBoth(Types.EnumMap(
     {
-        "hidden": Hidden,
-        "show": Show,
+        "never-show": -1,
+        "hidden": 0,
+        "show": 1,
         "replace-with-children": ReplaceWithChildren
     }
-)
+), Types.Typecasts.int)
