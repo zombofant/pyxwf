@@ -80,6 +80,8 @@ class Navigation(Crumbs.CrumbBase):
                 nodeIterable.push(iter(navInfo))
             elif displayMode >= self.minDisplay:
                 li = ET.SubElement(ul, NS.XHTML.li)
+                if navInfo.getRepresentative() is ctx.PageNode:
+                    self._propagateActive(li)
                 a = ET.SubElement(li, NS.PyWebXML.a, href=child.Path)
                 a.text = navInfo.getTitle()
                 if (self.minDepth is None or depth < self.minDepth or
