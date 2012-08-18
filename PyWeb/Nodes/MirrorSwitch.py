@@ -1,5 +1,6 @@
+from __future__ import unicode_literals
 import os
-import httplib, random
+import httplib, random, urllib
 
 import PyWeb.Nodes as Nodes
 import PyWeb.Types as Types
@@ -29,14 +30,15 @@ class Mirror(object):
         else:
             conn = httplib.HTTPSConnection(self.host, self.sslPort)
         try:
-            conn.request("HEAD", path)
+            urlEncoded = urllib.quote(path.encode("utf-8"))
+            conn.request("HEAD", urlEncoded)
             response = conn.getresponse()
             status = response.status
         finally:
             conn.close()
 
         if status == 200:
-            return "{0}{1}".format(self.host, path)
+            return "{0}{1}".format(self.host, urlEncoded)
         else:
             return None
 
@@ -60,7 +62,6 @@ class MirrorSwitch(Nodes.Node, Navigation.Info):
     def resolvePath(self, ctx, relPath):
         toTry = list(self.mirrors)
         random.shuffle(toTry)
-        print(toTry)
         for mirror in toTry:
             postSchemeURL = mirror.test(relPath)
             if postSchemeURL is not None:
