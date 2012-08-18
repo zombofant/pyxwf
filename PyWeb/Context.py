@@ -136,10 +136,10 @@ class Context(object):
 
     @classmethod
     def getContentTypeToUse(cls, prefList, ownPreferences):
-        use = None
         if len(prefList) == 0:
-            return ownPreferences[0]
+            return None
 
+        use = None
         for pref in ownPreferences:
             for item in prefList:
                 if item.value == pref:

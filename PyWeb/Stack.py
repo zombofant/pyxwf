@@ -71,9 +71,9 @@ class WebStackContext(Context.Context):
             ",".join(tx.get_header_values("Accept"))
         )
         xhtmlContentType = self.getContentTypeToUse(
-            prefs, ["text/html", "application/xhtml+xml", "application/xml"])
+            prefs, ["application/xhtml+xml", "application/xml"])
 
-        self._canUseXHTML = xhtmlContentType != "text/html"
+        self._canUseXHTML = xhtmlContentType is not None
 
     def _parseUserAgent(self):
         tx = self._transaction
