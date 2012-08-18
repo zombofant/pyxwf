@@ -227,7 +227,7 @@ class Context(object):
 
     @Cachable.setter
     def Cachable(self, value):
-        self._cachable = Typecasts.Types.bool(value)
+        self._cachable = Types.Typecasts.bool(value)
 
     @property
     def IfModifiedSince(self):
