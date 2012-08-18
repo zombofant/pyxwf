@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import os, warnings, gc
+import os, warnings, gc, urllib
 from wsgiref.handlers import format_date_time
 from datetime import datetime
 
@@ -19,9 +19,9 @@ class WebStackContext(Context.Context):
     def __init__(self, transaction):
         super(WebStackContext, self).__init__(
             transaction.get_request_method(),
-            transaction.get_path_info(),
+            transaction.get_path_info(encoding="utf-8"),
             transaction.get_response_stream())
-        self._fullURI = transaction.get_path()
+        self._fullURI = transaction.get_path(encoding="utf-8")
         self._transaction = transaction
         self._parseIfModifiedSince()
         self._parseHostHeader()
