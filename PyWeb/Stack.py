@@ -139,6 +139,11 @@ class WebStackSite(Site.Site):
                 if len(loc) > 0 and loc[0] == "/":
                     loc = loc[1:]
                 loc = urllib.quote(os.path.join(self.urlRoot, loc).encode("utf-8"))
+                loc = b"{0}://{1}{2}".format(
+                    ctx.URLScheme,
+                    ctx.HostName,
+                    loc
+                )
             ctx._setCacheHeaders()
             transaction.redirect(loc, status.statusCode)
         except (Errors.HTTP200, EndOfResponse) as status:
