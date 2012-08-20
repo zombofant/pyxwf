@@ -105,12 +105,16 @@ class Context(object):
 
             text/html;q=1.0, application/xml;q=0.9, */*
         """
-        prefs = (s.strip().lower().partition(';')
-                    for s in preferences.split(","))
-        prefs = (Preference(value, float(q[2:]) if len(q) > 0 else 1.0)
-                    for (value, sep, q) in prefs
-                    if not (len(q) > 0 and float(q[2:])==0) and len(value) > 0)
-        prefs = sorted(prefs, reverse=True)
+        try:
+            prefs = (s.strip().lower().partition(';')
+                        for s in preferences.split(","))
+            prefs = (Preference(value, float(q[2:]) if len(q) > 0 else 1.0)
+                        for (value, sep, q) in prefs
+                        if not (len(q) > 0 and float(q[2:])==0) and len(value) > 0)
+            prefs = sorted(prefs, reverse=True)
+        except ValueError:
+            print("Parsing of preference list failed on following input: {0}".format(preferences))
+            return []
         return prefs
 
     @classmethod
