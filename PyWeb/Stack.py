@@ -133,9 +133,11 @@ class WebStackSite(Site.Site):
         except Errors.HTTPRedirection as status:
             loc = status.newLocation
             if status.local:
+                if isinstance(loc, str):
+                    loc = loc.decode("utf-8")
                 if len(loc) > 0 and loc[0] == "/":
                     loc = loc[1:]
-                loc = os.path.join(self.urlRoot, loc)
+                loc = urllib.quote(os.path.join(self.urlRoot, loc).encode("utf-8"))
             ctx._setCacheHeaders()
             transaction.redirect(loc, status.statusCode)
         except (Errors.HTTP200, EndOfResponse) as status:

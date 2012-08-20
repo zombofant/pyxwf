@@ -82,7 +82,7 @@ class RedirectInternal(RedirectBase):
 
     @property
     def Target(self):
-        return self.TargetNode.Path
+        return self.TargetNode.Path.encode("utf-8")
 
     def getNavigationInfo(self, ctx):
         return self.NavigationInfo(ctx, self)
