@@ -83,13 +83,13 @@ def XHTMLToHTML(tree):
 
 
 userAgentRegexes = [
-    ("ie", re.compile("MSIE ([0-9.]+)")),
+    ("ie", re.compile("MSIE ([0-9]+(\.[0-9]+)?)")),
     ("firefox", re.compile("Firefox/([0-9]+(\.[0-9]+)?)")),
-    ("safari", re.compile("Safari/([0-9.]+)")),
-    ("opera", re.compile("Opera/([0-9.]+)")),
-    ("lynx", re.compile("Lynx/([0-9.]+)")),
+    ("safari", re.compile("Safari/([0-9]+(\.[0-9]+)?)")),
+    ("opera", re.compile("Opera/([0-9]+(\.[0-9]+)?)")),
+    ("lynx", re.compile("Lynx/([0-9]+(\.[0-9]+)?)")),
     ("links", re.compile("Links ")),
-    ("wget", re.compile("[Ww]get/([0-9.]+)"))
+    ("wget", re.compile("[Ww]get/([0-9]+(\.[0-9]+)?)"))
 ]
 
 def guessUserAgent(headerValue):
