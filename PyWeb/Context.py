@@ -139,7 +139,7 @@ class Context(object):
         return use
 
     @classmethod
-    def getContentTypeToUse(cls, prefList, ownPreferences):
+    def getContentTypeToUse(cls, prefList, ownPreferences, matchWildcard=True):
         if len(prefList) == 0:
             return None
 
@@ -148,7 +148,7 @@ class Context(object):
             for item in prefList:
                 if item.value == pref:
                     return item.value
-                if use is None and fnmatch(pref, item.value):
+                if use is None and matchWildcard and fnmatch(pref, item.value):
                     use = pref
         return use
 

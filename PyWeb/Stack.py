@@ -71,7 +71,8 @@ class WebStackContext(Context.Context):
             ",".join(tx.get_header_values("Accept"))
         )
         xhtmlContentType = self.getContentTypeToUse(
-            prefs, ["application/xhtml+xml", "application/xml"])
+            prefs, ["application/xhtml+xml", "application/xml"],
+            matchWildcard=False)
 
         self._canUseXHTML = xhtmlContentType is not None
 
