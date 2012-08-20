@@ -5,7 +5,7 @@ and passes them through the tree defined in the sitemap xml.
 """
 from __future__ import unicode_literals
 
-import itertools, os, importlib, copy, mimetypes, warnings, re
+import itertools, os, importlib, copy, mimetypes, warnings, re, sys
 
 from PyWeb.utils import ET
 import PyWeb.Types as Types
@@ -435,7 +435,7 @@ class Site(Resource.Resource):
             ET.SubElement(err, NS.PyWebXML.resource).text = resourceName
             return tpl.transform(err, {})
 
-    def handle(self, ctx):
+    def getMessage(self, ctx):
         """
         Handle a request in the given Context *ctx*.
         """
@@ -519,9 +519,21 @@ class Site(Resource.Resource):
             message = Message.TextMessage(data, contentType,
                     statusCode=status, encoding="utf-8")
         else:
-            print("Cannot process node result: {0}".format(type(data)))
-            raise Errors.InternalServerError()
+            raise TypeError("Cannot process node result: {0}".format(type(data)))
         # only enforce at the end of a request, otherwise things may become
         # horribly slow if more resources are needed than the cache allows
         self.cache.enforceLimit()
         return message
+
+    def handle(self, ctx):
+        try:
+            return self.getMessage(ctx)
+        except Errors.Handler.InternalServerError as err:
+            return Message.HTMLMessage.fromXHTMLTree(err.xhtml, statusCode=500,
+                encoding="utf-8")
+        except Errors.HTTP.HTTPException:
+            raise
+        except Exception as err:
+            xhtml = Errors.Handler.InternalServerError(ctx, *sys.exc_info()).xhtml
+            return Message.HTMLMessage.fromXHTMLTree(xhtml, statusCode=500,
+                encoding="utf-8")
