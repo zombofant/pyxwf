@@ -76,7 +76,7 @@ def NumericRange(typecast, min, max):
         rangeStr = "{0}..{1}".format(min, max)
         def tc(value):
             numeric = typecast(value)
-            if not min <= value <= max:
+            if not (min <= numeric <= max):
                 raise ValueError("numeric value {0} out of bounds: {1}".format(
                     numeric, rangeStr
                 ))
