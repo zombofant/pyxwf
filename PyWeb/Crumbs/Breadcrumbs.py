@@ -22,7 +22,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
             node.get("force-show-current", False))
         self.minDisplay = Types.Typecasts.int(node.get("min-display", 1))
 
-    def render(self, ctx):
+    def render(self, ctx, intoNode, atIndex):
         if not ctx.PageNode:
             return None
         ul = ET.Element(NS.XHTML.ul)
@@ -50,4 +50,4 @@ class Breadcrumbs(Crumbs.CrumbBase):
             else:
                 li.text = navInfo.getTitle()
             ul.insert(0, li)
-        return ul
+        intoNode.insert(atIndex, ul)

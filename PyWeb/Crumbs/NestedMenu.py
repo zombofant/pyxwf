@@ -91,14 +91,16 @@ class Navigation(Crumbs.CrumbBase):
                         li.append(subtree)
         return ul
 
-    def render(self, ctx):
+    def render(self, ctx, intoNode, atIndex):
         if ctx.PageNode:
             activeChain = frozenset(ctx.PageNode.iterUpwards())
         else:
             activeChain = frozenset()
         if self.showRoot:
-            return self._navTree(None, ctx, [self.root], depth=0,
+            tree = self._navTree(None, ctx, [self.root], depth=0,
                 activeChain=activeChain)
+            intoNode.insert(atIndex, tree)
         else:
-            return self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
+            tree = self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
                 activeChain=activeChain)
+            intoNode.insert(atIndex, tree)

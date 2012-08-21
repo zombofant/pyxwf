@@ -242,6 +242,12 @@ class Site(Resource.Resource):
                     continue
                 authorObj.applyToNode(author)
 
+    def _placeCrumb(self, ctx, crumbNode, crumb):
+        parent = crumbNode.getparent()
+        idx = parent.index(crumbNode)
+        del parent[idx]
+        crumb.render(ctx, parent, idx)
+
     def transformPyNamespace(self, ctx, body, crumbs=True, a=True, link=True,
             img=True):
         """
@@ -256,16 +262,11 @@ class Site(Resource.Resource):
                 crumbs = True
                 crumbID = crumbNode.get("id")
                 try:
-                    crumbTree = ctx.crumbCache[crumbID]
+                    crumb = self.crumbs[crumbID]
                 except KeyError:
-                    try:
-                        crumb = self.crumbs[crumbID]
-                    except KeyError:
-                        raise ValueError("Invalid crumb id: {0!r}."\
-                                .format(crumbID))
-                    else:
-                        crumbTree = crumb.render(ctx)
-                self._replaceChild(crumbNode.getparent(), crumbNode, crumbTree)
+                    raise ValueError("Invalid crumb id: {0!r}."\
+                            .format(crumbID))
+                self._placeCrumb(ctx, crumbNode, crumb)
 
         if a:
             for localLink in body.iter(NS.PyWebXML.a):
