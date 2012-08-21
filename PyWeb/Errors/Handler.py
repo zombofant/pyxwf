@@ -33,10 +33,10 @@ class InternalServerError(HTTP.InternalServerError):
             if len(obj) == 0:
                 return u"()"
             return u"(\n"+newIndent+((u"\n"+newIndent).join(self.fancyRepr(item, newIndent2) for item in obj))+u"\n"+indent+u")"
-        elif hasattr(obj, "__class__") and obj.__class__ == Cookie:
-            return self.fancyRepr(obj.value)
-        elif hasattr(obj, "__class__") and obj.__class__ == HeaderDict:
-            return self.fancyRepr(obj.headers)
+        #elif hasattr(obj, "__class__") and obj.__class__ == Cookie:
+        #    return self.fancyRepr(obj.value)
+        #elif hasattr(obj, "__class__") and obj.__class__ == HeaderDict:
+        #    return self.fancyRepr(obj.headers)
         elif hasattr(obj, "__unicode__") or type(obj) == unicode:
             return u"""[{1}] u"{0}\"""".format(unicode(obj), type(obj))
         elif hasattr(obj, "__str__") or type(obj) == str:
