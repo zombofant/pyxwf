@@ -49,16 +49,28 @@ class Navigation(Crumbs.CrumbBase):
         self.activeClass = node.get("active-class", "nav-active")
         self.childActiveClass = node.get("child-active-class")
         self.minDisplay = Types.Typecasts.int(node.get("min-display", 1))
+        self.rootAsHeader = Types.DefaultForNone(False,
+            Types.NumericRange(int, 1, 6))(node.get("root-as-header"))
 
     def _propagateActive(self, eNode):
-        cls = self.activeClass
+        if not self.childActiveClass:
+            return
+        cls = self.childActiveClass
         while eNode is not None:
             if eNode.tag == NS.XHTML.li:
-                utils.addClass(eNode, cls)
-            if not self.childActiveClass:
-                return
+                a = eNode.find(NS.XHTML.a)
+                if a is not None:
+                    utils.addClass(a, cls)
             eNode = eNode.getparent()
-            cls = self.childActiveClass
+
+    def _markupA(self, ctx, parent, node, navInfo, propagate=True):
+        a = ET.SubElement(parent, NS.PyWebXML.a, href=node.Path)
+        a.text = navInfo.getTitle()
+        if navInfo.getRepresentative() is ctx.PageNode:
+            utils.addClass(a, self.activeClass)
+            if propagate:
+                self._propagateActive(a)
+        return a
 
     def _navTree(self, parent, ctx, info, depth=0, activeChain=set()):
         if self.maxDepth > 0 and depth > self.maxDepth:
@@ -80,10 +92,7 @@ class Navigation(Crumbs.CrumbBase):
                 nodeIterable.push(iter(navInfo))
             elif displayMode >= self.minDisplay:
                 li = ET.SubElement(ul, NS.XHTML.li)
-                if navInfo.getRepresentative() is ctx.PageNode:
-                    self._propagateActive(li)
-                a = ET.SubElement(li, NS.PyWebXML.a, href=child.Path)
-                a.text = navInfo.getTitle()
+                self._markupA(ctx, li, child, navInfo, True)
                 if (self.minDepth is None or depth < self.minDepth or
                         child in activeChain):
                     subtree = self._navTree(li, ctx, navInfo, depth+1, activeChain)
@@ -97,9 +106,23 @@ class Navigation(Crumbs.CrumbBase):
         else:
             activeChain = frozenset()
         if self.showRoot:
-            tree = self._navTree(None, ctx, [self.root], depth=0,
-                activeChain=activeChain)
-            intoNode.insert(atIndex, tree)
+            if self.rootAsHeader is not None:
+                tree = self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
+                    depth=0,
+                    activeChain=activeChain)
+                intoNode.insert(atIndex, tree)
+                header = ET.Element(NS.XHTML.header)
+                hX = ET.SubElement(header,
+                    getattr(NS.XHTML, "h{0}".format(self.rootAsHeader)))
+                self._markupA(ctx, hX, self.root,
+                    self.root.getNavigationInfo(ctx),
+                    propagate=False)
+                intoNode.insert(atIndex, header)
+            else:
+                tree = self._navTree(None, ctx, [self.root],
+                    depth=0,
+                    activeChain=activeChain)
+                intoNode.insert(atIndex, tree)
         else:
             tree = self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
                 activeChain=activeChain)
