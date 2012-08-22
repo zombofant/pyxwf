@@ -83,14 +83,69 @@ def XHTMLToHTML(tree):
 
 
 userAgentRegexes = [
+    ("googlebot", re.compile("Googlebot/([0-9]+(\.[0-9]+)?)")),
+    ("googlebot", re.compile("Googlebot-Image/([0-9]+(\.[0-9]+)?)")),
+    ("bingbot", re.compile("bingbot/([0-9]+(\.[0-9]+)?)")),
+    ("ahrefsbot", re.compile("AhrefsBot/([0-9]+(\.[0-9]+)?)")),
+    ("yandexbot", re.compile("YandexBot/([0-9]+(\.[0-9]+)?)")),
+    ("yahoo-slurp", re.compile("Yahoo! Slurp/([0-9]+(\.[0-9]+)?)")),
+    ("yahoo-slurp", re.compile("Yahoo! Slurp")),
+    ("speedy-spider", re.compile("Speedy Spider")),
+    ("sistrix-crawler", re.compile("SISTRIX Crawler")),
+    ("msnbot", re.compile("msnbot/([0-9]+(\.[0-9]+)?)")),
+    ("msnbot", re.compile("msnbot-media/([0-9]+(\.[0-9]+)?)")),
+    ("konqueror", re.compile("Konqueror/([0-9]+(\.[0-9]+)?)")),
+    ("chrome", re.compile("Chrome/([0-9]+(\.[0-9]+)?)")),
     ("ie", re.compile("MSIE ([0-9]+(\.[0-9]+)?)")),
     ("firefox", re.compile("Firefox/([0-9]+(\.[0-9]+)?)")),
+    ("firefox", re.compile("Gecko/[0-9]+\s+Firefox[0-9]+")),
+    ("firefox", re.compile("Minefield/([0-9]+(\.[0-9]+)?)")),
+    ("firefox", re.compile("Iceape/([0-9]+(\.[0-9]+)?)")),
+    ("firefox", re.compile("Iceweasel/([0-9]+(\.[0-9]+)?)")),
+    ("seamonkey", re.compile("SeaMonkey/([0-9]+(\.[0-9]+)?)")),
     ("safari", re.compile("Safari/([0-9]+(\.[0-9]+)?)")),
     ("opera", re.compile("Opera/([0-9]+(\.[0-9]+)?)")),
     ("lynx", re.compile("Lynx/([0-9]+(\.[0-9]+)?)")),
     ("links", re.compile("Links ")),
-    ("wget", re.compile("[Ww]get/([0-9]+(\.[0-9]+)?)"))
+    ("w3m", re.compile("w3m/([0-9]+(\.[0-9]+)?)")),
+    ("wget", re.compile("[Ww]get/([0-9]+(\.[0-9]+)?)")),
+    ("rotfuchs", re.compile("Gecko Rotfuchs")),
+    ("epiphany", re.compile("Epiphany/([0-9]+(\.[0-9]+)?)")),
+    ("rssowl", re.compile("RSSOwl/([0-9]+(\.[0-9]+)?)")),
+    ("askbot", re.compile("Ask Jeeves")),
+    ("exabot", re.compile("Exabot/([0-9]+(\.[0-9]+)?)")),
+    ("seekbot", re.compile("Seekbot/([0-9]+(\.[0-9]+)?)")),
+    ("libwww-perl", re.compile("libwww-perl/([0-9]+(\.[0-9]+)?)")),
+    ("blank", re.compile("^\s*-\s*$"))
 ]
+
+userAgentClasses = {
+    "googlebot": "indexer",
+    "bingbot": "indexer",
+    "yahoo-slurp": "indexer",
+    "msnbot": "indexer",
+    "speedy-spider": "crawler",
+    "sistrix-crawler": "crawler",
+    "wget": "crawler",
+    "firefox": "browser",
+    "seamonkey": "browser",
+    "safari": "browser",
+    "opera": "browser",
+    "links": "browser",
+    "lynx": "browser",
+    "rotfuchs": "browser",
+    "chrome": "browser",
+    "ie": "browser",
+    "w3m": "browser",
+    "konqueror": "browser",
+    "yandexbot": "indexer",
+    "ahrefsbot": "crawler",
+    "epiphany": "browser",
+    "askbot": "indexer",
+    "rssowl": "feedreader",
+    "exabot": "indexer",
+    "seekbot": "indexer",
+}
 
 def guessUserAgent(headerValue):
     """
@@ -104,6 +159,10 @@ def guessUserAgent(headerValue):
     * ``links`` for links
     * ``lynx`` for lynx
     * ``wget`` for wget
+    * ``chrome`` for chrome
+    * ``yahoo-slurp`` for yahoo slurp bot
+    * ``konqueror`` for konqueror
+    * ``googlebot`` for googlebot
     * None for each unknown user agent
 
     *version* will be either the version number of the user agent or None if the
@@ -121,3 +180,6 @@ def guessUserAgent(headerValue):
             return agentName, version
     else:
         return (None, None)
+
+def classifyUserAgent(uaName):
+    return userAgentClasses.get(uaName, None)
