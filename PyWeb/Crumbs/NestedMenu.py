@@ -43,7 +43,8 @@ class Navigation(Crumbs.CrumbBase):
         self.root = site.getNode(node.get("root"))
         self.showRoot = Types.DefaultForNone(False, Types.Typecasts.bool)\
                                             (node.get("show-root"))
-        self.maxDepth = depthRange(node.get("max-depth", 0))
+        self.maxDepth = Types.DefaultForNone(None, depthRange)\
+                                            (node.get("max-depth"))
         self.minDepth = Types.DefaultForNone(None, depthRange)\
                                             (node.get("min-depth"))
         self.activeClass = node.get("active-class", "nav-active")
@@ -72,8 +73,10 @@ class Navigation(Crumbs.CrumbBase):
                 self._propagateActive(a)
         return a
 
-    def _navTree(self, parent, ctx, info, depth=0, activeChain=set()):
-        if self.maxDepth > 0 and depth > self.maxDepth:
+    def _navTree(self, parent, ctx, info, depth=0, activeChain=set(), active=False):
+        if self.maxDepth is not None and depth > self.maxDepth:
+            return
+        if not (active or self.minDepth is None or depth <= self.minDepth):
             return
         nodeIterable = IteratorStack()
         try:
@@ -93,11 +96,10 @@ class Navigation(Crumbs.CrumbBase):
             elif displayMode >= self.minDisplay:
                 li = ET.SubElement(ul, NS.XHTML.li)
                 self._markupA(ctx, li, child, navInfo, True)
-                if (self.minDepth is None or depth < self.minDepth or
-                        child in activeChain):
-                    subtree = self._navTree(li, ctx, navInfo, depth+1, activeChain)
-                    if subtree is not None:
-                        li.append(subtree)
+                subtree = self._navTree(li, ctx, navInfo, depth+1, activeChain,
+                    active=child in activeChain)
+                if subtree is not None:
+                    li.append(subtree)
         return ul
 
     def render(self, ctx, intoNode, atIndex):
@@ -108,9 +110,11 @@ class Navigation(Crumbs.CrumbBase):
         if self.showRoot:
             if self.rootAsHeader is not None:
                 tree = self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
-                    depth=0,
-                    activeChain=activeChain)
-                intoNode.insert(atIndex, tree)
+                    depth=1,
+                    activeChain=activeChain,
+                    active=self.root in activeChain)
+                if tree is not None:
+                    intoNode.insert(atIndex, tree)
                 header = ET.Element(NS.XHTML.header)
                 hX = ET.SubElement(header,
                     getattr(NS.XHTML, "h{0}".format(self.rootAsHeader)))
@@ -121,9 +125,13 @@ class Navigation(Crumbs.CrumbBase):
             else:
                 tree = self._navTree(None, ctx, [self.root],
                     depth=0,
-                    activeChain=activeChain)
-                intoNode.insert(atIndex, tree)
+                    activeChain=activeChain,
+                    active=True)
+                if tree is not None:
+                    intoNode.insert(atIndex, tree)
         else:
             tree = self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
-                activeChain=activeChain)
-            intoNode.insert(atIndex, tree)
+                activeChain=activeChain,
+                active=True)
+            if tree is not None:
+                intoNode.insert(atIndex, tree)
