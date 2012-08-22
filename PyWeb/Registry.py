@@ -126,7 +126,7 @@ class HookRegistry(object):
     def register(self, hookName, handler, priority=0):
         hookList = self.hookDict.setdefault(hookName, [])
         hookList.append((priority, handler))
-        hookList.sort(key=operator.itemgetter(0))
+        # hookList.sort(key=operator.itemgetter(0))
 
     def call(self, hookName, *args):
         handlers = self.hookDict.get(hookName, [])

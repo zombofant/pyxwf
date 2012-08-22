@@ -81,6 +81,7 @@ def XHTMLToHTML(tree):
             raise ValueError("tree contains non-xhtml elements: {0}:{1}".format(ns, name))
         item.tag = name
 
+mobileUARE = re.compile("(\sMobile\s|\sMobile/[0-9a-fA-F]+)")
 
 userAgentRegexes = [
     ("googlebot", re.compile("Googlebot/([0-9]+(\.[0-9]+)?)")),
@@ -183,3 +184,6 @@ def guessUserAgent(headerValue):
 
 def classifyUserAgent(uaName):
     return userAgentClasses.get(uaName, None)
+
+def isMobileUserAgent(headerValue):
+    return mobileUARE.search(headerValue) is not None

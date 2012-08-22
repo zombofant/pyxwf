@@ -89,6 +89,7 @@ class WebStackContext(Context.Context):
         header = values[0]
         userAgent, version = utils.guessUserAgent(header)
         self._html5Support = self.userAgentSupportsHTML5(userAgent, version)
+        self._isMobileClient = utils.isMobileUserAgent(header)
 
     def _requireQuery(self):
         self._queryData = self._transaction.get_fields_from_path()

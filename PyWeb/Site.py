@@ -249,7 +249,7 @@ class Site(Resource.Resource):
         crumb.render(ctx, parent, idx)
 
     def transformPyNamespace(self, ctx, body, crumbs=True, a=True, link=True,
-            img=True):
+            img=True, mobileSwitch=True):
         """
         Do PyWeb specific transformations on the XHTML tree *body*. This
         includes transforming local a tags, local img tags and placing crumbs.
@@ -288,11 +288,23 @@ class Site(Resource.Resource):
                 localLink.tag = NS.XHTML.link
                 if localLink.get("href"):
                     self.transformHref(localLink)
+        if mobileSwitch:
+            toDelete = set()
+            for mobileSwitch in body.iter(getattr(NS.PyWebXML, "if-mobile")):
+                if Types.Typecasts.bool(mobileSwitch.get("mobile", True)) != ctx.IsMobileClient:
+                    toDelete.add(mobileSwitch)
+                    continue
 
-    def getTemplateArguments(self):
+                mobileSwitch.tag = getattr(NS.XHTML, mobileSwitch.get("xhtml-element", "span"))
+            for mobileSwitch in toDelete:
+                mobileSwitch.getparent().remove(mobileSwitch)
+
+
+    def getTemplateArguments(self, ctx):
         # XXX: This will possibly explode one day ...
         return {
-            b"site_title": utils.unicodeToXPathStr(self.title)
+            b"site_title": utils.unicodeToXPathStr(self.title),
+            b"mobile_client": "1" if ctx.IsMobileClient else "0"
         }
 
     def transformHref(self, node, attrName="href"):

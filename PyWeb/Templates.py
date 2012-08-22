@@ -40,7 +40,7 @@ class Template(Resource.Resource):
         keywords and author information, setting up the title, loading crumbs,
         replacing local links and more.
         """
-        templateArgs = site.getTemplateArguments()
+        templateArgs = site.getTemplateArguments(ctx)
         templateArgs.update(document.getTemplateArguments())
 
         metaPath = NS.PyWebXML.meta

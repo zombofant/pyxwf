@@ -84,6 +84,7 @@ class Context(object):
         self._html5Support = False
         self._vary = set(["host"])  # this is certainly used ;)
         self._accept = None
+        self._isMobileClient = False
 
     def _requireQuery(self):
         """
@@ -273,6 +274,19 @@ class Context(object):
         """
         self.addVary("Accept")
         return self._canUseXHTML
+
+    @property
+    def IsMobileClient(self):
+        """
+        Return whether the user agent is a mobile phone or similar.
+        """
+        self.addVary("User-Agent")
+        return self._isMobileClient
+
+    @IsMobileClient.setter
+    def IsMobileClient(self, value):
+        self._isMobileClient = Types.Typecasts.bool(value)
+        print(self._isMobileClient)
 
     @property
     def HTML5Support(self):
