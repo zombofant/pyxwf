@@ -158,7 +158,7 @@ class Context(object):
             minVersion = cls.userAgentHTML5Support[userAgent]
             return version >= minVersion
         except KeyError:
-            return False
+            return True  # we assume the best ... let them burn
 
     @property
     def Method(self):
