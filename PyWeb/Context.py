@@ -346,7 +346,15 @@ class Context(object):
             raise Errors.NotModified()
 
     def checkAcceptable(self, contentType):
-        pass
+        if self._accept is None:
+            return
+        if len(self._accept) == 0:
+            return
+        for pref in self._accept:
+            if pref.value == contentType or fnmatch(contentType, pref.value):
+                return
+        else:
+            raise Errors.NotAcceptable()
 
     def addCacheControl(self, token):
         """
