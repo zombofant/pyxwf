@@ -111,9 +111,13 @@ class XHTMLMessage(XMLMessage):
     automatically.
     """
 
-    def __init__(self, docTree, **kwargs):
+    def __init__(self, docTree, minifyNamespaces=True, **kwargs):
+        myArgs = {
+            "cleanupNamespaces": True
+        }
+        myArgs.update(kwargs)
         super(XHTMLMessage, self).__init__(docTree, ContentTypes.xhtml,
-            **kwargs)
+            **myArgs)
 
     def getEncodedBody(self):
         return super(XHTMLMessage, self).getEncodedBody(doctype="<!DOCTYPE html>")
