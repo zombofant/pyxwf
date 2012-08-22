@@ -67,12 +67,13 @@ class WebStackContext(Context.Context):
     def _parsePreferences(self):
         tx = self._transaction
 
-        prefs = self.parsePreferencesList(
+        self.parsePreferencesList(
             ",".join(tx.get_header_values("Accept"))
         )
         xhtmlContentType = self.getContentTypeToUse(
-            prefs, ["application/xhtml+xml", "application/xml"],
-            matchWildcard=False)
+            ["application/xhtml+xml", "application/xml"],
+            matchWildcard=False
+        )
 
         self._canUseXHTML = xhtmlContentType is not None
 
@@ -106,6 +107,7 @@ class WebStackContext(Context.Context):
         else:
             self.addCacheControl("no-cache")
         tx.set_header_value("Cache-Control", ",".join(self._cacheControl))
+        tx.set_header_value("Vary", ",".join(self._vary))
 
     def sendResponse(self, message):
         tx = self._transaction

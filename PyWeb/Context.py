@@ -82,6 +82,8 @@ class Context(object):
         self._canUseXHTML = False
         self._cacheControl = set()
         self._html5Support = False
+        self._vary = set(["host"])  # this is certainly used ;)
+        self._accept = None
 
     def _requireQuery(self):
         """
@@ -98,8 +100,7 @@ class Context(object):
         """
         self._forceNoCache = True
 
-    @classmethod
-    def parsePreferencesList(cls, preferences):
+    def parsePreferencesList(self, preferences):
         """
         Parse a HTTP formatted list of preferences like the following:
 
@@ -114,8 +115,8 @@ class Context(object):
             prefs = sorted(prefs, reverse=True)
         except ValueError:
             print("Parsing of preference list failed on following input: {0}".format(preferences))
-            return []
-        return prefs
+            prefs = []
+        self._accept = prefs
 
     @classmethod
     def getCharsetToUse(cls, prefList, ownPreferences):
@@ -138,14 +139,16 @@ class Context(object):
             use = ownPreferences[0]
         return use
 
-    @classmethod
-    def getContentTypeToUse(cls, prefList, ownPreferences, matchWildcard=True):
-        if len(prefList) == 0:
+    def getContentTypeToUse(self, ownPreferences, matchWildcard=True):
+        if self._accept is None:
+            raise Exception("parsePreferences() must have been called before getContentTypeToUse")
+        accept = self._accept
+        if len(accept) == 0:
             return None
 
         use = None
         for pref in ownPreferences:
-            for item in prefList:
+            for item in accept:
                 if item.value == pref:
                     return item.value
                 if use is None and matchWildcard and fnmatch(pref, item.value):
@@ -268,6 +271,7 @@ class Context(object):
         If this is False, the application handling the request represented by
         this Context, must not send XHTML responses.
         """
+        self.addVary("Accept")
         return self._canUseXHTML
 
     @property
@@ -276,6 +280,7 @@ class Context(object):
         Return whether the User-Agent is supposed to support HTML5. This is
         used by the site to determine whether to apply a to-html4 backtransform.
         """
+        self.addVary("User-Agent")
         return self._html5Support
 
     @abc.abstractmethod
@@ -336,6 +341,7 @@ class Context(object):
             return
         if self.IfModifiedSince is None:
             return
+        self.addVary("If-Modified-Since")
         if self.LastModified <= self.IfModifiedSince:
             raise Errors.NotModified()
 
@@ -347,3 +353,6 @@ class Context(object):
         Add *token* to the list of Cache-Control HTTP tokens.
         """
         self._cacheControl.add(token)
+
+    def addVary(self, fieldName):
+        self._vary.add(fieldName.lower())
