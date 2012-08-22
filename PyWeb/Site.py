@@ -251,8 +251,13 @@ class Site(Resource.Resource):
     def transformPyNamespace(self, ctx, body, crumbs=True, a=True, link=True,
             img=True):
         """
-        Do PyWeb specific transformations on the XHTML body *body*. This
+        Do PyWeb specific transformations on the XHTML tree *body*. This
         includes transforming local a tags, local img tags and placing crumbs.
+
+        Note that the tree *body* is not bound to be an actual XHTML body.
+        This method will iterate over all matching elements, so it can also be
+        a whole XHTML html document or just a snippet or something completely
+        outside the XHTML namespace.
         """
         if not hasattr(ctx, "crumbCache"):
             ctx.crumbCache = {}
