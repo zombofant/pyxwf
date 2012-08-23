@@ -207,6 +207,21 @@ class Site(Resource.Resource):
             workingCopy.remove(compatibility)
         self.html4Transform = compatibility.get("html4-transform")
 
+        self._namespaceMap = {}
+        self._forceNamespaces = set()
+        xmlNamespaces = workingCopy.find(getattr(NS.Site, "xml-namespaces"))
+        if xmlNamespaces is None:
+            xmlNamespaces = ET.Element(getattr(NS.Site, "xml-namespaces"))
+        else:
+            workingCopy.remove(xmlNamespaces)
+        for ns in xmlNamespaces.findall(NS.Site.ns):
+            prefix = Types.NotNone(ns.get("prefix"))
+            uri = Types.NotNone(ns.get("uri"))
+            force = Types.Typecasts.bool(ns.get("force", False))
+            self._namespaceMap[prefix] = uri
+            if force:
+                self._forceNamespaces.add((prefix, uri))
+
         # further information, warn about unknown tags in our namespace
         for child in workingCopy:
             if child.tag is ET.Comment:
@@ -523,19 +538,24 @@ class Site(Resource.Resource):
 
             if not ctx.CanUseXHTML:
                 message = Message.HTMLMessage.fromXHTMLTree(resultTree,
-                        statusCode=status, encoding="utf-8",
-                        prettyPrint=self.prettyPrint)
+                    statusCode=status, encoding="utf-8",
+                    prettyPrint=self.prettyPrint
+                )
             else:
                 message = Message.XHTMLMessage(resultTree,
-                        statusCode=status, encoding="utf-8",
-                        prettyPrint=self.prettyPrint)
+                    statusCode=status, encoding="utf-8",
+                    prettyPrint=self.prettyPrint,
+                    forceNamespaces=dict(self._forceNamespaces)
+                )
         elif isinstance(data, (ET._Element, ET._ElementTree)):
             message = Message.XMLMessage(data, contentType,
-                    statusCode=status, encoding="utf-8",
-                    cleanupNamespaces=True, prettyPrint=self.prettyPrint)
+                statusCode=status, encoding="utf-8",
+                cleanupNamespaces=True, prettyPrint=self.prettyPrint
+            )
         elif isinstance(data, basestring):
             message = Message.TextMessage(data, contentType,
-                    statusCode=status, encoding="utf-8")
+                statusCode=status, encoding="utf-8"
+            )
         else:
             raise TypeError("Cannot process node result: {0}".format(type(data)))
         # only enforce at the end of a request, otherwise things may become
