@@ -97,12 +97,14 @@ class Document(object):
             ext=None,
             authors=None,
             date=None,
-            license=None):
+            license=None,
+            hmeta=None):
         super(Document, self).__init__()
         self.title = title
         self.authors = list(authors or [])
         self.keywords = keywords
         self.links = links
+        self.hmeta = list(hmeta or [])
         self.body = body
         self.etag = etag
         self.date = date
@@ -129,6 +131,9 @@ class Document(object):
 
         for link in self.links:
             meta.append(link)
+
+        for hmeta in self.hmeta:
+            meta.append(hmeta)
 
         if self.date:
             date = ET.SubElement(meta, NS.PyWebXML.date)

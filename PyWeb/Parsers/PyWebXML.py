@@ -54,6 +54,10 @@ class PyWebXML(Parsers.ParserBase):
         datetext = meta.findtext(NS.PyWebXML.date)
         return utils.parseISODate(datetext)
 
+    @classmethod
+    def getMeta(cls, meta):
+        return meta.findall(NS.XHTML.meta)
+
     def parseTree(self, root, headerOffset=1):
         if root.tag != NS.PyWebXML.page:
             raise ValueError("This is not a pyweb-xml document.")
@@ -75,11 +79,12 @@ class PyWebXML(Parsers.ParserBase):
 
         date = self.getDate(meta)
         authors = self.getAuthors(meta)
+        hmeta = self.getMeta(meta)
 
         ext = meta
 
         return Document.Document(title, keywords, links, body,
-            ext=ext, date=date, authors=authors)
+            ext=ext, date=date, authors=authors, hmeta=hmeta)
 
     def parse(self, fileref, **kwargs):
         tree = ET.parse(fileref)

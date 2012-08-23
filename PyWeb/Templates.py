@@ -10,6 +10,8 @@ import PyWeb.Resource as Resource
 import PyWeb.Cache as Cache
 import PyWeb.Namespaces as NS
 import PyWeb.Document as Document
+import PyWeb.Registry as Registry
+import PyWeb.ContentTypes as ContentTypes
 import PyWeb.Parsers.PyWebXML as PyWebXML
 
 class Template(Resource.Resource):
@@ -81,6 +83,8 @@ class Template(Resource.Resource):
                 "name": "keywords",
                 "content": ",".join(newDoc.keywords)
             })
+        for hmeta in newDoc.hmeta:
+            head.append(hmeta)
         html.append(body)
         site.transformPyNamespace(ctx, html)
 
@@ -109,17 +113,7 @@ class XSLTTemplate(Template):
 
     def transform(self, body, templateArgs, customBody=NS.XHTML.body):
         newDoc = self.rawTransform(body, templateArgs)
-
-        meta = newDoc.find(NS.PyWebXML.meta)
-        if meta is not None:
-            keywords, links = PyWebXML.PyWebXML.getKeywordsAndLinks(meta)
-            title = meta.findtext(NS.PyWebXML.title)
-        else:
-            links, keywords = [], []
-            title = None
-
-        body = newDoc.find(customBody)
-        return Document.Document(title, keywords, links, body)
+        return Registry.ParserPlugins.getPluginInstance(ContentTypes.PyWebXML).parseTree(newDoc.getroot(), headerOffset=0)
 
 
 class XSLTTemplateCache(Cache.FileSourcedCache):
