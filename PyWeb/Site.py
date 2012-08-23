@@ -291,18 +291,18 @@ class Site(Resource.Resource):
         if a:
             for localLink in body.iter(NS.PyWebXML.a):
                 localLink.tag = NS.XHTML.a
-                self.transformHref(localLink)
+                self.transformHref(ctx, localLink)
         if img:
             for localImg in body.iter(NS.PyWebXML.img):
                 localImg.tag = NS.XHTML.img
-                self.transformHref(localImg)
+                self.transformHref(ctx, localImg)
                 localImg.set("src", localImg.get("href"))
                 del localImg.attrib["href"]
         if link:
             for localLink in body.iter(NS.PyWebXML.link):
                 localLink.tag = NS.XHTML.link
                 if localLink.get("href"):
-                    self.transformHref(localLink)
+                    self.transformHref(ctx, localLink)
         if mobileSwitch:
             toDelete = set()
             for mobileSwitch in body.iter(getattr(NS.PyWebXML, "if-mobile")):
@@ -322,7 +322,7 @@ class Site(Resource.Resource):
             b"mobile_client": "1" if ctx.IsMobileClient else "0"
         }
 
-    def transformHref(self, node, attrName="href"):
+    def transformHref(self, ctx, node, attrName="href", makeGlobal=False):
         """
         Transform the attribute *attrName* on the ETree node *node* as if it
         was a possibly local url. If it is local and relative, it gets
@@ -332,7 +332,11 @@ class Site(Resource.Resource):
         v = node.get(attrName)
         if v is None or v.startswith("/") or self.urnScheme.search(v):  # non local href
             return
-        node.set(attrName, os.path.join(self.urlRoot, v))
+        value = os.path.join(self.urlRoot, v)
+        if makeGlobal:
+            value = "{0}://{1}{2}".format(ctx.URLScheme, ctx.HostName, value)
+        node.set(attrName, value)
+
 
     def _getNode(self, ctx):
         """

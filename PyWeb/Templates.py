@@ -68,9 +68,8 @@ class Template(Resource.Resource):
             ieLimit = link.get("ie-only")
             if ieLimit is not None:
                 link = copy.copy(link)
-                site.transformHref(link)
+                site.transformHref(ctx, link)
                 link.tag = "link"
-                ET.cleanup_namespaces(link)
                 del link.attrib["ie-only"]
                 s = ET.tostring(link, method="html", xml_declaration="no", encoding="utf-8").decode("utf-8")
                 s = "[{0}]>{1}<![endif]".format(ieLimit, s)

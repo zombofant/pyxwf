@@ -69,7 +69,7 @@ class AtomFeedRoot(object):
         self.site.transformPyNamespace(ctx, feed, crumbs=False, link=False)
         for localLink in feed.iter(NS.PyWebXML.link):
             localLink.tag = NS.Atom.link
-            self.site.transformHref(localLink)
+            self.site.transformHref(ctx, localLink)
             localLink.text = self.linkPrefix[:-1]+localLink.get("href")
             del localLink.attrib["href"]
         return feed
