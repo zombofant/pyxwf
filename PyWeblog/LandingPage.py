@@ -43,6 +43,7 @@ class LandingPage(Directories.WithFeedMixin, Nodes.Node, Navigation.Info):
         return self.template.transform(articles, {})
 
     def getNavigationInfo(self, ctx):
+        ctx.useResource(self.blog)
         return self
 
     def getTitle(self):
