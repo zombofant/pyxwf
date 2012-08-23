@@ -215,7 +215,7 @@ class Site(Resource.Resource):
         else:
             workingCopy.remove(xmlNamespaces)
         for ns in xmlNamespaces.findall(NS.Site.ns):
-            prefix = Types.NotNone(ns.get("prefix"))
+            prefix = ns.get("prefix")
             uri = Types.NotNone(ns.get("uri"))
             force = Types.Typecasts.bool(ns.get("force", False))
             self._namespaceMap[prefix] = uri
