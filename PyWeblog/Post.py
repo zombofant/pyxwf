@@ -80,7 +80,8 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
     def _createPost(self):
         date_long = self.creationDate.strftime(self.site.longDateFormat)
         self.post = self.blog.PostTemplate.transform(self.article, {
-            b"date_long": utils.unicodeToXPathStr(date_long)
+            b"date_long": utils.unicodeToXPathStr(date_long),
+            b"last_modified": utils.unicodeToXPathStr(self._lastModified.isoformat()+"Z")
         })
         return self.post
 
