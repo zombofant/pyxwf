@@ -13,6 +13,7 @@ xhtml = "application/xhtml+xml"
 html = "text/html"
 plainText = "text/plain"
 Atom = "application/atom+xml"
+PyWebXML = "application/x-pyweb-xml"
 
 normalization = {
     "application/xhtml+xml": xhtml,
