@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
@@ -21,6 +23,8 @@ class Breadcrumbs(Crumbs.CrumbBase):
         self.forceShowCurrent = Types.Typecasts.bool(
             node.get("force-show-current", False))
         self.minDisplay = Types.Typecasts.int(node.get("min-display", 1))
+        self.rich = self._richMap(node.get("rich"))
+        self.rdfaPrefix = node.get("rdfa-prefix", "v:")
 
     def render(self, ctx, intoNode, atIndex):
         if not ctx.PageNode:
@@ -44,10 +48,36 @@ class Breadcrumbs(Crumbs.CrumbBase):
 
             hadNodes.add(representative)
             li = ET.Element(NS.XHTML.li)
+            relevant = li
             if node is not pageNode:
                 a = ET.SubElement(li, NS.PyWebXML.a, href=representative.Path)
                 a.text = navInfo.getTitle()
+                relevant = a
+                tail = False
             else:
                 li.text = navInfo.getTitle()
+                tail = True
+            self.rich(self, ctx, relevant, isTail=tail)
             ul.insert(0, li)
         intoNode.insert(atIndex, ul)
+
+    def rdfa(self, ctx, relevantNode, isTail=False):
+        prefix = self.rdfaPrefix
+        if not isTail:
+            relevantNode.set("typeof", "v:Breadcrumb")
+        else:
+            relevantNode.set("typeof", "v:Breadcrumb")
+
+    def schema(self, ctx, relevantNode, isTail=False):
+        relevantNode.set("property", "breadcrumb")
+        if isTail:
+            relevantNode.set(NS.PyWebXML.content, ctx.PageNode.Path)
+
+    def norich(self, *args, **kwargs):
+        pass
+
+    _richMap = Types.EnumMap({
+        "rdfa": rdfa,
+        "schema.org": schema,
+        None: norich
+    })
