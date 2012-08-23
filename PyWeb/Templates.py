@@ -23,8 +23,9 @@ class Template(Resource.Resource):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, fileName):
+    def __init__(self, site, fileName):
         super(Template, self).__init__()
+        self.site = site
         self.fileName = fileName
         self._lastModified = utils.fileLastModified(fileName)
 
@@ -36,13 +37,13 @@ class Template(Resource.Resource):
     def transform(self, body, templateArgs):
         pass
 
-    def final(self, site, ctx, document, licenseFallback=None):
+    def final(self, ctx, document, licenseFallback=None):
         """
         Do the final transformation on *document*. This includes adding
         keywords and author information, setting up the title, loading crumbs,
         replacing local links and more.
         """
-        templateArgs = site.getTemplateArguments(ctx)
+        templateArgs = self.site.getTemplateArguments(ctx)
         templateArgs.update(document.getTemplateArguments())
 
         metaPath = NS.PyWebXML.meta
@@ -50,7 +51,7 @@ class Template(Resource.Resource):
         page = document.toPyWebXMLPage()
         if licenseFallback is not None and page.find(licensePath) is None:
             page.find(metaPath).append(licenseFallback.toNode())
-        site.transformReferences(ctx, page)
+        self.site.transformReferences(ctx, page)
 
         newDoc = self.transform(page, templateArgs)
         newDoc.title = newDoc.title or document.title
@@ -68,7 +69,7 @@ class Template(Resource.Resource):
             ieLimit = link.get("ie-only")
             if ieLimit is not None:
                 link = copy.copy(link)
-                site.transformHref(ctx, link)
+                self.site.transformHref(ctx, link)
                 link.tag = "link"
                 del link.attrib["ie-only"]
                 s = ET.tostring(link, method="html", xml_declaration="no", encoding="utf-8").decode("utf-8")
@@ -85,7 +86,7 @@ class Template(Resource.Resource):
         for hmeta in newDoc.hmeta:
             head.append(hmeta)
         html.append(body)
-        site.transformPyNamespace(ctx, html)
+        self.site.transformPyNamespace(ctx, html)
 
         return ET.ElementTree(html)
 
@@ -94,8 +95,8 @@ class XSLTTemplate(Template):
     """
     A specific templating implementation which uses XSLT as backend.
     """
-    def __init__(self, fileName):
-        super(XSLTTemplate, self).__init__(fileName)
+    def __init__(self, site, fileName):
+        super(XSLTTemplate, self).__init__(site, fileName)
         self._parseTemplate()
 
     def update(self):
@@ -112,7 +113,7 @@ class XSLTTemplate(Template):
 
     def transform(self, body, templateArgs, customBody=NS.XHTML.body):
         newDoc = self.rawTransform(body, templateArgs)
-        return Registry.ParserPlugins.getPluginInstance(ContentTypes.PyWebXML).parseTree(newDoc.getroot(), headerOffset=0)
+        return self.site.parserRegistry[ContentTypes.PyWebXML].parseTree(newDoc.getroot(), headerOffset=0)
 
 
 class XSLTTemplateCache(Cache.FileSourcedCache):
@@ -121,6 +122,6 @@ class XSLTTemplateCache(Cache.FileSourcedCache):
     :cls:`XSLTTemplate` instances.
     """
     def _load(self, path):
-        return XSLTTemplate(path)
+        return XSLTTemplate(self.site, path)
 
 

@@ -80,6 +80,7 @@ class SubCache(object):
     """
 
     def __init__(self, cache):
+        self.site = cache.site
         self.master = cache
         self.entries = {}
         self.reverseMap = {}
@@ -169,7 +170,8 @@ class Cache(object):
 
     Specialized sub caches can be created using :meth:`specializedSubcache`.
     """
-    def __init__(self, limit=0):
+    def __init__(self, site, limit=0):
+        self.site = site
         self.subCaches = {}
         self._limit = 0
         self.Limit = limit

@@ -131,6 +131,8 @@ class WebStackSite(Site.Site):
             message = self.handle(ctx)
         except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
             transaction.set_response_code(status.statusCode)
+            ctx.Cachable = False
+            ctx._setCacheHeaders()
         except Errors.NotModified as status:
             transaction.set_response_code(status.statusCode)
             ctx._setCacheHeaders()

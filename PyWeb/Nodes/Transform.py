@@ -3,6 +3,7 @@ import os, abc
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Nodes as Nodes
+import PyWeb.ContentTypes as ContentTypes
 import PyWeb.Registry as Registry
 import PyWeb.Errors as Errors
 import PyWeb.Navigation as Navigation
@@ -37,7 +38,7 @@ class TransformBase(Nodes.Node, Resource.Resource):
 
         self._transforms = self.site.templateCache
         self._xmlData = self.site.xmlDataCache
-        self._parser = Registry.ParserPlugins("application/x-pyweb-xml")
+        self._parser = self.site.parserRegistry[ContentTypes.PyWebXML]
 
         self._lastModified = self._calcLastModified()
         self._rebuild()
@@ -79,7 +80,7 @@ class TransformNode(TransformBase, Navigation.Info):
     def _rebuild(self):
         transform = self._transforms[self._transformFile]
         source = self._xmlData[self._sourceFile]
-        parser = Registry.ParserPlugins.getPluginInstance("application/x-pyweb-xml")
+        parser = self._parser
         docPage = transform.rawTransform(source.Tree, self._args).getroot()
         self._doc = parser.parseTree(docPage)
 

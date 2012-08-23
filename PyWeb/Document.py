@@ -162,7 +162,7 @@ class FileDocument(DocumentResource):
     fixed MIME type *overrideMIME*) in a cachable fashion. Provides the document
     as *doc* attribute.
     """
-    def __init__(self, fileName, overrideMIME=None, **kwargs):
+    def __init__(self, site, fileName, overrideMIME=None, **kwargs):
         super(FileDocument, self).__init__()
         self._lastModified = utils.fileLastModified(fileName)
         self._fileName = fileName
@@ -172,7 +172,7 @@ class FileDocument(DocumentResource):
             if mimeType is None:
                 raise Errors.UnknownMIMEType(fileName)
         self._kwargs = kwargs
-        self._parser = Registry.ParserPlugins(mimeType)
+        self._parser = site.parserRegistry[mimeType]
         self._reload()
 
     def _reload(self):
@@ -198,7 +198,7 @@ class FileDocumentCache(Cache.FileSourcedCache):
     """
 
     def _load(self, path, overrideMIME=None, **kwargs):
-        return FileDocument(path, overrideMIME=overrideMIME, **kwargs)
+        return FileDocument(self.site, path, overrideMIME=overrideMIME, **kwargs)
 
     def get(self, key, overrideMIME=None, **kwargs):
         return super(FileDocumentCache, self).__getitem__(key,

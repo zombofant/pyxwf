@@ -72,51 +72,11 @@ class _NodePlugins(NamespaceRegistry):
     def _getInstance(self, cls, node, site, parent):
         return cls(site, parent, node)
 
-class _ParserPlugins(RegistryBase):
-    keyDescription = "MIME type"
-
-    def __init__(self):
-        super(_ParserPlugins, self).__init__()
-        self.instances = {}
-
-    def getPluginInstance(self, mime):
-        inst = self.instances.get(mime, None)
-        if inst is not None:
-            return inst
-        cls = self.get(mime, None)
-        if cls is None:
-            raise Errors.MissingParserPlugin(mime)
-        inst = cls(mime)
-        self.instances[mime] = inst
-        return inst
-
-    def register(self, types, cls):
-        self.registerMultiple(types, cls)
-
 class _CrumbPlugins(NamespaceRegistry):
     errorClass = Errors.MissingCrumbPlugin
 
     def _getInstance(self, cls, node, site):
         return cls(site, node)
-
-class _TweakPlugins(NamespaceRegistry):
-    errorClass = Errors.MissingTweakPlugin
-
-    def __setitem__(self, key, cls):
-        container = Tweaks.TweakContainer()
-        cls._tweaks[key[1]] = container
-        super(_TweakPlugins, self).__setitem__(key, container)
-
-    def __call__(self, node):
-        ns, name = utils.splitTag(node.tag)
-        try:
-            container = self[(ns, name)]
-        except KeyError:
-            raise self.errorClass(ns, name)
-        container.append(node)
-
-    _getInstance = None
-
 
 class HookRegistry(object):
     def __init__(self):
@@ -148,12 +108,52 @@ class SitletonRegistry(object):
         return [cls(site) for cls in self.classes]
 
 
+class ParserRegistry(object):
+    def __init__(self):
+        super(ParserRegistry, self).__init__()
+        self._mimeMap = {}
+
+    def register(self, inst, mimeTypes):
+        try:
+            inst.parse
+        except AttributeError:
+            raise TypeError("Parsers must have the parse() method.")
+        for mimeType in mimeTypes:
+            if mimeType in self._mimeMap:
+                raise PluginConflict(mimeType, self._mimeMap[mimeType], inst, "parsing of mime type {0}".format(mimeType))
+            self._mimeMap[mimeType] = inst
+
+    def __getitem__(self, mimeType):
+        try:
+            return self._mimeMap[mimeType]
+        except KeyError:
+            raise Errors.MissingParserPlugin(mimeType)
+
+
+class TweakRegistry(object):
+    def __init__(self):
+        super(TweakRegistry, self).__init__()
+        self._tweaks = {}
+
+    def register(self, inst, hooks):
+        for ns, (name, hook) in hooks:
+            tag = "{{{0}}}{1}".format(ns, name)
+            if tag in self._tweaks:
+                raise PluginConflict(tag, self._tweaks[tag], inst, "tweak node {0}".format(tag))
+            self._tweaks[tag] = hook
+
+    def submitTweak(self, node):
+        try:
+            hook = self._tweaks[node.tag]
+        except KeyError:
+            raise Errors.MissingTweakPlugin(node.tag)
+        hook(node)
+
+    _getInstance = None
+
 NodePlugins = _NodePlugins()
-ParserPlugins = _ParserPlugins()
 CrumbPlugins = _CrumbPlugins()
-TweakPlugins = _TweakPlugins()
 Sitletons = SitletonRegistry()
-Singletons = dict()
 
 class NamespaceMetaMixin(type):
     """
@@ -183,30 +183,6 @@ class NamespaceMetaMixin(type):
         mcls.register(ns, names, cls)
         return cls
 
-class TweakMetaMixin(type):
-    """
-    Mixin for a metaclass which handles registration of tweak subscriptions,
-    based on namespace/tag name pairs.
-    """
-
-    def __new__(mcls, name, bases, dct):
-        ns = dct.get("tweakNamespace", dct.get("namespace", None))
-        try:
-            names = list(dct.get("tweakNames", None))
-        except TypeError:
-            names = []
-
-        dct.setdefault("_tweaks", {})
-
-        cls = super(TweakMetaMixin, mcls).__new__(mcls, name, bases, dct)
-        if ns is not None and len(names) > 0:
-            mcls.registerTweaks(ns, names, cls)
-        return cls
-
-    @classmethod
-    def registerTweaks(mcls, ns, names, cls):
-        TweakPlugins.register(ns, names, cls)
-
 class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
     """
     Takes :cls:`PyWeb.Nodes.NodeMeta` and mixes it with the
@@ -215,22 +191,6 @@ class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
     @classmethod
     def register(mcls, ns, names, cls):
         NodePlugins.register(ns, names, cls)
-
-class ParserMeta(abc.ABCMeta, TweakMetaMixin):
-    """
-    Metaclass for parsers. Parser classes need to have a
-    *mimeTypes* attribute which must be an iterable of strings reflecting the
-    mime types the class is able to handle.
-    """
-    def __new__(mcls, name, bases, dct):
-        types = dct.get("mimeTypes", None)
-        try:
-            iterable = list(types)
-        except TypeError:
-            raise TypeError("Plugin needs attribute mimeTypes which must be a sequence of strings.")
-        cls = super(ParserMeta, mcls).__new__(mcls, name, bases, dct)
-        ParserPlugins.register(iterable, cls)
-        return cls
 
 class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
     """
@@ -242,7 +202,7 @@ class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
         CrumbPlugins.register(ns, names, cls)
 
 
-class SitletonMeta(abc.ABCMeta, TweakMetaMixin):
+class SitletonMeta(abc.ABCMeta):
     """
     A class using this metaclass will have exactly one instance per running
     site. Thus, this metaclass is useful for use with hook classes which
@@ -253,9 +213,3 @@ class SitletonMeta(abc.ABCMeta, TweakMetaMixin):
         cls = super(SitletonMeta, mcls).__new__(mcls, name, bases, dct)
         Sitletons.register(cls)
         return cls
-
-def clearAll():
-    NodePlugins.clear()
-    TweakPlugins.clear()
-    ParserPlugins.clear()
-    CrumbPlugins.clear()

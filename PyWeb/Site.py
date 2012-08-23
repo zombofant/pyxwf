@@ -35,14 +35,12 @@ class Site(Resource.Resource):
         super(Site, self).__init__(**kwargs)
         self.startCWD = os.getcwd()
         self.defaultURLRoot = defaultURLRoot
-        self.cache = Cache.Cache()
-        self.hooks = Registry.HookRegistry()
+        self.cache = Cache.Cache(self)
         # self.savepoint = ImportSavepoints.RollbackImporter()
         try:
             self.loadSitemap(sitemapFile)
         except:
             raise
-        self.sitletons = Registry.Sitletons.instanciate(self)
 
     @property
     def LastModified(self):
@@ -231,7 +229,7 @@ class Site(Resource.Resource):
                 print("Warning: Unknown tweak parameter: {0}".format(name))
             else:
                 try:
-                    Registry.TweakPlugins(child)
+                    self.tweakRegistry.submitTweak(child)
                 except Errors.MissingTweakPlugin as err:
                     print("Warning: {0}".format(err))
 
@@ -425,9 +423,15 @@ class Site(Resource.Resource):
             Document.FileDocumentCache, self.root)
         self.xmlDataCache = self._setupCache((self, "xml-data-cache"),
             Resource.XMLFileCache, self.root)
+        self.parserRegistry = Registry.ParserRegistry()
+        self.tweakRegistry = Registry.TweakRegistry()
+        self.hooks = Registry.HookRegistry()
 
         # load plugins
         self._loadPlugins(root)
+
+        # instanciate sitletons, so they're ready when the tweaks come in
+        self.sitletons = Registry.Sitletons.instanciate(self)
 
         # load extended configuration
         tweaks = root.find(NS.Site.tweaks)
@@ -543,7 +547,7 @@ class Site(Resource.Resource):
 
         if isinstance(data, Document.Document):
             # do the final transformation on the content fetched from the node
-            resultTree = template.final(self, ctx, data,
+            resultTree = template.final(ctx, data,
                     licenseFallback=self._license)
 
             for xslt in htmlTransforms:

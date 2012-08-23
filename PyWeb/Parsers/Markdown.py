@@ -13,16 +13,16 @@ import PyWeb.Parsers as Parsers
 import PyWeb.Document as Document
 import PyWeb.Namespaces as NS
 import PyWeb.Types as Types
+import PyWeb.Tweaks as Tweaks
 
-class _NS(object):
+class MarkdownNS(object):
     __metaclass__ = NS.__metaclass__
     xmlns = "http://pyweb.zombofant.net/xmlns/documents/markdown"
 
-class Markdown(Parsers.ParserBase):
-    __metaclass__ = Registry.ParserMeta
+class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
+    __metaclass__ = Registry.SitletonMeta
 
-    namespace = str(_NS)
-    tweakNames = ["tweaks", "nsdecl"]
+    namespace = str(MarkdownNS)
     mimeTypes = ["text/x-markdown"]
 
     _allowHtmlType = Types.DefaultForNone(False, Types.Typecasts.bool)
@@ -32,26 +32,32 @@ class Markdown(Parsers.ParserBase):
     _template = """<?xml version="1.0" ?>
 <body xmlns="{0}">{{0}}</body>""".format(NS.XHTML)
 
-    def __init__(self, mime):
-        self.NS = _NS
-        super(Markdown, self).__init__()
-        tweaks = self._tweaks["tweaks"].find(self.NS.tweaks)
-        if tweaks is None:
-            tweaks = ET.Element(self.NS.tweaks)
+    def __init__(self, site):
+        super(Markdown, self).__init__(site,
+            tweakNS=self.namespace,
+            tweakHooks=[("tweaks", self.tweak), ("nsdecl", self.nsdecl)],
+            parserMimeTypes=self.mimeTypes
+        )
+        self.md = markdown2.Markdown(
+            extras=["metadata"],
+            safe_mode="escape"
+        )
+        self._namespaces = {}
 
+    def tweak(self, tweak):
         kwargs = {}
-        if not self._allowHtmlType(tweaks.get("allow-html")):
+        if not self._allowHtmlType(tweak.get("allow-html")):
             kwargs["safe_mode"] = "escape"
+
         self.md = markdown2.Markdown(
             extras=["metadata"],
             **kwargs
         )
 
-        self._namespaces = {}
-        for nsdecl in self._tweaks["nsdecl"].findall(self.NS.nsdecl):
-            prefix = self._prefixType(nsdecl.get("prefix"))
-            xmlns = self._xmlnsType(nsdecl.get("ns"))
-            self._namespaces[prefix] = xmlns
+    def nsdecl(self, nsdecl):
+        prefix = self._prefixType(nsdecl.get("prefix"))
+        xmlns = self._xmlnsType(nsdecl.get("uri"))
+        self._namespaces[prefix] = xmlns
 
     def transformUrls(self, body):
         for a in body.iter(NS.XHTML.a):
@@ -117,7 +123,7 @@ class Markdown(Parsers.ParserBase):
             authors = map(self._authorFromId, self._smartSplit(authors))
         keywords = self._smartSplit(metadata.get("Keywords", ""))
 
-        ext = ET.Element(self.NS.ext)
+        ext = ET.Element(MarkdownNS.ext)
         for key, value in metadata.viewitems():
             prefix, _, tag = key.partition("-")
             if len(_) == 0:

@@ -16,12 +16,14 @@ map = itertools.imap
 
 
 class PyWebXML(Parsers.ParserBase):
-    __metaclass__ = Registry.ParserMeta
+    __metaclass__ = Registry.SitletonMeta
 
     mimeTypes = ["application/x-pyweb-xml"]
 
-    def __init__(self, mime):
-        super(PyWebXML, self).__init__()
+    def __init__(self, site):
+        super(PyWebXML, self).__init__(site,
+            parserMimeTypes=self.mimeTypes
+        )
 
     @staticmethod
     def _linkFromNode(node):

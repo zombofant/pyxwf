@@ -1,5 +1,6 @@
 from HTTP import *
 import Handler
+import PyWeb.utils as utils
 
 import os
 
@@ -41,10 +42,22 @@ class MissingCrumbPlugin(MissingNamespacePlugin):
         )
 
 class MissingTweakPlugin(MissingNamespacePlugin):
-    def __init__(self, ns, name):
+    def __init__(self, tag):
+        ns, name = utils.splitTag(tag)
         super(MissingTweakPlugin, self).__init__(ns, name,
             "No plugin for tweak {{{0}}}{1}"
         )
+
+class PluginConflict(Exception):
+    def __init__(self, key, plugin1, plugin2, objStr=None):
+        super(PluginConflict, self).__init__(
+            "Conflict: {0} is shared by both {1} and {2}".format(
+                objStr or key, plugin1, plugin2
+            )
+        )
+        self.key = key
+        self.plugin1 = plugin1
+        self.plugin2 = plugin2
 
 class ResourceLost(Exception):
     def __init__(self, fileName):

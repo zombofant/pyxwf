@@ -4,24 +4,28 @@ import PyWeb.Registry as Registry
 import PyWeb.Namespaces as NS
 import PyWeb.Errors as Errors
 import PyWeb.Types as Types
+import PyWeb.Tweaks as Tweaks
 
 class HostNS(object):
     __metaclass__ = NS.__metaclass__
     xmlns = "http://pyweb.zombofant.net/xmlns/tweaks/host"
 
-class HostRedirect(object):
+class HostRedirect(Tweaks.TweakSitleton):
     __metaclass__ = Registry.SitletonMeta
 
     namespace = str(HostNS)
     tweakNames = ["redirect"]
 
     def __init__(self, site):
-        super(HostRedirect, self).__init__()
+        super(HostRedirect, self).__init__(site,
+            tweakNS=self.namespace,
+            tweakNames=self.tweakNames
+        )
         site.hooks.register("handle.pre-lookup", self.redirect)
-        self.site = site
-        redirects = self._tweaks["redirect"]
+        self.redirects = []
 
-        self.redirects = [self._redirectFromET(node) for node in redirects]
+    def tweak(self, node):
+        self.redirects.append(self._redirectFromET(node))
 
     def _redirectFromET(self, node):
         srcName = Types.Typecasts.unicode(Types.NotNone(node.get("src")))
@@ -48,7 +52,7 @@ class HostRedirect(object):
                 )
                 raise kind(newLocation=path, local=False)
 
-class HostForceMobile(object):
+class HostForceMobile(Tweaks.TweakSitleton):
     __metaclass__ = Registry.SitletonMeta
 
     namespace = str(HostNS)
@@ -57,14 +61,17 @@ class HostForceMobile(object):
     _hostNameType = Types.NotNone
 
     def __init__(self, site):
-        super(HostForceMobile, self).__init__()
+        super(HostForceMobile, self).__init__(site,
+            tweakNS=self.namespace,
+            tweakNames=self.tweakNames
+        )
         site.hooks.register("handle.pre-lookup", self.forceMobile)
-        self.site = site
+        self.hosts = {}
 
-        self.hosts = dict(
-            (self._hostNameType(node.get("host")),
-             Types.Typecasts.bool(node.get("mobile", True))
-            ) for node in self._tweaks["force-mobile"])
+    def tweak(self, node):
+        key = self._hostNameType(node.get("host"))
+        forceMobile = Types.Typecasts.bool(node.get("mobile", True))
+        self.hosts[key] = forceMobile
 
     def forceMobile(self, ctx):
         try:

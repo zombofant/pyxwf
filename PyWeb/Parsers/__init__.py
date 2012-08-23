@@ -1,8 +1,9 @@
 import abc, itertools
 
 import PyWeb.Namespaces as NS
+import PyWeb.Sitleton as Sitleton
 
-class ParserBase(object):
+class ParserBase(Sitleton.Sitleton):
     """
     Baseclass for Parser implementations. Derived classes should use
     :cls:`PyWeb.Registry.ParserMeta` as metaclass to automatically register
@@ -12,8 +13,9 @@ class ParserBase(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self):
-        pass
+    def __init__(self, site, parserMimeTypes=[], **kwargs):
+        super(ParserBase, self).__init__(site, **kwargs)
+        site.parserRegistry.register(self, parserMimeTypes)
 
     @classmethod
     def transformHeaders(cls, body, headerOffset):
