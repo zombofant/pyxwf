@@ -70,7 +70,8 @@ class AtomFeedRoot(object):
         for localLink in feed.iter(NS.PyWebXML.link):
             localLink.tag = NS.Atom.link
             self.site.transformHref(localLink)
-            localLink.set("href", self.linkPrefix[:-1]+localLink.get("href"))
+            localLink.text = self.linkPrefix[:-1]+localLink.get("href")
+            del localLink.attrib["href"]
         return feed
 
 class AtomFeedNode(Nodes.Node):
