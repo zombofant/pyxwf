@@ -75,7 +75,7 @@ class XMLMessage(Message):
     """
 
     def __init__(self, docTree, contentType, cleanupNamespaces=False,
-            prettyPrint=False, **kwargs):
+            prettyPrint=False, forceNamespaces={}, **kwargs):
         super(XMLMessage, self).__init__(contentType, **kwargs)
         self._docTree = docTree
         self._prettyPrint = prettyPrint
@@ -85,6 +85,16 @@ class XMLMessage(Message):
                 ET.cleanup_namespaces(self._docTree)
             except AttributeError:
                 pass
+        if forceNamespaces:
+            root = self._docTree.getroot()
+            # this is an ugly hack
+            nsmap = root.nsmap
+            nsmap.update(forceNamespaces)
+            newRoot = ET.Element(root.tag, attrib=root.attrib, nsmap=nsmap)
+            newRoot.extend(root)
+            self._docTree = ET.ElementTree(newRoot)
+            """for prefix, uri in forceNamespaces.viewitems():
+                root.set("{{{0}}}{1}".format("http://www.w3.org/2000/xmlns/", prefix), uri)"""
     @property
     def DocTree(self):
         return self._docTree
@@ -111,16 +121,21 @@ class XHTMLMessage(XMLMessage):
     automatically.
     """
 
-    def __init__(self, docTree, minifyNamespaces=True, **kwargs):
+    def __init__(self, docTree, minifyNamespaces=True,
+            **kwargs):
         myArgs = {
             "cleanupNamespaces": True
         }
         myArgs.update(kwargs)
         super(XHTMLMessage, self).__init__(docTree, ContentTypes.xhtml,
             **myArgs)
+        self._minifyNamespaces = minifyNamespaces
 
     def getEncodedBody(self):
-        return super(XHTMLMessage, self).getEncodedBody(doctype="<!DOCTYPE html>")
+        kwargs = {
+            "doctype": "<!DOCTYPE html>"
+        }
+        return super(XHTMLMessage, self).getEncodedBody(**kwargs)
 
 
 class HTMLMessage(Message):
