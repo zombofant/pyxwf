@@ -34,6 +34,7 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
     def _reload(self, initial=False):
         if not initial:
             self.blog.removeFromIndex(self)
+        self.site.fileDocumentCache.update(self.fileName)
         docRef = self.site.fileDocumentCache.get(self.fileName, headerOffset=2)
         self._processDocument(docRef)
 
