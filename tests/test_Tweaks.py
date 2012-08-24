@@ -2,9 +2,9 @@ from __future__ import unicode_literals
 
 import unittest
 
-from PyWeb.utils import ET
-import PyWeb.Registry as Registry
-import PyWeb.Tweaks as Tweaks
+from PyXWF.utils import ET
+import PyXWF.Registry as Registry
+import PyXWF.Tweaks as Tweaks
 
 import tests.Mocks as Mocks
 

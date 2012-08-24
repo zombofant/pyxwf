@@ -2,12 +2,12 @@ from __future__ import unicode_literals
 
 import operator
 
-from PyWeb.utils import ET
-import PyWeb.ContentTypes as ContentTypes
-import PyWeb.Types as Types
-import PyWeb.Nodes as Nodes
-import PyWeb.Navigation as Navigation
-import PyWeb.Namespaces as NS
+from PyXWF.utils import ET
+import PyXWF.ContentTypes as ContentTypes
+import PyXWF.Types as Types
+import PyXWF.Nodes as Nodes
+import PyXWF.Navigation as Navigation
+import PyXWF.Namespaces as NS
 
 class AtomFeedRoot(object):
     def __init__(self, cfgNode, blog):

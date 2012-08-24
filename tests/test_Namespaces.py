@@ -2,8 +2,8 @@ from __future__ import unicode_literals
 
 import unittest
 
-from PyWeb.utils import ET
-import PyWeb.Namespaces as NS
+from PyXWF.utils import ET
+import PyXWF.Namespaces as NS
 
 import tests.Mocks as Mocks
 

@@ -5,10 +5,10 @@ from datetime import datetime
 
 import lxml.builder as builder
 
-from PyWeb.utils import ET
-import PyWeb.utils as utils
-import PyWeb.Namespaces as NS
-import PyWeb.TimeUtils as TimeUtils
+from PyXWF.utils import ET
+import PyXWF.utils as utils
+import PyXWF.Namespaces as NS
+import PyXWF.TimeUtils as TimeUtils
 
 import Mocks
 

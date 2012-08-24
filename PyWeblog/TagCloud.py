@@ -2,16 +2,16 @@ from __future__ import unicode_literals, print_function, division
 
 import operator, itertools
 
-from PyWeb.utils import ET
-import PyWeb.utils as utils
-import PyWeb.Namespaces as NS
-import PyWeb.Registry as Registry
-import PyWeb.Crumbs as Crumbs
-import PyWeb.Types as Types
+from PyXWF.utils import ET
+import PyXWF.utils as utils
+import PyXWF.Namespaces as NS
+import PyXWF.Registry as Registry
+import PyXWF.Crumbs as Crumbs
+import PyXWF.Types as Types
 
 class TagCloud(Crumbs.CrumbBase):
     __metaclass__ = Registry.CrumbMeta
-    namespace = "http://pyweb.zombofant.net/xmlns/weblog"
+    namespace = "http://pyxwf.zombofant.net/xmlns/weblog"
     names = ["tagcloud"]
 
     _levelsType = Types.DefaultForNone(2,

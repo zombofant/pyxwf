@@ -1,10 +1,10 @@
 import os, tempfile, shutil, unittest
 
-from PyWeb.utils import ET
-import PyWeb.utils as utils
-import PyWeb.Site as Site
-import PyWeb.Context as Context
-import PyWeb.Namespaces as NS
+from PyXWF.utils import ET
+import PyXWF.utils as utils
+import PyXWF.Site as Site
+import PyXWF.Context as Context
+import PyXWF.Namespaces as NS
 
 try:
     from cStringIO import StringIO
@@ -13,7 +13,7 @@ except ImportError:
 
 class MockNS(object):
     __metaclass__ = NS.__metaclass__
-    xmlns = "http://pyweb.zombofant.net/xmlns/for-unit-testing-only"
+    xmlns = "http://pyxwf.zombofant.net/xmlns/for-unit-testing-only"
 
 class MockFSLocation(object):
     def __init__(self):
@@ -113,18 +113,18 @@ class FSTest(unittest.TestCase):
 
 class DynamicSiteTest(FSTest):
     sitemapXML = """<?xml version="1.0" encoding="utf-8"?>
-<site   xmlns="http://pyweb.zombofant.net/xmlns/site"
-        xmlns:py="http://pyweb.zombofant.net/xmlns/documents/pywebxml"
-        xmlns:dir="http://pyweb.zombofant.net/xmlns/nodes/directory"
-        xmlns:page="http://pyweb.zombofant.net/xmlns/nodes/page"
-        xmlns:redirect="http://pyweb.zombofant.net/xmlns/nodes/redirect">
+<site   xmlns="http://pyxwf.zombofant.net/xmlns/site"
+        xmlns:py="http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
+        xmlns:dir="http://pyxwf.zombofant.net/xmlns/nodes/directory"
+        xmlns:page="http://pyxwf.zombofant.net/xmlns/nodes/page"
+        xmlns:redirect="http://pyxwf.zombofant.net/xmlns/nodes/redirect">
     <meta>
         <title>mocked site</title>
         <urlRoot>/</urlRoot>
     </meta>
     <plugins>
-        <p>PyWeb.Nodes.Redirect</p>
-        <p>PyWeb.Nodes.Directory</p>
+        <p>PyXWF.Nodes.Redirect</p>
+        <p>PyXWF.Nodes.Directory</p>
     </plugins>
     <tweaks />
     <dir:tree
@@ -152,11 +152,11 @@ class DynamicSiteTest(FSTest):
         return sitemap, meta, plugins, tweaks, tree, crumbs
 
     def setUpSitemap(self, etree, meta, plugins, tweaks, tree, crumbs):
-        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
+        ET.SubElement(tree, "{http://pyxwf.zombofant.net/xmlns/nodes/redirect}internal", attrib={
             "id": "foo",
             "to": "bar"
         })
-        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
+        ET.SubElement(tree, "{http://pyxwf.zombofant.net/xmlns/nodes/redirect}internal", attrib={
             "id": "bar",
             "to": "foo",
             "name": "bar"

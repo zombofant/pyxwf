@@ -2,10 +2,10 @@ from __future__ import unicode_literals
 
 import unittest
 
-from PyWeb.utils import ET
-import PyWeb.Errors as Errors
+from PyXWF.utils import ET
+import PyXWF.Errors as Errors
 
-import PyWeb.Nodes.Redirect as Redirect
+import PyXWF.Nodes.Redirect as Redirect
 
 import tests.Mocks as Mocks
 

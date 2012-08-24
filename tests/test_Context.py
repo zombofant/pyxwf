@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-import PyWeb.Message as Message
+import PyXWF.Message as Message
 
 import tests.Mocks as Mocks
 

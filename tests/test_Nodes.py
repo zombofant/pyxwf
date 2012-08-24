@@ -2,8 +2,8 @@ from __future__ import unicode_literals
 
 import unittest
 
-import PyWeb.Nodes as Nodes
-import PyWeb.Errors as Errors
+import PyXWF.Nodes as Nodes
+import PyXWF.Errors as Errors
 
 import tests.Mocks as Mocks
 

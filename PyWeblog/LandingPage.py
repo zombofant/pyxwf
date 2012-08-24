@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 
-from PyWeb.utils import ET
-import PyWeb.Types as Types
-import PyWeb.Nodes as Nodes
-import PyWeb.Navigation as Navigation
-import PyWeb.Namespaces as NS
+from PyXWF.utils import ET
+import PyXWF.Types as Types
+import PyXWF.Nodes as Nodes
+import PyXWF.Navigation as Navigation
+import PyXWF.Namespaces as NS
 
 import PyWeblog.Atom as Atom
 import PyWeblog.Directories as Directories

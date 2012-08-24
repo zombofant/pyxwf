@@ -4,17 +4,17 @@ import os, mimetypes, abc, itertools, copy, functools
 from datetime import datetime
 import time
 
-from PyWeb.utils import ET
-import PyWeb.utils as utils
-import PyWeb.Registry as Registry
-import PyWeb.Navigation as Navigation
-import PyWeb.Types as Types
-import PyWeb.Errors as Errors
-import PyWeb.Document as Document
-import PyWeb.Nodes as Nodes
-import PyWeb.Navigation as Navigation
-import PyWeb.Namespaces as NS
-import PyWeb.Resource as Resource
+from PyXWF.utils import ET
+import PyXWF.utils as utils
+import PyXWF.Registry as Registry
+import PyXWF.Navigation as Navigation
+import PyXWF.Types as Types
+import PyXWF.Errors as Errors
+import PyXWF.Document as Document
+import PyXWF.Nodes as Nodes
+import PyXWF.Navigation as Navigation
+import PyXWF.Namespaces as NS
+import PyXWF.Resource as Resource
 
 @functools.total_ordering
 class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):

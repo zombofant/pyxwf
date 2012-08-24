@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import unittest
 from datetime import datetime
 
-import PyWeb.TimeUtils as TimeUtils
+import PyXWF.TimeUtils as TimeUtils
 
 class Timestamp2Datetime(unittest.TestCase):
     def test_roundtrip(self):

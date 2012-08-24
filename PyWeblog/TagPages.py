@@ -1,9 +1,9 @@
-from PyWeb.utils import ET
-import PyWeb.Namespaces as NS
-import PyWeb.Nodes as Nodes
-import PyWeb.Types as Types
-import PyWeb.Navigation as Navigation
-import PyWeb.Errors as Errors
+from PyXWF.utils import ET
+import PyXWF.Namespaces as NS
+import PyXWF.Nodes as Nodes
+import PyXWF.Types as Types
+import PyXWF.Navigation as Navigation
+import PyXWF.Errors as Errors
 
 import PyWeblog.Atom as Atom
 import PyWeblog.Directories as Directories

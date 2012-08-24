@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-import PyWeb.Types as Types
+import PyXWF.Types as Types
 
 class Typecasts(unittest.TestCase):
     def test_bool(self):

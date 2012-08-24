@@ -2,12 +2,12 @@ from __future__ import unicode_literals
 
 import unittest
 
-from PyWeb.utils import ET
-import PyWeb.Namespaces as NS
-import PyWeb.ContentTypes as ContentTypes
-import PyWeb.Message as Message
+from PyXWF.utils import ET
+import PyXWF.Namespaces as NS
+import PyXWF.ContentTypes as ContentTypes
+import PyXWF.Message as Message
 
-import PyWeb.Nodes.Page
+import PyXWF.Nodes.Page
 
 import Mocks
 
@@ -15,8 +15,8 @@ class SimpleSite(Mocks.SiteTest):
     def setUpFS(self):
         f = self.fs.open("basic.xml", "w")
         f.write("""<?xml version="1.0" ?>
-<page   xmlns="http://pyweb.zombofant.net/xmlns/documents/pywebxml"
-        xmlns:a="http://pyweb.zombofant.net/xmlns/templates/default">
+<page   xmlns="http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
+        xmlns:a="http://pyxwf.zombofant.net/xmlns/templates/default">
     <meta>
         <title>Home</title>
     </meta>
@@ -32,9 +32,9 @@ class SimpleSite(Mocks.SiteTest):
 <xsl:stylesheet
         version='1.0'
         xmlns:h="http://www.w3.org/1999/xhtml"
-        xmlns:py="http://pyweb.zombofant.net/xmlns/documents/pywebxml"
+        xmlns:py="http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
         xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
-        xmlns:a="http://pyweb.zombofant.net/xmlns/templates/default">
+        xmlns:a="http://pyxwf.zombofant.net/xmlns/templates/default">
     <xsl:output method="xml" encoding="utf-8" />
 
     <xsl:template match="@*|node()">
@@ -57,7 +57,7 @@ class SimpleSite(Mocks.SiteTest):
         f.close()
 
     def setUpSitemap(self, etree, meta, plugins, tweaks, tree, crumbs):
-        node = ET.SubElement(tree, PyWeb.Nodes.Page.PageNS.node)
+        node = ET.SubElement(tree, PyXWF.Nodes.Page.PageNS.node)
         node.set("src", "basic.xml")
         node.set("type", ContentTypes.PyWebXML)
         node.set("id", "home")

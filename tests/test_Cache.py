@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import unittest
 
-import PyWeb.Cache as MCache
+import PyXWF.Cache as MCache
 
 class Dummy(MCache.Cachable):
     pass
