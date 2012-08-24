@@ -151,6 +151,17 @@ class DynamicSiteTest(FSTest):
         crumbs = sitemap.find(NS.Site.crumbs)
         return sitemap, meta, plugins, tweaks, tree, crumbs
 
+    def setUpSitemap(self, etree, meta, plugins, tweaks, tree, crumbs):
+        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
+            "id": "foo",
+            "to": "bar"
+        })
+        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
+            "id": "bar",
+            "to": "foo",
+            "name": "bar"
+        })
+
     def getSitemap(self, setupFunc, **kwargs):
         sitemapData = self.getBasicSitemap()
         sitemap = sitemapData[0]
@@ -173,17 +184,6 @@ class DynamicSiteTest(FSTest):
 class SiteTest(DynamicSiteTest):
     def setUpFS(self):
         pass
-
-    def setUpSitemap(self, etree, meta, plugins, tweaks, tree, crumbs):
-        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
-            "id": "foo",
-            "to": "bar"
-        })
-        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
-            "id": "bar",
-            "to": "foo",
-            "name": "bar"
-        })
 
     def setUp(self):
         super(SiteTest, self).setUp()
