@@ -89,16 +89,25 @@ class MockedContext(Context.Context):
         out.write(b"\n")
         self.Out.write(message.getEncodedBody())
 
+
+class ContextTest(unittest.TestCase):
+    def tearDown(self):
+        del self.ctx
+        super(ContextTest, self).tearDown()
+
+
 class FSTest(unittest.TestCase):
     def setUp(self):
+        super(FSTest, self).setUp()
         self.fs = MockFSLocation()
 
     def tearDown(self):
         self.fs.close()
         del self.fs
+        super(FSTest, self).tearDown()
 
 
-class SiteTest(FSTest):
+class DynamicSiteTest(FSTest):
     sitemapXML = """<?xml version="1.0" encoding="utf-8"?>
 <site   xmlns="http://pyweb.zombofant.net/xmlns/site"
         xmlns:py="http://pyweb.zombofant.net/xmlns/documents/pywebxml"
@@ -120,23 +129,7 @@ class SiteTest(FSTest):
     <crumbs />
 </site>""".encode("utf-8")
 
-    def setUpFS(self):
-        pass
-
-    def setUpSitemap(self, etree, meta, plugins, tweaks, tree, crumbs):
-        ET.SubElement(treeNode, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
-            "id": "foo",
-            "to": "bar"
-        })
-        ET.SubElement(treeNode, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
-            "id": "bar",
-            "to": "foo",
-            "name": "bar"
-        })
-
-    def setUp(self):
-        super(SiteTest, self).setUp()
-        self.setUpFS()
+    def getBasicSitemap(self):
         sitemap = ET.XML(self.sitemapXML)
         meta = sitemap.find(NS.Site.meta)
         plugins = sitemap.find(NS.Site.plugins)
@@ -152,13 +145,47 @@ class SiteTest(FSTest):
         else:
             tree = None
         crumbs = sitemap.find(NS.Site.crumbs)
-        self.setUpSitemap(sitemap, meta, plugins, tweaks, tree, crumbs)
+        return sitemap, meta, plugins, tweaks, tree, crumbs
+
+    def getSitemap(self, setupFunc, **kwargs):
+        sitemapData = self.getBasicSitemap()
+        sitemap = sitemapData[0]
+        setupFunc(*sitemapData, **kwargs)
+        return sitemap
+
+    def setupSite(self, sitemap):
         f = self.fs.open("sitemap.xml", "w")
         try:
             f.write(ET.tostring(sitemap))
         finally:
             f.close()
         self.site = MockedSite(self.fs)
+
+    def tearDown(self):
+        if hasattr(self, "site"):
+            del self.site
+        super(DynamicSiteTest, self).tearDown()
+
+class SiteTest(DynamicSiteTest):
+    def setUpFS(self):
+        pass
+
+    def setUpSitemap(self, etree, meta, plugins, tweaks, tree, crumbs):
+        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
+            "id": "foo",
+            "to": "bar"
+        })
+        ET.SubElement(tree, "{http://pyweb.zombofant.net/xmlns/nodes/redirect}internal", attrib={
+            "id": "bar",
+            "to": "foo",
+            "name": "bar"
+        })
+
+    def setUp(self):
+        super(SiteTest, self).setUp()
+        self.setUpFS()
+        sitemap = self.getSitemap(self.setUpSitemap)
+        self.setupSite(sitemap)
 
     def tearDown(self):
         del self.site
