@@ -80,6 +80,7 @@ def XHTMLToHTML(tree):
         if ns != xhtmlNS:
             raise ValueError("tree contains non-xhtml elements: {0}:{1}".format(ns, name))
         item.tag = name
+    ET.cleanup_namespaces(tree)
 
 mobileUARE = re.compile("(\sMobile\s|\sMobile/[0-9a-fA-F]+)")
 
