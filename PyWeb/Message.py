@@ -64,6 +64,38 @@ class Message(object):
     def StatusCode(self):
         return self._statusCode
 
+    def __eq__(self, other):
+        try:
+            return (self._statusCode == other._statusCode and
+                    self._encoding == other._encoding and
+                    self._mimeType == other._mimeType and
+                    self.getEncodedBody() == other.getEncodedBody())
+        except AttributeError:
+            return NotImplemented
+
+    def __ne__(self, other):
+        result = self == other
+        if result is NotImplemented:
+            return result
+        return not result
+
+    def __str__(self):
+        return """\
+{0} Raw message
+Content-Type: {1}; charset={2}
+Last-Modified: {4}
+
+{3}\n""".format(
+            self._statusCode,
+            self._mimeType,
+            self._encoding,
+            self.getEncodedBody(),
+            self._lastModified.isoformat() if self._lastModified else "None"
+        )
+
+    def __repr__(self):
+        return str(self)
+
 
 class XMLMessage(Message):
     """
