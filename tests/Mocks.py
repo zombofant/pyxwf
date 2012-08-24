@@ -11,6 +11,10 @@ try:
 except ImportError:
     from io import StringIO
 
+class MockNS(object):
+    __metaclass__ = NS.__metaclass__
+    xmlns = "http://pyweb.zombofant.net/xmlns/for-unit-testing-only"
+
 class MockFSLocation(object):
     def __init__(self):
         self._closed = False

@@ -5,10 +5,11 @@ import unittest
 from PyWeb.utils import ET
 import PyWeb.Namespaces as NS
 
-class Metaclass(unittest.TestCase):
-    ns = "http://pyweb.zombofant.net/xmlns/for-unit-testing-only"
+import tests.Mocks as Mocks
 
+class Metaclass(unittest.TestCase):
     def setUp(self):
+        self.ns = str(Mocks.MockNS)
         self.mcls = NS.__metaclass__(b"unit-testing-class",
             (object, ),
             {
