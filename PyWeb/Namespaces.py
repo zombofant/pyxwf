@@ -6,6 +6,7 @@ of the namespace of the class. The only exception is the `xmlns` attribute which
 will return the namespace itself.
 """
 
+import lxml.builder as builder
 import PyWeb.utils as utils
 
 class __metaclass__(utils.NoInstance):
@@ -23,7 +24,11 @@ class __metaclass__(utils.NoInstance):
         for entry in cache:
             getattr(cls, entry)
         dct["cache"]["xmlns"] = dct["xmlns"]
+        dct["cache"]["maker"] = builder.ElementMaker(namespace=dct["xmlns"])
         return cls
+
+    def __call__(cls, name, *args, **kwargs):
+        return getattr(cls.__dict__["cache"]["maker"], name)(*args, **kwargs)
 
     def __getattr__(cls, name):
         cache = cls.__dict__["cache"]
@@ -39,7 +44,6 @@ class __metaclass__(utils.NoInstance):
 
     def __unicode__(cls):
         return unicode(cls.__dict__["xmlns"])
-
 
 class XHTML(object):
     __metaclass__ = __metaclass__
