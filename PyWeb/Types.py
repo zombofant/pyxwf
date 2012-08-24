@@ -93,7 +93,7 @@ def AllowBoth(type1, type2):
             try:
                 return type2(s)
             except Exception as e2:
-                raise ValueError("{1} and {2}".format(e1, e2))
+                raise ValueError("{0} and {1}".format(e1, e2))
     return WrapFunction(redefine_both_callable,
         "{0} or {1}".format(unicode(type1), unicode(type2))
     )
