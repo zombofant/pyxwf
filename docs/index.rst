@@ -23,10 +23,15 @@ consider default and useful:
 *  ``py:`` maps to ``http://pyweb.zombofant.net/xmlns/documents/pywebxml``,
    the namespace for PyWebXML documents.
 
-.. toctree::
-   :maxdepth: 2
+Table of contents
+-----------------
 
-   setup/index
+.. toctree::
+   :maxdepth: 3
+
+   tutorial/index
+   plugins/index
+   reference/index
 
 Indices and tables
 ==================
