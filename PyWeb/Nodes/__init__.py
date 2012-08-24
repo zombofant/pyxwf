@@ -34,7 +34,9 @@ class NodeMeta(abc.ABCMeta):
                 except (ValueError, TypeError, AttributeError):
                     mcls._raiseNoValidRequestHandlers(mcls)
         else:
-            requestHandlers = collections.defaultdict(lambda x: requestHandlers)
+            defaultHandler = requestHandlers
+            requestHandlers = collections.defaultdict(lambda: defaultHandler)
+            dct["requestHandlers"] = requestHandlers
 
 
         for val in requestHandlers.viewvalues():
