@@ -6,9 +6,14 @@ import PyWeb.Nodes as Nodes
 import PyWeb.Registry as Registry
 import PyWeb.Navigation as Navigation
 import PyWeb.Types as Types
+import PyWeb.Namespaces as NS
+
+class RedirectNS(object):
+    __metaclass__ = NS.__metaclass__
+    xmlns = "http://pyweb.zombofant.net/xmlns/nodes/redirect"
 
 class RedirectBase(Nodes.Node):
-    namespace = "http://pyweb.zombofant.net/xmlns/nodes/redirect"
+    namespace = str(RedirectNS)
 
     methods = {
         "found": Errors.Found,

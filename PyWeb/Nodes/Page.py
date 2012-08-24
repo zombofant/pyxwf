@@ -5,11 +5,16 @@ import PyWeb.Registry as Registry
 import PyWeb.Navigation as Navigation
 import PyWeb.Document as Document
 import PyWeb.Resource as Resource
+import PyWeb.Namespaces as NS
+
+class PageNS(object):
+    __metaclass__ = NS.__metaclass__
+    xmlns = "http://pyweb.zombofant.net/xmlns/nodes/page"
 
 class Page(Nodes.Node, Navigation.Info, Resource.Resource):
     __metaclass__ = Registry.NodeMeta
 
-    namespace = "http://pyweb.zombofant.net/xmlns/nodes/page"
+    namespace = str(PageNS)
     names = ["node"]
 
     def __init__(self, site, parent, node):
