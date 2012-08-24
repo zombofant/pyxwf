@@ -33,14 +33,6 @@ class WebStackContext(Context.Context):
     def Out(self):
         return self._transaction.get_response_stream()
 
-    @property
-    def HostName(self):
-        return self._hostName
-
-    @property
-    def URLScheme(self):
-        return self._scheme
-
     def _parseIfModifiedSince(self):
         values = self._transaction.get_header_values("If-Modified-Since")
         if len(values) > 1:
@@ -97,25 +89,18 @@ class WebStackContext(Context.Context):
     def _requirePost(self):
         raise NotImplemented()
 
-    def _setCacheHeaders(self):
+    def _headersToTX(self):
         tx = self._transaction
-        if self.Cachable:
-            lastModified = self.LastModified
-            if lastModified is not None:
-                self.addCacheControl("must-revalidate")
-                tx.set_header_value("Last-Modified",
-                    format_date_time(TimeUtils.toTimestamp(lastModified)))
-        else:
-            self.addCacheControl("no-cache")
-        tx.set_header_value("Cache-Control", ",".join(self._cacheControl))
-        tx.set_header_value("Vary", ",".join(self._vary))
+        for key, value in self._responseHeaders.viewitems():
+            tx.set_header_value(key, ",".join(value))
 
     def sendResponse(self, message):
         tx = self._transaction
         tx.rollback()
         tx.set_response_code(message.StatusCode)
-        tx.set_content_type(ContentType(message.MIMEType, message.Encoding))
+        self.setResponseContentType(message.MIMEType, message.Encoding)
         self._setCacheHeaders()
+        self._headersToTX()
         self.Out.write(message.getEncodedBody())
 
 class WebStackSite(Site.Site):
@@ -133,9 +118,11 @@ class WebStackSite(Site.Site):
             transaction.set_response_code(status.statusCode)
             ctx.Cachable = False
             ctx._setCacheHeaders()
+            ctx._headersToTX()
         except Errors.NotModified as status:
             transaction.set_response_code(status.statusCode)
             ctx._setCacheHeaders()
+            ctx._headersToTX()
         except Errors.HTTPRedirection as status:
             loc = status.newLocation
             if status.local:

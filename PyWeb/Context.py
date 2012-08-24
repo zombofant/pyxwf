@@ -85,6 +85,7 @@ class Context(object):
         self._vary = set(["host"])  # this is certainly used ;)
         self._accept = None
         self._isMobileClient = False
+        self._responseHeaders = {}
 
     def _requireQuery(self):
         """
@@ -100,6 +101,18 @@ class Context(object):
         :prop:`PostData`. This disables caching of the response altogether.
         """
         self._forceNoCache = True
+
+    def _setCacheHeaders(self):
+        if self.Cachable:
+            lastModified = self.LastModified
+            if lastModified is not None:
+                self.addCacheControl("must-revalidate")
+                self.setResponseHeader("Last-Modified",
+                    format_date_time(TimeUtils.toTimestamp(lastModified)))
+        else:
+            self.addCacheControl("no-cache")
+        self.setResponseHeader("Cache-Control", ",".join(self._cacheControl))
+        self.setResponseHeader("Vary", ",".join(self._vary))
 
     def parsePreferencesList(self, preferences):
         """
@@ -185,6 +198,14 @@ class Context(object):
         The URL path for the request.
         """
         return self._fullURI
+
+    @property
+    def HostName(self):
+        return self._hostName
+
+    @property
+    def URLScheme(self):
+        return self._scheme
 
     Path = RequestPath
 
