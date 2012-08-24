@@ -113,8 +113,10 @@ class Context(object):
                     format_date_time(TimeUtils.toTimestamp(lastModified)))
         else:
             self.addCacheControl("no-cache")
-        self.setResponseHeader("Cache-Control", ",".join(self._cacheControl))
-        self.setResponseHeader("Vary", ",".join(self._vary))
+        if len(self._cacheControl) > 0:
+            self.setResponseHeader("Cache-Control", ",".join(self._cacheControl))
+        if len(self._vary) > 0:
+            self.setResponseHeader("Vary", ",".join(self._vary))
 
     def parsePreferencesList(self, preferences):
         """
