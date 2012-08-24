@@ -318,6 +318,13 @@ class Context(object):
         self.addVary("User-Agent")
         return self._html5Support
 
+    @property
+    def CacheControl(self):
+        """
+        The current contents of the Cache-Control header values.
+        """
+        return frozenset(self._cacheControl)
+
     @abc.abstractmethod
     def sendResponse(self, message):
         """
