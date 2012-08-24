@@ -439,8 +439,12 @@ class Site(Resource.Resource):
             tweaks = ET.Element(NS.Site.tweaks)
         self._loadTweaks(tweaks)
 
+        self.hooks.call("tweaks-loaded")
+
         # load site tree
         self._loadTree(root)
+
+        self.hooks.call("tree-loaded")
 
         # setup the default template
         if self.defaultTemplate is None:
@@ -448,6 +452,9 @@ class Site(Resource.Resource):
 
         # load crumbs
         self._loadCrumbs(root)
+
+        self.hooks.call("crumbs-loaded")
+        self.hooks.call("loading-finished")
 
     def update(self):
         """
@@ -457,6 +464,7 @@ class Site(Resource.Resource):
         sitemapTimestamp = utils.fileLastModified(self.sitemapFile)
         if sitemapTimestamp > self.sitemapTimestamp:
             print("sitemap xml changed -- reloading COMPLETE site.")
+            self.hooks.call("global-reload")
             # Registry.clearAll()
             # self.savepoint.rollback()
             self.loadSitemap(self.sitemapFile)
