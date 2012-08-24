@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<page   xmlns="http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
+        xmlns:py="http://pyxwf.zombofant.net/xmlns/documents/pywebxml">
+    <meta>
+        <title>Home page</title>
+    </meta>
+    <body xmlns="http://www.w3.org/1999/xhtml">
+        <header>
+            <!-- note that hX tags automatically get transformed to hX+1 tags
+                 according to the environment where they're used. -->
+            <h1>Welcome to my website!</h1>
+        </header>
+        <p>I just set up PyXWF and want to play around.</p>
+    </body>
+</page>

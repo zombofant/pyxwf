@@ -4,8 +4,12 @@ from __future__ import unicode_literals, print_function
 
 import sys, os
 
+# we keep our pyxwf instance configurations in /etc/webconf, which is set up as
+# python package by adding an empty __init__.py. Each web project gets its own
+# python module which contains a dict called ``conf``.
+# See also site_name.py
 sys.path.append("/etc")
-from webconf.pyxwf import conf
+from webconf.site_name import conf
 sys.path.remove("/etc")
 
 try:

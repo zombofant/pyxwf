@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<site   xmlns="http://pyxwf.zombofant.net/xmlns/site"
+        xmlns:py="http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
+        xmlns:dir="http://pyxwf.zombofant.net/xmlns/nodes/directory"
+        xmlns:page="http://pyxwf.zombofant.net/xmlns/nodes/page">
+    <meta>
+        <title>My fancy PyXWF site</title>
+    </meta>
+    <plugins>
+        <p>PyXWF.Nodes.Directory</p>
+        <p>PyXWF.Nodes.Page</p>
+    </plugins>
+    <tweaks />
+    <dir:tree
+            id="treeRoot"
+            template="templates/default.xsl">
+        <page:node  name="" id="home"
+            src="home.xml"
+            type="application/x-pywebxml" />
+    </dir:tree>
+    <crumbs />
+</site>
