@@ -2,9 +2,11 @@ from __future__ import unicode_literals
 
 import operator, abc, collections, functools
 from fnmatch import fnmatch
+from wsgiref.handlers import format_date_time
 
 import PyWeb.Types as Types
 import PyWeb.Errors as Errors
+import PyWeb.TimeUtils as TimeUtils
 
 @functools.total_ordering
 class Preference(object):
@@ -415,6 +417,6 @@ class Context(object):
 
     def setResponseContentType(self, mimeType, charset):
         if charset:
-            self.setResponseHeader("{0}; charset={1}".format(mimeType, charset))
+            self.setResponseHeader("Content-Type", "{0}; charset={1}".format(mimeType, charset))
         else:
-            self.setResponseHeader(mimeType)
+            self.setResponseHeader("Content-Type", mimeType)

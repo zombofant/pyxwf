@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import os, warnings, gc, urllib
-from wsgiref.handlers import format_date_time
 from datetime import datetime
 
 import WebStack
