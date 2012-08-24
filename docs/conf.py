@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'PyWeb'
+project = u'PyXWF'
 copyright = u'2012, Jonas Wielicki'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -178,7 +178,7 @@ htmlhelp_basename = 'PyWebdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'PyWeb.tex', u'PyWeb Documentation',
+  ('index', 'PyXWF.tex', u'PyXWF Documentation',
    u'Jonas Wielicki', 'manual'),
 ]
 
@@ -211,7 +211,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pyweb', u'PyWeb Documentation',
+    ('index', 'pyxwf', u'PyXWF Documentation',
      [u'Jonas Wielicki'], 1)
 ]
 
