@@ -18,5 +18,15 @@ class MockFSLocation(unittest.TestCase):
         self.assertRaises(ValueError, getattr, self.location, "Root")
         self.assertRaises(ValueError, getattr, self.location, "SiteDir")
 
+    def test___call__(self):
+        path = "foo/bar"
+        self.assertEqual(os.path.join(self.location.Root, path), self.location(path))
+
+    def test_open(self):
+        someFile = "foo.bar"
+        f = self.location.open(someFile, "w")
+        f.close()
+        self.assertTrue(os.path.isfile(self.location(someFile)))
+
     def tearDown(self):
         self.location.close()

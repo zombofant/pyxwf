@@ -1,4 +1,4 @@
-import os, tempfile, shutil
+import os, tempfile, shutil, unittest
 
 import PyWeb.Site as Site
 
@@ -8,6 +8,9 @@ class MockFSLocation(object):
         self._root = tempfile.mkdtemp(".mock")
         self._sitedir = os.path.join(self._root, "site")
         os.mkdir(self._sitedir)
+
+    def __del__(self):
+        self.close()
 
     def _unclosed(self):
         if self._closed:
@@ -23,6 +26,12 @@ class MockFSLocation(object):
         self._unclosed()
         return self._sitedir
 
+    def open(self, fileName, mode):
+        return open(self(fileName), mode)
+
+    def __call__(self, fileName):
+        return os.path.join(self.Root, fileName)
+
     def close(self):
         if self._closed:
             return
@@ -35,3 +44,12 @@ class MockedSite(Site.Site):
         os.chdir(fsLocation.SiteDir)
         sitemapFile = os.path.join(fsLocation.SiteDir, sitemapRelFileName)
         super(MockedSite, Site).__init__(sitemapFile, defaultURLRoot="/")
+
+
+class FSTest(unittest.TestCase):
+    def setUp(self):
+        self.fs = MockFSLocation()
+
+    def tearDown(self):
+        self.fs.close()
+        del self.fs

@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import unittest
+import unittest, os
 from datetime import datetime
 
 import lxml.builder as builder
@@ -8,6 +8,9 @@ import lxml.builder as builder
 from PyWeb.utils import ET
 import PyWeb.utils as utils
 import PyWeb.Namespaces as NS
+import PyWeb.TimeUtils as TimeUtils
+
+import Mocks
 
 class splitTag(unittest.TestCase):
     def test_split(self):
@@ -156,3 +159,17 @@ class XHTMLToHTML(unittest.TestCase):
             )
         )
         self.assertRaises(ValueError, utils.XHTMLToHTML, tree)
+
+
+class fileLastModified(Mocks.FSTest):
+    def test_nonExisting(self):
+        self.assertIsNone(utils.fileLastModified(os.path.join(self.fs.Root, "foo")))
+
+    def test_file(self):
+        path = self.fs("test.file")
+        time = TimeUtils.now()
+        f = open(path, "w")
+        f.close()
+        os.utime(path, (time, time))
+
+        self.assertEqual(TimeUtils.toDatetime(time), utils.fileLastModified(path))
