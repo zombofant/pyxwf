@@ -6,7 +6,7 @@ PyWeb instance.
 It may, in the future, also be used to cache complete rendered pages.
 """
 
-import abc, functools, time, os
+import abc, functools, time, os, operator
 
 import PyWeb.Nodes as Nodes
 import PyWeb.Errors as Errors
@@ -278,7 +278,7 @@ class Cache(object):
             self.entries = []
             for cache in self.subCaches.viewvalues():
                 self.entries.extend(cache.entries.viewvalues())
-            self.entries.sort()
+            self.entries.sort(key=operator.attrgetter("_cache_lastAccess"))
             self.enforceLimit()
         self._limit = value
 
