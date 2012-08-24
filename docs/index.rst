@@ -20,7 +20,7 @@ Some namespaces are used commonly with PyXWF and thus have some prefixes we
 consider default and useful:
 
 *  ``h:`` maps to ``http://www.w3.org/1999/xhtml``, the XHTML namespace.
-*  ``py:`` maps to ``http://pyweb.zombofant.net/xmlns/documents/pywebxml``,
+*  ``py:`` maps to ``http://pyxwf.zombofant.net/xmlns/documents/pywebxml``,
    the namespace for PyWebXML documents.
 
 Table of contents
