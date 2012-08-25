@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import operator, abc, collections, functools
+import operator, abc, collections, functools, logging, itertools
 from fnmatch import fnmatch
 from wsgiref.handlers import format_date_time
 
@@ -65,6 +65,19 @@ class Context(object):
         Preference("text/html", 0.9)
     ]
 
+    charsetPreferences = [
+        # prefer UTF-8, then go through the other unicode encodings in
+        # ascending order of size. prefer little-endian over big-endian
+        # encodings
+        Preference("utf-8", 1.0),
+        Preference("utf-16le", 0.95),
+        Preference("utf-16be", 0.9),
+        Preference("ucs-2le", 0.85),
+        Preference("ucs-2be", 0.8),
+        Preference("utf-32le", 0.75),
+        Preference("utf-32be", 0.7),
+    ]
+
     userAgentHTML5Support = {
         "ie": 9.0,
         "firefox": 4.0,
@@ -126,13 +139,38 @@ class Context(object):
             self.setResponseHeader("Vary", ",".join(self._vary))
 
     def _determineHTMLContentType(self):
-        htmlContentType = self.getContentTypeToUse(
+        htmlContentType = self.getPreferenceToUse(
             self._accept,
             self.htmlPreferences
         )
 
         self._canUseXHTML = htmlContentType == ContentTypes.xhtml
         return htmlContentType
+
+    def getEncodedBody(self, message, remotePreferences=[]):
+        if len(remotePreferences) == 0:
+            message.Encoding = "utf-8"
+            return message.getEncodedBody()
+
+        candidates = self.getPreferenceCandidates(remotePreferences,
+            self.charsetPreferences,
+            matchWildcard=True,
+            includeNonMatching=True)
+
+        # to prevent denial of service, we only test the first five encodings
+        for theirPref, ourPref in itertools.islice(reversed(candidates), 0, 5):
+            encoding = ourPref.value
+            try:
+                message.Encoding = encoding
+                return message.getEncodedBody()
+            except UnicodeEncodeError:
+                pass
+        else:
+            # we try to serve the client UTF-8 and log a warning
+            logging.warning("No charset the client presented us worked to encode the message, falling back to UTF-8")
+            logging.debug("Accept-Charset: {0}".format(", ".join(map(str, remotePreferences))))
+            message.Encoding = "utf-8"
+            return message.getEncodedBody()
 
     def parsePreferencesList(self, preferences):
         """
@@ -152,46 +190,39 @@ class Context(object):
             prefs = []
         return prefs
 
-    @classmethod
-    def getCharsetToUse(cls, prefList, ownPreferences):
-        use = None
-        q = None
-        if len(prefList) == 0:
-            return ownPreferences[0]
-        for item in prefList:
-            if q is None:
-                q = item.q
-            if use is None:
-                use = item.value
-            if item.q < q:
-                break
-            if item.value in ownPreferences:
-                return item.value
-            if item.value == "*" and use is None:
-                use = ownPreferences[0]
-        if use is None:
-            use = ownPreferences[0]
-        return use
-
-    def getContentTypeToUse(self, remotePreferences,
-            ownPreferences, matchWildcard=True):
-
+    def getPreferenceCandidates(self, remotePreferences, ownPreferences,
+            matchWildcard=True,
+            includeNonMatching=False):
         if len(remotePreferences) == 0:
-            return None
+            return []
 
+        remotePreferences = set(remotePreferences)
+        taken = set()
         candidates = []
         for ourPref in ownPreferences:
-            q = None
             for remPref in remotePreferences:
-                if q is not None and remPref.q < q:
-                    break
                 if remPref.value == ourPref.value:
                     candidates.append((remPref, ourPref))
-                if matchWildcard and fnmatch(ourPref.value, remPref.value):
+                    taken.add(remPref)
+                elif matchWildcard and fnmatch(ourPref.value, remPref.value):
                     candidates.append((remPref, ourPref))
-                q = remPref.q
+                    taken.add(remPref)
+            remotePreferences -= taken
+            if len(remotePreferences) == 0:
+                break
+
+        if includeNonMatching:
+            candidates.extend((remPref, Preference(remPref.value, 0.0)) for remPref in remotePreferences)
 
         candidates.sort()
+        return candidates
+
+    def getPreferenceToUse(self, remotePreferences,
+            ownPreferences, matchWildcard=True):
+        candidates = self.getPreferenceCandidates(remotePreferences,
+            ownPreferences,
+            matchWildcard=matchWildcard,
+            includeNonMatching=False)
         try:
             # return the candidate with highest rating. return the preference
             # object from our list, as that's guaranteed to have a fully

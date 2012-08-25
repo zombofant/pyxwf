@@ -62,6 +62,9 @@ class WebStackContext(Context.Context):
         self._accept = self.parsePreferencesList(
             ",".join(tx.get_header_values("Accept"))
         )
+        self._acceptCharset = self.parsePreferencesList(
+            ",".join(tx.get_header_values("Accept-Charset"))
+        )
 
     def _parseUserAgent(self):
         tx = self._transaction
@@ -91,11 +94,15 @@ class WebStackContext(Context.Context):
     def sendResponse(self, message):
         tx = self._transaction
         tx.rollback()
+        # this must be done before setting the content type, as the method also
+        # determines the charset to use
+        body = self.getEncodedBody(message, self._acceptCharset)
+
         tx.set_response_code(message.StatusCode)
         self.setResponseContentType(message.MIMEType, message.Encoding)
         self._setCacheHeaders()
         self._headersToTX()
-        self.Out.write(message.getEncodedBody())
+        self.Out.write(body)
 
 class WebStackSite(Site.Site):
     def __init__(self, sitemapFile, **kwargs):

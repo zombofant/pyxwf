@@ -60,22 +60,24 @@ class MockedContext(Context.Context):
     def __init__(self, urlRoot,
             method="GET",
             path="",
-            responseStream=StringIO(),
+            responseStream=None,
             scheme="http",
             host="mockingbird.example.com",
             userAgent="Wget/1.12 (linux-gnu)",
             accept="application/xhtml+xml",
+            acceptCharset="utf-8",
             ifModifiedSince=None,
             queryData={}):
         super(MockedContext, self).__init__(
             method,
             path,
-            responseStream
+            responseStream or StringIO()
         )
         self._fullURI = urlRoot + path
         self._scheme = scheme
         self._hostName = host
         self._accept = self.parsePreferencesList(accept)
+        self._acceptCharset = self.parsePreferencesList(acceptCharset)
         self._determineHTMLContentType()
         self._ifModifiedSince = ifModifiedSince
         self._queryData = {}
@@ -85,13 +87,14 @@ class MockedContext(Context.Context):
 
     def sendResponse(self, message):
         out = self.Out
+        body = self.getEncodedBody(message, self._acceptCharset)
         out.write(b"{0:d} Mocked Status Code\n".format(message.StatusCode))
         self.setResponseContentType(message.MIMEType, message.Encoding)
         self._setCacheHeaders()
         for header, value in self._responseHeaders.items():
             out.write("{0}: {1}\n".format(header, ",".join(value)).encode("ascii"))
         out.write(b"\n")
-        self.Out.write(message.getEncodedBody())
+        self.Out.write(body)
 
 
 class ContextTest(unittest.TestCase):
