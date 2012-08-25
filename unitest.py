@@ -29,10 +29,10 @@ from our_future import *
 
 class Colors(object):
     # HEADER = '\033[95m'
-    
+
     Header = '\033[01m'
     Warning = '\033[93m'
-    Success = '\033[01;32m' 
+    Success = '\033[01;32m'
     Skipped = '\033[94m'
     Error = '\033[01;31m'
     Failure = Error
@@ -54,7 +54,7 @@ class Colors(object):
         self.Reset = ''
         self.Header = ''
         self.Warning = ''
-    
+
     def __call__(self, string, colour):
         return "{0}{2}{1}".format(colour, self.Reset, string)
 
@@ -68,9 +68,12 @@ import textwrap
 import itertools
 import platform
 import time
+import logging
 
 if platform.python_implementation() == "PyPy":
     import numpypy
+
+logging.basicConfig(level=logging.ERROR)
 
 STATE_PASS = 0
 STATE_SKIP = 1
@@ -137,7 +140,7 @@ group.add_argument(
     dest="stripModulePrefix"
 )
 group.add_argument(
-    "--no-strip-module-prefix", 
+    "--no-strip-module-prefix",
     dest="stripModulePrefix",
     action="store_const",
     const="",
@@ -153,7 +156,7 @@ group.add_argument(
     dest="stripMethodPrefix"
 )
 group.add_argument(
-    "--no-strip-method-prefix", 
+    "--no-strip-method-prefix",
     dest="stripMethodPrefix",
     action="store_const",
     const="",
@@ -189,7 +192,7 @@ parser.add_argument(
     help="Start test discovery at DIR. Defaults to ./tests"
 )
 parser.add_argument(
-    "--project-dir", 
+    "--project-dir",
     dest="projectDir",
     type=unicode,
     metavar="DIR",
@@ -223,7 +226,7 @@ class AwesomeTextResult(unittest.TestResult):
     ]
     maxStateNameLen = len(stateNames[STATE_UNEXPECTED_SUCCESS][0])
     ttyWidth = 80
-    
+
     def __init__(self, ttyWidth, quiet, stripModulePrefix, stripMethodPrefix, *args, **kwargs):
         super(AwesomeTextResult, self).__init__(*args, **kwargs)
         self._previousPath = None
@@ -255,11 +258,11 @@ class AwesomeTextResult(unittest.TestResult):
         modulePath[-1] = self._strip(modulePath[-1], self.stripModulePrefix)
         modulePath.append(type(test).__name__)
         return (modulePath, methodName)
-        
+
     def _formatTestName(self, name, indent=" "*2, color=Colors.TestName):
         testNameLen = self.ttyWidth - (self.maxStateNameLen + (len(indent+" $")) - (len(color) + len(Colors.Reset)))
         return ("{1}{0:.<"+unicode(testNameLen)+"s} ").format(Colors(name, color)+" ", indent)
-    
+
     def _printTestName(self, test):
         modulePath, methodName = self._extractModuleAndMethodName(test)
         if methodName is None:
@@ -278,7 +281,7 @@ class AwesomeTextResult(unittest.TestResult):
             methodName = "runTest"
         modulePath.append(methodName)
         return ".".join(modulePath)
-    
+
     def _printState(self, state):
         print(Colors(*self.stateNames[state]))
 
@@ -293,14 +296,14 @@ class AwesomeTextResult(unittest.TestResult):
         return indent + (("\n"+indent).join(self._skipBlank(s)))
 
     def _formatError(self, err, indent=None):
-        s = "".join(traceback.format_exception(*err))
+        s = "".join(map(lambda x: x.decode("utf-8"), traceback.format_exception(*err)))
         return self._indented(s, indent)
-    
+
     def startTest(self, test):
         if not self.quiet:
             self._printTestName(test)
         super(AwesomeTextResult, self).startTest(test)
-    
+
     def addError(self, test, err):
         super(AwesomeTextResult, self).addError(test, err)
         if self.quiet:
@@ -370,8 +373,8 @@ class AwesomeTextResult(unittest.TestResult):
             passedColour = Colors.Success
         elif passedCount == 0:
             passedColour = Colors.Failure
-        
-        
+
+
         print("{0} ({1} tests in total):".format(Colors("Statistics", Colors.Header), testsTotal), file=file)
         print("  passed                 : {0}".format(Colors(passedCount, passedColour)), file=file)
         print("  skipped                : {0}".format(self._colouredNumber(skippedCount, Colors.Skipped, Colors.Success)), file=file)
