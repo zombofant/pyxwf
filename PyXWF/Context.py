@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function
 
 import operator, abc, collections, functools, logging, itertools
 from fnmatch import fnmatch
@@ -23,7 +23,7 @@ class Preference(object):
     Preference objects compare according to the q value assigned to them.
     """
     @classmethod
-    def fromHeaderSection(cls, value, dropParameters=True, index=0):
+    def fromHeaderSection(cls, value, dropParameters=False, index=0):
         parts = value.lower().split(";")
         header = parts[0].strip()
         parameters = parts[1:]
@@ -42,14 +42,14 @@ class Preference(object):
             elif dropParameters:
                 continue
             if not _:
-                typeParameters[parameter] = None
+                typeParameters[name] = None
             else:
-                typeParameters[parameter] = arg.strip()
+                typeParameters[name] = arg.strip()
 
         return cls(header, q, parameters=typeParameters, index=index)
 
     @classmethod
-    def listFromHeader(cls, headerValue):
+    def listFromHeader(cls, headerValue, dropParameters=False):
         """
         Parse a HTTP formatted list of preferences like the following:
 
@@ -57,10 +57,11 @@ class Preference(object):
         """
         try:
             # parse preferences
-            prefs = (cls.fromHeaderSection(section, index=i)
+            prefs = (cls.fromHeaderSection(section, dropParameters=dropParameters, index=i)
                      for i, section in enumerate(headerValue.split(",")))
-            # drop those with q <= 0 and sort the result
-            prefs = sorted(filter(lambda x: x.q > 0., prefs),
+            # sort the result
+            # don't drop q=0, as it might be used to disable certain ranges
+            prefs = sorted(prefs,
                     reverse=True,
                     key=Preference.rfcCompliantKey)
         except ValueError:
@@ -73,12 +74,19 @@ class Preference(object):
         # the more asterisks, the lower the precedence
         self.precedence = -value.count("*")
         self.q = q
-        self.typeParameters = {}
-        self.rfcKey = (self.q, self.precedence, len(self.typeParameters), -index)
-        self.fullKey = (self.q, self.precedence, self.value, tuple(self.typeParameters.items()))
+        self.typeParameters = parameters
+        self.index = index
+        self.rfcKey = (self.precedence, self.q, len(self.typeParameters), -index)
+        self.fullKey = (self.precedence, self.q, self.value, tuple(self.typeParameters.items()))
 
     def __unicode__(self):
-        return "{0};q={1:.2f}".format(self.value, self.q)
+        return ";".join(itertools.chain(
+            [self.value],
+            ("{0}={1}".format(key, value) for key, value in self.typeParameters.items())
+        ))
+
+    def __repr__(self):
+        return "{0};q={1:.2f}".format(unicode(self), self.q)
 
     def __repr__(self):
         return unicode(self)
@@ -112,27 +120,34 @@ class Preference(object):
 
     def match(self, otherPref, allowWildcard=True):
         if isinstance(otherPref, Preference):
-            q = self.match(otherPref.value)
+            wildcardPenalty, _, q = self.match(otherPref.value)
+            keysUsed = 0
             if q <= 0:
-                return q
+                return (wildcardPenalty, 0, q)
             try:
+                remainingKeys = set(otherPref.typeParameters.keys())
                 for key, value in self.typeParameters.items():
                     if otherPref.typeParameters[key] != value:
-                        return 0
+                        return (0, 0, 0)
+                    keysUsed += 1
+                    remainingKeys.discard(key)
+                if len(remainingKeys) > 0 and not allowWildcard:
+                    return (0, 0, 0)
             except KeyError:
-                return 0
-            return q
+                return (0, 0, 0)
+            return (wildcardPenalty, keysUsed, q)
         else:
+            wildcardPenalty = self.precedence
             if allowWildcard:
                 if fnmatch(otherPref, self.value):
-                    return self.q
+                    return (wildcardPenalty, 0, self.q)
                 else:
-                    return 0
+                    return (0, 0, 0)
             else:
                 if otherPref == self.value:
-                    return self.q
+                    return (0, 0, self.q)
                 else:
-                    return 0
+                    return (0, 0, 0)
 
     rfcCompliantKey = operator.attrgetter("rfcKey")
 
@@ -235,21 +250,27 @@ class Context(object):
         logging.debug("CanUseXHTML: {0}".format(self._canUseXHTML))
         return htmlContentType
 
-    def parsePreferencesList(self, preferences):
-        return Preference.listFromHeader(preferences)
+    def parseAccept(self, headerValue):
+        return Preference.listFromHeader(headerValue)
+
+    def parseAcceptCharset(self, headerValue):
+        prefs = Preference.listFromHeader(headerValue, dropParameters=True)
+
+        starCount = sum(map(lambda x: 1 if x.value == "*" else 0, prefs))
+        if starCount == 0:
+            # according to HTTP/1.1 spec, we _have_ to add iso-8859-1 if no "*"
+            # is in the list
+            prefs.append(Preference("iso-8859-1", 1.0, index=len(prefs)))
+            prefs.sort(key=Preference.rfcCompliantKey)
+
+        return prefs
 
     def getEncodedBody(self, message, remotePreferences=[]):
-        if len(remotePreferences) == 0:
-            # according to HTTP/1.1 spec, we _have_ to try latin-1, and must
-            # assume nothing else.
-            remotePreferences = [
-                Preference("latin-1", 1.0)
-            ]
-
         candidates = self.getPreferenceCandidates(remotePreferences,
             self.charsetPreferences,
             matchWildcard=True,
-            includeNonMatching=True)
+            includeNonMatching=True,
+            takeEverythingOnEmpty=True)
 
         # to prevent denial of service, we only test the first five encodings
         for q, encoding in itertools.islice(reversed(candidates), 0, 5):
@@ -266,24 +287,40 @@ class Context(object):
 
     def getPreferenceCandidates(self, remotePreferences, ownPreferences,
             matchWildcard=True,
-            includeNonMatching=False):
+            includeNonMatching=False,
+            takeEverythingOnEmpty=True):
         if len(remotePreferences) == 0:
-            return []
+            if takeEverythingOnEmpty:
+                # everything is acceptable
+                return list(map(lambda x: (x.q, x.value), ownPreferences))
+            else:
+                return []
 
         candidates = dict()
         for remPref in remotePreferences:
             for ownPref in ownPreferences:
-                q = remPref.match(ownPref, allowWildcard=matchWildcard)
+                sortKey = remPref.match(ownPref, allowWildcard=matchWildcard)
+                penalty, keys, q = sortKey
                 if q > 0.:
-                    if not ownPref.value in candidates:
-                        candidates[ownPref.value] = q
+                    value = unicode(ownPref)
+                    sortKey = penalty, keys, q, ownPref.q, -remPref.index
                 elif includeNonMatching and remPref.precedence == 0:
-                    if not remPref.value in candidates:
-                        candidates[remPref.value] = remPref.q
+                    # we must not add values with precedence != 0
+                    value = unicode(remPref)
+                    sortKey = remPref.precedence, 0, remPref.q, 0, -remPref.index
+                else:
+                    continue
+                try:
+                    oldKey = candidates[value]
+                    if oldKey < sortKey:
+                        candidates[value] = sortKey
+                except KeyError:
+                    candidates[value] = sortKey
 
         candidates = sorted(
             ((q, pref) for pref, q in candidates.iteritems()),
             key=operator.itemgetter(0))
+        candidates = [(q, pref) for (prec, keys, q, q2, index), pref in candidates]
         return candidates
 
     def getPreferenceToUse(self, remotePreferences,

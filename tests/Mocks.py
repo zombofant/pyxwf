@@ -76,8 +76,8 @@ class MockedContext(Context.Context):
         self._fullURI = urlRoot + path
         self._scheme = scheme
         self._hostName = host
-        self._accept = self.parsePreferencesList(accept)
-        self._acceptCharset = self.parsePreferencesList(acceptCharset)
+        self._accept = self.parseAccept(accept)
+        self._acceptCharset = self.parseAcceptCharset(acceptCharset)
         self._determineHTMLContentType()
         self._ifModifiedSince = ifModifiedSince
         self._queryData = {}

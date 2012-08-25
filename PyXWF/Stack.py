@@ -59,10 +59,10 @@ class WebStackContext(Context.Context):
     def _parsePreferences(self):
         tx = self._transaction
 
-        self._accept = self.parsePreferencesList(
+        self._accept = self.parseAccept(
             ",".join(tx.get_header_values("Accept"))
         )
-        self._acceptCharset = self.parsePreferencesList(
+        self._acceptCharset = self.parseAcceptCharset(
             ",".join(tx.get_header_values("Accept-Charset"))
         )
 
