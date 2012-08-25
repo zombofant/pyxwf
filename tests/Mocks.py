@@ -87,7 +87,7 @@ class MockedContext(Context.Context):
 
     def sendResponse(self, message):
         out = self.Out
-        body = self.getEncodedBody(message, self._acceptCharset)
+        body = self.getEncodedBody(message)
         out.write(b"{0:d} Mocked Status Code\n".format(message.StatusCode))
         self.setResponseContentType(message.MIMEType, message.Encoding)
         self._setCacheHeaders()

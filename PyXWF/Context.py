@@ -8,148 +8,7 @@ import PyXWF.Types as Types
 import PyXWF.Errors as Errors
 import PyXWF.TimeUtils as TimeUtils
 import PyXWF.ContentTypes as ContentTypes
-
-@functools.total_ordering
-class Preference(object):
-    """
-    Represent a HTTP Header preference, for example:
-
-        text/html;q=0.9
-
-    would be constructed as:
-
-        Preference("text/html", 0.9)
-
-    Preference objects compare according to the q value assigned to them.
-    """
-    @classmethod
-    def fromHeaderSection(cls, value, dropParameters=False, index=0):
-        parts = value.lower().split(";")
-        header = parts[0].strip()
-        parameters = parts[1:]
-
-        q = 1.
-        typeParameters = {}
-        for parameter in parameters:
-            parameter = parameter.strip()
-            name, _, arg = parameter.partition("=")
-            if name == "q":
-                try:
-                    q = float(arg)
-                except ValueError:
-                    q = 0.
-                break
-            elif dropParameters:
-                continue
-            if not _:
-                typeParameters[name] = None
-            else:
-                typeParameters[name] = arg.strip()
-
-        return cls(header, q, parameters=typeParameters, index=index)
-
-    @classmethod
-    def listFromHeader(cls, headerValue, dropParameters=False):
-        """
-        Parse a HTTP formatted list of preferences like the following:
-
-            text/html;q=1.0, application/xml;q=0.9, */*
-        """
-        try:
-            # parse preferences
-            prefs = (cls.fromHeaderSection(section, dropParameters=dropParameters, index=i)
-                     for i, section in enumerate(headerValue.split(",")))
-            # sort the result
-            # don't drop q=0, as it might be used to disable certain ranges
-            prefs = sorted(prefs,
-                    reverse=True,
-                    key=Preference.rfcCompliantKey)
-        except ValueError:
-            print("Parsing of preference list failed on following input: {0}".format(preferences))
-            prefs = []
-        return prefs
-
-    def __init__(self, value, q, parameters={}, index=0):
-        self.value = value
-        # the more asterisks, the lower the precedence
-        self.precedence = -value.count("*")
-        self.q = q
-        self.typeParameters = parameters
-        self.index = index
-        self.rfcKey = (self.precedence, self.q, len(self.typeParameters), -index)
-        self.fullKey = (self.precedence, self.q, self.value, tuple(self.typeParameters.items()))
-
-    def __unicode__(self):
-        return ";".join(itertools.chain(
-            [self.value],
-            ("{0}={1}".format(key, value) for key, value in self.typeParameters.items())
-        ))
-
-    def __repr__(self):
-        return "{0};q={1:.2f}".format(unicode(self), self.q)
-
-    def __repr__(self):
-        return unicode(self)
-
-    def __eq__(self, other):
-        try:
-            return self.fullKey == other.fullKey
-        except AttributeError:
-            return NotImplemented
-
-    def __ne__(self, other):
-        try:
-            return self.fullKey != other.fullKey
-        except AttributeError:
-            return NotImplemented
-
-    def __lt__(self, other):
-        try:
-            return self.fullKey < other.fullKey
-        except AttributeError:
-            return NotImplemented
-
-    def __le__(self, other):
-        try:
-            return self.fullKey <= other.fullKey
-        except AttributeError:
-            return NotImplemented
-
-    def __hash__(self):
-        return hash(self.fullKey)
-
-    def match(self, otherPref, allowWildcard=True):
-        if isinstance(otherPref, Preference):
-            wildcardPenalty, _, q = self.match(otherPref.value)
-            keysUsed = 0
-            if q <= 0:
-                return (wildcardPenalty, 0, q)
-            try:
-                remainingKeys = set(otherPref.typeParameters.keys())
-                for key, value in self.typeParameters.items():
-                    if otherPref.typeParameters[key] != value:
-                        return (0, 0, 0)
-                    keysUsed += 1
-                    remainingKeys.discard(key)
-                if len(remainingKeys) > 0 and not allowWildcard:
-                    return (0, 0, 0)
-            except KeyError:
-                return (0, 0, 0)
-            return (wildcardPenalty, keysUsed, q)
-        else:
-            wildcardPenalty = self.precedence
-            if allowWildcard:
-                if fnmatch(otherPref, self.value):
-                    return (wildcardPenalty, 0, self.q)
-                else:
-                    return (0, 0, 0)
-            else:
-                if otherPref == self.value:
-                    return (0, 0, self.q)
-                else:
-                    return (0, 0, 0)
-
-    rfcCompliantKey = operator.attrgetter("rfcKey")
+import PyXWF.AcceptHeaders as AcceptHeaders
 
 class Context(object):
     """
@@ -162,21 +21,21 @@ class Context(object):
 
     htmlPreferences = [
         # prefer delivery of XHTML (no conversion required)
-        Preference("application/xhtml+xml", 1.0),
-        Preference("text/html", 0.9)
+        AcceptHeaders.AcceptPreference("application/xhtml+xml", 1.0),
+        AcceptHeaders.AcceptPreference("text/html", 0.9)
     ]
 
     charsetPreferences = [
         # prefer UTF-8, then go through the other unicode encodings in
         # ascending order of size. prefer little-endian over big-endian
         # encodings
-        Preference("utf-8", 1.0),
-        Preference("utf-16le", 0.95),
-        Preference("utf-16be", 0.9),
-        Preference("ucs-2le", 0.85),
-        Preference("ucs-2be", 0.8),
-        Preference("utf-32le", 0.75),
-        Preference("utf-32be", 0.7),
+        AcceptHeaders.CharsetPreference("utf-8", 1.0),
+        AcceptHeaders.CharsetPreference("utf-16le", 0.95),
+        AcceptHeaders.CharsetPreference("utf-16be", 0.9),
+        AcceptHeaders.CharsetPreference("ucs-2le", 0.85),
+        AcceptHeaders.CharsetPreference("ucs-2be", 0.8),
+        AcceptHeaders.CharsetPreference("utf-32le", 0.75),
+        AcceptHeaders.CharsetPreference("utf-32be", 0.7),
     ]
 
     userAgentHTML5Support = {
@@ -241,8 +100,7 @@ class Context(object):
 
     def _determineHTMLContentType(self):
         logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
-        htmlContentType = self.getPreferenceToUse(
-            self._accept,
+        htmlContentType = self._accept.bestMatch(
             self.htmlPreferences,
             matchWildcard=False
         )
@@ -251,22 +109,18 @@ class Context(object):
         return htmlContentType
 
     def parseAccept(self, headerValue):
-        return Preference.listFromHeader(headerValue)
-
-    def parseAcceptCharset(self, headerValue):
-        prefs = Preference.listFromHeader(headerValue, dropParameters=True)
-
-        starCount = sum(map(lambda x: 1 if x.value == "*" else 0, prefs))
-        if starCount == 0:
-            # according to HTTP/1.1 spec, we _have_ to add iso-8859-1 if no "*"
-            # is in the list
-            prefs.append(Preference("iso-8859-1", 1.0, index=len(prefs)))
-            prefs.sort(key=Preference.rfcCompliantKey)
-
+        prefs = AcceptHeaders.AcceptPreferenceList()
+        prefs.appendHeader(headerValue)
         return prefs
 
-    def getEncodedBody(self, message, remotePreferences=[]):
-        candidates = self.getPreferenceCandidates(remotePreferences,
+    def parseAcceptCharset(self, headerValue):
+        prefs = AcceptHeaders.CharsetPreferenceList()
+        prefs.appendHeader(headerValue)
+        prefs.injectRFCValues()
+        return prefs
+
+    def getEncodedBody(self, message):
+        candidates = self._acceptCharset.getCandidates(
             self.charsetPreferences,
             matchWildcard=True,
             includeNonMatching=True,
@@ -282,61 +136,8 @@ class Context(object):
         else:
             # we try to serve the client UTF-8 and log a warning
             logging.warning("No charset the client presented us worked to encode the message, returning 406 Not Acceptable")
-            logging.debug("Accept-Charset: {0}".format(", ".join(map(str, remotePreferences))))
+            logging.debug("Accept-Charset: {0}".format(", ".join(map(str, self._acceptCharset))))
             raise Errors.NotAcceptable()
-
-    def getPreferenceCandidates(self, remotePreferences, ownPreferences,
-            matchWildcard=True,
-            includeNonMatching=False,
-            takeEverythingOnEmpty=True):
-        if len(remotePreferences) == 0:
-            if takeEverythingOnEmpty:
-                # everything is acceptable
-                return list(map(lambda x: (x.q, x.value), ownPreferences))
-            else:
-                return []
-
-        candidates = dict()
-        for remPref in remotePreferences:
-            for ownPref in ownPreferences:
-                sortKey = remPref.match(ownPref, allowWildcard=matchWildcard)
-                penalty, keys, q = sortKey
-                if q > 0.:
-                    value = unicode(ownPref)
-                    sortKey = penalty, keys, q, ownPref.q, -remPref.index
-                elif includeNonMatching and remPref.precedence == 0:
-                    # we must not add values with precedence != 0
-                    value = unicode(remPref)
-                    sortKey = remPref.precedence, 0, remPref.q, 0, -remPref.index
-                else:
-                    continue
-                try:
-                    oldKey = candidates[value]
-                    if oldKey < sortKey:
-                        candidates[value] = sortKey
-                except KeyError:
-                    candidates[value] = sortKey
-
-        candidates = sorted(
-            ((q, pref) for pref, q in candidates.iteritems()),
-            key=operator.itemgetter(0))
-        candidates = [(q, pref) for (prec, keys, q, q2, index), pref in candidates]
-        return candidates
-
-    def getPreferenceToUse(self, remotePreferences,
-            ownPreferences, matchWildcard=True):
-        candidates = self.getPreferenceCandidates(remotePreferences,
-            ownPreferences,
-            matchWildcard=matchWildcard,
-            includeNonMatching=False)
-        try:
-            # return the candidate with highest rating. return the preference
-            # object from our list, as that's guaranteed to have a fully
-            # qualified content type
-            return candidates.pop()[1]
-        except IndexError:
-            # no candidates
-            return None
 
     @classmethod
     def userAgentSupportsHTML5(cls, userAgent, version):

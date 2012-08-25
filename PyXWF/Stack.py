@@ -96,7 +96,7 @@ class WebStackContext(Context.Context):
         # this must be done before setting the content type, as the method also
         # determines the charset to use
         try:
-            body = self.getEncodedBody(message, self._acceptCharset)
+            body = self.getEncodedBody(message)
         except Errors.NotAcceptable as err:
             tx.rollback()
             tx.set_response_code(message.StatusCode)
