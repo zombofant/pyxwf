@@ -93,11 +93,15 @@ class WebStackContext(Context.Context):
 
     def sendResponse(self, message):
         tx = self._transaction
-        tx.rollback()
         # this must be done before setting the content type, as the method also
         # determines the charset to use
-        body = self.getEncodedBody(message, self._acceptCharset)
-
+        try:
+            body = self.getEncodedBody(message, self._acceptCharset)
+        except Errors.NotAcceptable as err:
+            tx.rollback()
+            tx.set_response_code(message.StatusCode)
+            return
+        tx.rollback()
         tx.set_response_code(message.StatusCode)
         self.setResponseContentType(message.MIMEType, message.Encoding)
         self._setCacheHeaders()
