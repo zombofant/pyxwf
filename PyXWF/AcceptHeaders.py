@@ -176,6 +176,12 @@ class LanguagePreference(Preference):
 
         return cls(header, q, parameters=parameters)
 
+    def __unicode__(self):
+        return "{0}{1}".format(
+            self.value,
+            ("-"+self.parameters["sub"]) if "sub" in self.parameters else ""
+        )
+
 class PreferenceList(object):
     def __init__(self, preferenceClass, **kwargs):
         super(PreferenceList, self).__init__(**kwargs)
