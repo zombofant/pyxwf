@@ -27,6 +27,7 @@ class WebStackContext(Context.Context):
         self._parseEnvironment()
         self._parsePreferences()
         self._parseUserAgent()
+        self._determineHTMLContentType()
 
     @property
     def Out(self):
@@ -58,15 +59,9 @@ class WebStackContext(Context.Context):
     def _parsePreferences(self):
         tx = self._transaction
 
-        self.parsePreferencesList(
+        self._accept = self.parsePreferencesList(
             ",".join(tx.get_header_values("Accept"))
         )
-        xhtmlContentType = self.getContentTypeToUse(
-            ["application/xhtml+xml", "application/xml"],
-            matchWildcard=False
-        )
-
-        self._canUseXHTML = xhtmlContentType is not None
 
     def _parseUserAgent(self):
         tx = self._transaction

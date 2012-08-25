@@ -7,6 +7,7 @@ from wsgiref.handlers import format_date_time
 import PyXWF.Types as Types
 import PyXWF.Errors as Errors
 import PyXWF.TimeUtils as TimeUtils
+import PyXWF.ContentTypes as ContentTypes
 
 @functools.total_ordering
 class Preference(object):
@@ -57,6 +58,12 @@ class Context(object):
     underscore, so you're safe to use all other names.
     """
     __metaclass__ = abc.ABCMeta
+
+    htmlPreferences = [
+        # prefer delivery of XHTML (no conversion required)
+        Preference("application/xhtml+xml", 1.0),
+        Preference("text/html", 0.9)
+    ]
 
     userAgentHTML5Support = {
         "ie": 9.0,
@@ -118,6 +125,15 @@ class Context(object):
         if len(self._vary) > 0:
             self.setResponseHeader("Vary", ",".join(self._vary))
 
+    def _determineHTMLContentType(self):
+        htmlContentType = self.getContentTypeToUse(
+            self._accept,
+            self.htmlPreferences
+        )
+
+        self._canUseXHTML = htmlContentType == ContentTypes.xhtml
+        return htmlContentType
+
     def parsePreferencesList(self, preferences):
         """
         Parse a HTTP formatted list of preferences like the following:
@@ -134,7 +150,7 @@ class Context(object):
         except ValueError:
             print("Parsing of preference list failed on following input: {0}".format(preferences))
             prefs = []
-        self._accept = prefs
+        return prefs
 
     @classmethod
     def getCharsetToUse(cls, prefList, ownPreferences):
@@ -157,21 +173,33 @@ class Context(object):
             use = ownPreferences[0]
         return use
 
-    def getContentTypeToUse(self, ownPreferences, matchWildcard=True):
-        if self._accept is None:
-            raise Exception("parsePreferences() must have been called before getContentTypeToUse")
-        accept = self._accept
-        if len(accept) == 0:
+    def getContentTypeToUse(self, remotePreferences,
+            ownPreferences, matchWildcard=True):
+
+        if len(remotePreferences) == 0:
             return None
 
-        use = None
-        for pref in ownPreferences:
-            for item in accept:
-                if item.value == pref:
-                    return item.value
-                if use is None and matchWildcard and fnmatch(pref, item.value):
-                    use = pref
-        return use
+        candidates = []
+        for ourPref in ownPreferences:
+            q = None
+            for remPref in remotePreferences:
+                if q is not None and remPref.q < q:
+                    break
+                if remPref.value == ourPref.value:
+                    candidates.append((remPref, ourPref))
+                if matchWildcard and fnmatch(ourPref.value, remPref.value):
+                    candidates.append((remPref, ourPref))
+                q = remPref.q
+
+        candidates.sort()
+        try:
+            # return the candidate with highest rating. return the preference
+            # object from our list, as that's guaranteed to have a fully
+            # qualified content type
+            return candidates.pop()[1].value
+        except IndexError:
+            # no candidates
+            return None
 
     @classmethod
     def userAgentSupportsHTML5(cls, userAgent, version):

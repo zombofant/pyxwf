@@ -116,6 +116,10 @@ class SimpleSite(Mocks.SiteTest):
             )
         ), encoding="utf-8")
         self.assertEqual(message, refMessage)
+        ctx = Mocks.MockedContext.fromSite(self.site,
+                accept="text/html, application/xhtml+xml")
+        message = self.site.getMessage(ctx)
+        self.assertEqual(message, refMessage)
 
     def test_getMessage_html(self):
         ctx = Mocks.MockedContext.fromSite(self.site, accept="text/html")
@@ -129,5 +133,9 @@ class SimpleSite(Mocks.SiteTest):
                 xhtml("p", "some text")
             )
         ), encoding="utf-8")
+        self.assertEqual(message, refMessage)
+        ctx = Mocks.MockedContext.fromSite(self.site,
+                accept="text/html, application/xhtml+xml;q=0.9")
+        message = self.site.getMessage(ctx)
         self.assertEqual(message, refMessage)
 
