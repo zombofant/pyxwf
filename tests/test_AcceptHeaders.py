@@ -34,7 +34,20 @@ class Preference(unittest.TestCase):
         self.assertSequenceEqual(correctOrdering, inputOrdering)
 
 
-class AcceptPreferenceList(unittest.TestCase):
+class ListTest(unittest.TestCase):
+    def _testList(self, prefList, expectedQualities):
+        for pref, q in expectedQualities:
+            calculatedq = prefList.getQuality(pref)
+            self.assertEqual(q,
+                calculatedq,
+                msg="{0} did not get the correct q-value: {1} expected, {2} calculated".format(
+                    unicode(pref),
+                    q,
+                    calculatedq
+                )
+            )
+
+class AcceptPreferenceList(ListTest):
     def test_parsing(self):
         P = AcceptHeaders.AcceptPreference
         header = """text/plain; q=0.5, text/html,
@@ -56,25 +69,17 @@ class AcceptPreferenceList(unittest.TestCase):
                text/html;level=2;q=0.4, */*;q=0.5""")
 
         P = AcceptHeaders.AcceptPreference
-        expectedPrecedence = [
-            (P.fromHeaderSection("text/html;level=1"),     1.0),
-            (P.fromHeaderSection("text/html"),             0.7),
-            (P.fromHeaderSection("text/plain"),            0.3),
-            (P.fromHeaderSection("image/jpeg"),            0.5),
-            (P.fromHeaderSection("text/html;level=2"),     0.4),
-            (P.fromHeaderSection("text/html;level=3"),     0.7),
+        expectedQualities = [
+            (P.fromHeaderSection("text/html;level=1"),      1.0),
+            (P.fromHeaderSection("text/html"),              0.7),
+            (P.fromHeaderSection("text/plain"),             0.3),
+            (P.fromHeaderSection("image/jpeg"),             0.5),
+            (P.fromHeaderSection("text/html;level=2"),      0.4),
+            (P.fromHeaderSection("text/html;level=3"),      0.7),
         ]
+        self._testList(l, expectedQualities)
 
-        for pref, q in expectedPrecedence:
-            candidates = l.getCandidates([pref])
-            precedence = candidates.pop()[0]
-            self.assertEqual(q, precedence, msg="{0} did not get the correct q-value: {1} expected, {2} calculated".format(
-                pref,
-                q,
-                precedence
-            ))
-
-class CharsetPreferenceList(unittest.TestCase):
+class CharsetPreferenceList(ListTest):
     def test_parsing(self):
         P = AcceptHeaders.CharsetPreference
         header = """iso-8859-5, unicode-1-1;q=0.8"""
@@ -89,7 +94,7 @@ class CharsetPreferenceList(unittest.TestCase):
             ]
         )
 
-class LanguagePreferenceList(unittest.TestCase):
+class LanguagePreferenceList(ListTest):
     def test_parsing(self):
         P = AcceptHeaders.LanguagePreference
         header = """da, en-gb;q=0.8, en;q=0.7"""
@@ -109,22 +114,11 @@ class LanguagePreferenceList(unittest.TestCase):
         l = AcceptHeaders.LanguagePreferenceList()
         l.appendHeader(header)
 
-        expectedPrecedence = [
-            (P.fromHeaderSection("da"),                    1.0),
-            (P.fromHeaderSection("en-gb"),             0.8),
-            (P.fromHeaderSection("en-us"),            0.7),
-            (P.fromHeaderSection("da-foo"),            1.0),
-            (P.fromHeaderSection("de-de"),     0.0),
+        expectedQualities = [
+            (P.fromHeaderSection("da"),                     1.0),
+            (P.fromHeaderSection("en-gb"),                  0.8),
+            (P.fromHeaderSection("en-us"),                  0.7),
+            (P.fromHeaderSection("da-foo"),                 1.0),
+            (P.fromHeaderSection("de-de"),                  0.0),
         ]
-
-        for pref, q in expectedPrecedence:
-            candidates = l.getCandidates([pref])
-            try:
-                precedence = candidates.pop()[0]
-            except IndexError:
-                precedence = 0
-            self.assertEqual(q, precedence, msg="{0} did not get the correct q-value: {1} expected, {2} calculated".format(
-                unicode(pref),
-                q,
-                precedence
-            ))
+        self._testList(l, expectedQualities)

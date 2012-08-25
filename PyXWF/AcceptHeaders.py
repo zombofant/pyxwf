@@ -3,18 +3,6 @@ from fnmatch import fnmatch
 
 @functools.total_ordering
 class Preference(object):
-    """
-    Represent a HTTP Header preference, for example:
-
-        text/html;q=0.9
-
-    would be constructed as:
-
-        Preference("text/html", 0.9)
-
-    Preference objects compare according to the q value assigned to them.
-    """
-
     def __init__(self, value, q, parameters={}):
         self.value = value
         # the more asterisks, the lower the precedence
@@ -93,7 +81,6 @@ class Preference(object):
 
     rfcCompliantKey = operator.attrgetter("rfcKey")
 
-
 class AcceptPreference(Preference):
     @classmethod
     def fromHeaderSection(cls, value,
@@ -123,7 +110,6 @@ class AcceptPreference(Preference):
 
         return cls(header, q, parameters=parameters)
 
-
 class CharsetPreference(Preference):
     @classmethod
     def fromHeaderSection(cls, value,
@@ -145,7 +131,6 @@ class CharsetPreference(Preference):
             q = 1
 
         return cls(header, q, parameters={})
-
 
 class LanguagePreference(Preference):
     @classmethod
@@ -181,6 +166,7 @@ class LanguagePreference(Preference):
             self.value,
             ("-"+self.parameters["sub"]) if "sub" in self.parameters else ""
         )
+
 
 class PreferenceList(object):
     def __init__(self, preferenceClass, **kwargs):
@@ -241,6 +227,16 @@ class PreferenceList(object):
         candidates = [(q, pref) for (prec, keys, q, q2, index), pref in candidates]
         return candidates
 
+    def getQuality(self, preference, matchWildcard=True):
+        candidates = self.getCandidates([preference],
+            matchWildcard=matchWildcard,
+            includeNonMatching=False)
+        try:
+            return candidates.pop()[0]
+        except IndexError:
+            # no candidates
+            return 0
+
     def bestMatch(self, ownPreferences, matchWildcard=True):
         candidates = self.getCandidates(ownPreferences,
             matchWildcard=matchWildcard,
@@ -254,11 +250,9 @@ class PreferenceList(object):
             # no candidates
             return None
 
-
 class AcceptPreferenceList(PreferenceList):
     def __init__(self, **kwargs):
         super(AcceptPreferenceList, self).__init__(AcceptPreference, **kwargs)
-
 
 class CharsetPreferenceList(PreferenceList):
     def __init__(self, **kwargs):
