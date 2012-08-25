@@ -540,12 +540,13 @@ class Site(Resource.Resource):
             ctx.useResources(htmlTransforms)
 
             contentType = node.getContentType(ctx)
-            # HOTFIX
-            # ctx.checkAcceptable(contentType)
-
             if contentType == ContentTypes.xhtml:
                 if not ctx.HTML5Support and self.html4Transform:
                     ctx.useResource(self.templateCache[self.html4Transform])
+            if not ctx.CanUseXHTML:
+                # we'll do conversion later
+                contentType = ContentTypes.html
+            ctx.checkAcceptable(contentType)
 
             # raise NotModified if the result will be available on the client
             # side
