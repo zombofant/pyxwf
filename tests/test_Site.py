@@ -116,8 +116,15 @@ class SimpleSite(Mocks.SiteTest):
             )
         ), encoding="utf-8")
         self.assertEqual(message, refMessage)
+
+        # test that XHTML is picked if both are equally accepted by the client
         ctx = Mocks.MockedContext.fromSite(self.site,
                 accept="text/html, application/xhtml+xml")
+        message = self.site.getMessage(ctx)
+        self.assertEqual(message, refMessage)
+
+        ctx = Mocks.MockedContext.fromSite(self.site,
+                accept="text/plain, text/html;q=0.8, application/xhtml+xml;q=0.8")
         message = self.site.getMessage(ctx)
         self.assertEqual(message, refMessage)
 
@@ -134,8 +141,15 @@ class SimpleSite(Mocks.SiteTest):
             )
         ), encoding="utf-8")
         self.assertEqual(message, refMessage)
+
+        # test that HTML is picked if it is preferred by the client
         ctx = Mocks.MockedContext.fromSite(self.site,
                 accept="text/html, application/xhtml+xml;q=0.9")
+        message = self.site.getMessage(ctx)
+        self.assertEqual(message, refMessage)
+
+        ctx = Mocks.MockedContext.fromSite(self.site,
+                accept="text/plain, text/html;q=0.95, application/xhtml+xml;q=0.9")
         message = self.site.getMessage(ctx)
         self.assertEqual(message, refMessage)
 
