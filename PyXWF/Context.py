@@ -2,12 +2,12 @@ from __future__ import unicode_literals, print_function
 
 import operator, abc, collections, functools, logging, itertools
 from fnmatch import fnmatch
-from wsgiref.handlers import format_date_time
 
 import PyXWF.Types as Types
 import PyXWF.Errors as Errors
 import PyXWF.TimeUtils as TimeUtils
 import PyXWF.ContentTypes as ContentTypes
+import PyXWF.HTTPUtils as HTTPUtils
 import PyXWF.AcceptHeaders as AcceptHeaders
 import PyXWF.Message as Message
 
@@ -89,7 +89,7 @@ class Context(object):
             if lastModified is not None:
                 self.addCacheControl("must-revalidate")
                 self.setResponseHeader("Last-Modified",
-                    format_date_time(TimeUtils.toTimestamp(lastModified)))
+                    HTTPUtils.formatHTTPDate(lastModified))
         else:
             self.addCacheControl("no-cache")
         if len(self._cacheControl) > 0:
