@@ -517,12 +517,12 @@ class Site(Resource.Resource):
             # attempt lookup
             node = self._getNode(ctx)
         except Errors.NotFound as status:
-            if err.document is not None:
-                data = err.document
-                template = err.template
+            if status.document is not None:
+                data = status.document
+                template = status.template
             else:
                 data = self.handleNotFound(ctx,
-                        err.resourceName or ctx.Path)
+                        status.resourceName or ctx.Path)
                 template = None
             if template is None:
                 template = self.templateCache[self.defaultTemplate]
