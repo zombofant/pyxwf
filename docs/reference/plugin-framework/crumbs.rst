@@ -1,5 +1,5 @@
 :mod:`PyXWF.Crumbs` – Crumb baseclass
 =====================================
 
-.. automodule:: PyXWF.Crumb
+.. automodule:: PyXWF.Crumbs
     :members:

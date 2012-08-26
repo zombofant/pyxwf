@@ -185,8 +185,11 @@ class NamespaceMetaMixin(type):
 
 class NodeMeta(Nodes.NodeMeta, NamespaceMetaMixin):
     """
-    Takes :class:`PyXWF.Nodes.NodeMeta` and mixes it with the
+    Takes :class:`~PyXWF.Nodes.NodeMeta` and mixes it with the
     :class:`NamespaceMetaMixin` to create a suitable Node plugin metaclass.
+
+    .. note::
+        See :class:`~PyXWF.Nodes.Node` for an example of use.
     """
     @classmethod
     def register(mcls, ns, names, cls):
@@ -196,6 +199,9 @@ class CrumbMeta(abc.ABCMeta, NamespaceMetaMixin):
     """
     Takes :class:`abc.ABCMeta` and mixes it with the
     :class:`NamespaceMetaMixin` to create a suitable Crumb plugin metaclass.
+
+    .. note::
+        See :class:`~PyXWF.Crumbs.CrumbBase` for an example of use.
     """
     @classmethod
     def register(mcls, ns, names, cls):

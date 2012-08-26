@@ -14,6 +14,11 @@ class NoInstance(type):
         return super(NoInstance, mcls).__new__(mcls, name, bases, dct)
 
 def splitTag(tag):
+    """
+    Split an ElementTree tag into its namespace and XML local-name and return
+    these as a tuple ``(namespace, localName)``. If the tag has no namespace
+    associated, :data:`None` is returned for *namespace*.
+    """
     assert(isinstance(tag, basestring))
     if len(tag) == 0:
         return None, ""
@@ -26,6 +31,10 @@ def splitTag(tag):
         return None, tag
 
 def addClass(node, cls):
+    """
+    Take the ``@class`` attribute of *node*, split it at spaces, put it into a
+    :class:`set`, add *cls* to the set and re-join the set with spaces.
+    """
     classes = set(node.get("class", "").split())
     classes.add(cls)
     node.set("class", " ".join(classes))
@@ -62,6 +71,10 @@ def unicodeToXPathStr(value):
     return '"'+unicode(value).replace("\"", "\\\"")+'"'
 
 def parseISODate(s):
+    """
+    Parse a date like returned with :meth:`~datetime.datetime.isoformat`, but
+    with a trailing `Z` to indicate the UTC timezone.
+    """
     if s is None:
         return None
     return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ")

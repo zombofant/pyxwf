@@ -5,14 +5,22 @@ from wsgiref.handlers import format_date_time
 
 import PyXWF.TimeUtils as TimeUtils
 
-"""
-Sun, 06 Nov 1994 08:49:37 GMT  ; RFC 822, updated by RFC 1123
-Sunday, 06-Nov-94 08:49:37 GMT ; RFC 850, obsoleted by RFC 1036
-Sun Nov  6 08:49:37 1994       ; ANSI C's asctime() format
-"""
-
 def parseHTTPDate(httpDate):
+    """
+    Parse the string *httpDate* as a date according to RFC 2616 and return the
+    resulting :class:`~datetime.datetime` instance.
+
+    .. note::
+        This uses :func:`email.utils.parsedate`.
+    """
     return datetime(*eutils.parsedate(httpDate)[:6])
 
 def formatHTTPDate(datetime):
+    """
+    Convert the :class:`~datetime.datetime` instance *datetime* into a string
+    formatted to be compliant with the HTTP RFC.
+
+    .. note::
+        This uses :func:`wsgiref.handlers.format_date_time`.
+    """
     return format_date_time(TimeUtils.toTimestamp(datetime))
