@@ -188,3 +188,11 @@ def classifyUserAgent(uaName):
 
 def isMobileUserAgent(headerValue):
     return mobileUARE.search(headerValue) is not None
+
+def chunkString(s, chunkSize=1024):
+    off = 0
+    while True:
+        yield s[off:off+chunkSize]
+        off += chunkSize
+        if off >= len(s):
+            return
