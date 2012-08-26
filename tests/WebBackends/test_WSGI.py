@@ -17,6 +17,9 @@ class WSGIContext(unittest.TestCase):
         self.assertIsNone(self.responseHeaders)
         self.assertIsInstance(status, str)
         self.assertIsInstance(headers, list)
+        for key, value in headers:
+            self.assertIsInstance(key, str)
+            self.assertIsInstance(value, str)
         headers.sort()
         self.responseHeaders = headers
         self.responseStatus = status

@@ -105,14 +105,14 @@ class Context(object):
 
     def _setPropertyHeaders(self):
         if self._vary:
-            self.setResponseHeader("vary", ",".join(self._vary))
+            self.setResponseHeader(b"vary", b",".join(self._vary))
         else:
-            self.clearResponseHeader("vary")
+            self.clearResponseHeader(b"vary")
 
         if self._cacheControl:
-            self.setResponseHeader("cache-control", ",".join(self._cacheControl))
+            self.setResponseHeader(b"cache-control", b",".join(self._cacheControl))
         else:
-            self.clearResponseHeader("cache-control")
+            self.clearResponseHeader(b"cache-control")
 
     def parseAccept(self, headerValue):
         prefs = AcceptHeaders.AcceptPreferenceList()
@@ -376,7 +376,7 @@ class Context(object):
         self._vary.add(fieldName.lower())
 
     def setResponseHeader(self, header, value):
-        self._responseHeaders[header.lower()] = value
+        self._responseHeaders[str(header).lower()] = str(value)
 
     def clearResponseHeader(self, header):
         try:
@@ -386,9 +386,9 @@ class Context(object):
 
     def setResponseContentType(self, mimeType, charset):
         if charset:
-            self.setResponseHeader("Content-Type", "{0}; charset={1}".format(mimeType, charset))
+            self.setResponseHeader(b"Content-Type", b"{0}; charset={1}".format(mimeType, charset))
         else:
-            self.setResponseHeader("Content-Type", mimeType)
+            self.setResponseHeader(b"Content-Type", str(mimeType))
 
     def sendEmptyResponse(self, status):
         self.sendResponse(Message.EmptyMessage(status=status))

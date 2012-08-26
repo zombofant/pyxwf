@@ -148,8 +148,7 @@ class WSGISite(Site.Site):
                     ctx.HostName,
                     loc
                 )
-            ctx._setCacheHeaders()
-            ctx.setResponseHeader("Location", loc)
+            ctx.setResponseHeader(b"Location", loc)
             return ctx.sendEmptyResponse(status)
         else:
             return ctx.sendResponse(message)
