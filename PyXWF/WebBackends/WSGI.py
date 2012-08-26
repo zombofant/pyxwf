@@ -155,6 +155,14 @@ class WSGISite(Site.Site):
                 )
             ctx.setResponseHeader(b"Location", loc)
             return ctx.sendEmptyResponse(status)
+        except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
+            ctx.Cachable = False
+            if status.message is not None:
+                message = Message.PlainTextMessage(contents=status.message,
+                    status=status)
+                return ctx.sendResponse(status)
+            else:
+                return ctx.sendEmptyResponse(status)
         else:
             return ctx.sendResponse(message)
 
