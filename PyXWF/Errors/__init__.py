@@ -8,7 +8,7 @@ class InternalRedirect(Exception):
     def __init__(self, to):
         self.to = to
 
-class MalformedHTTPRequset(ValueError):
+class MalformedHTTPRequest(ValueError):
     pass
 
 

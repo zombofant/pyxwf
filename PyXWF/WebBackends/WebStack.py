@@ -122,7 +122,7 @@ class WebStackSite(Site.Site):
         try:
             try:
                 ctx = WebStackContext(transaction)
-            except Errors.MalformedHTTPRequset as err:
+            except Errors.MalformedHTTPRequest as err:
                 raise Errors.BadRequest(unicode(err))
             message = self.handle(ctx)
         except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
