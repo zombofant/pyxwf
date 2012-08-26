@@ -13,6 +13,7 @@ from PyXWF.utils import ET
 import PyXWF.utils as utils
 import PyXWF.Namespaces as NS
 import PyXWF.ContentTypes as ContentTypes
+import PyXWF.Errors as Errors
 
 class Message(object):
     """
@@ -26,12 +27,12 @@ class Message(object):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, mimeType, statusCode=200, encoding=None):
+    def __init__(self, mimeType, status=Errors.OK, encoding=None):
         super(Message, self).__init__()
         self._mimeType = mimeType
         self._encoding = encoding
         self._lastModified = None
-        self._statusCode = statusCode
+        self._status = status
 
     @property
     def MIMEType(self):
@@ -62,11 +63,19 @@ class Message(object):
 
     @property
     def StatusCode(self):
-        return self._statusCode
+        return self._status.code
+
+    @property
+    def Status(self):
+        return self._status
+
+    @Status.setter
+    def Status(self, value):
+        self._status = value
 
     def __eq__(self, other):
         try:
-            return (self._statusCode == other._statusCode and
+            return (self._status.code == other._status.code and
                     self._encoding == other._encoding and
                     self._mimeType == other._mimeType and
                     self.getEncodedBody() == other.getEncodedBody())
@@ -81,12 +90,13 @@ class Message(object):
 
     def __str__(self):
         return """\
-{0} Raw message
-Content-Type: {1}; charset={2}
-Last-Modified: {4}
+{0} {1}
+Content-Type: {2}; charset={3}
+Last-Modified: {5}
 
-{3}\n""".format(
-            self._statusCode,
+{4}\n""".format(
+            self._status.code,
+            self._status.title,
             self._mimeType,
             self._encoding,
             self.getEncodedBody(),
@@ -253,3 +263,16 @@ class TextMessage(Message):
 
     def getEncodedBody(self):
         return self._contents.encode(self.Encoding)
+
+
+class EmptyMessage(Message):
+    """
+    Represent a message without a body.
+    """
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault("status", Errors.NoContent)
+        super(EmptyMessage, self).__init__(None, **kwargs)
+
+    def getEncodedBody(self):
+        return None

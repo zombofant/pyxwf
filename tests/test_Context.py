@@ -20,8 +20,8 @@ class Context(unittest.TestCase):
 
     def test_message(self):
         ctx = self.sendMessage()
-        self.assertEqual(ctx.Out.getvalue(), b"""\
-200 Mocked Status Code
+        self.assertMultiLineEqual(ctx.Out.getvalue(), b"""\
+200 OK
 content-type: text/plain; charset=utf-8
 vary: host
 
@@ -29,8 +29,8 @@ Foo bar""")
 
     def test_charsetDetection(self):
         ctx = self.sendMessage(acceptCharset="ascii,utf-8;q=0.9")
-        self.assertEqual(ctx.Out.getvalue(), b"""\
-200 Mocked Status Code
+        self.assertMultiLineEqual(ctx.Out.getvalue(), b"""\
+200 OK
 content-type: text/plain; charset=ascii
 vary: host
 
@@ -38,8 +38,8 @@ Foo bar""")
 
     def test_charsetISOInclusion(self):
         ctx = self.sendMessage(body="äöü", acceptCharset="ascii")
-        self.assertEqual(ctx.Out.getvalue(), b"""\
-200 Mocked Status Code
+        self.assertMultiLineEqual(ctx.Out.getvalue(), b"""\
+200 OK
 content-type: text/plain; charset=iso-8859-1
 vary: host
 
@@ -50,8 +50,8 @@ vary: host
 
     def test_charsetDetection_complex(self):
         ctx = self.sendMessage(body="😸", acceptCharset="ascii,latin-1;q=0.9,utf-32be;q=0.8,utf-32le;q=0.8,utf-8;q=0.7,*;q=0")
-        self.assertEqual(ctx.Out.getvalue(), b"""\
-200 Mocked Status Code
+        self.assertMultiLineEqual(ctx.Out.getvalue(), b"""\
+200 OK
 content-type: text/plain; charset=utf-32le
 vary: host
 
@@ -62,8 +62,8 @@ vary: host
         message = Message.XHTMLMessage(NS.XHTML("html"))
         ctx.sendResponse(message)
 
-        self.assertEqual(ctx.Out.getvalue(), b"""\
-200 Mocked Status Code
+        self.assertMultiLineEqual(ctx.Out.getvalue(), b"""\
+200 OK
 content-type: application/xhtml+xml; charset=utf-8
 vary: host
 

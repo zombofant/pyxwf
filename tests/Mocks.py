@@ -91,7 +91,7 @@ class MockedContext(Context.Context):
     def sendResponse(self, message):
         out = self.Out
         body = self.getEncodedBody(message)
-        out.write(b"{0:d} Mocked Status Code\n".format(message.StatusCode))
+        out.write(b"{0:d} {1}\n".format(message.Status.code, message.Status.title))
         self.setResponseContentType(message.MIMEType, message.Encoding)
         self._setCacheHeaders()
         # sorting is important to create reproducible and easy to test responses

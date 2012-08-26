@@ -512,11 +512,11 @@ class Site(Resource.Resource):
             self.htmlTransforms)
 
         # default status code
-        status = 200
+        status = Errors.OK
         try:
             # attempt lookup
             node = self._getNode(ctx)
-        except Errors.HTTP.NotFound as err:
+        except Errors.NotFound as status:
             if err.document is not None:
                 data = err.document
                 template = err.template
@@ -526,7 +526,6 @@ class Site(Resource.Resource):
                 template = None
             if template is None:
                 template = self.templateCache[self.defaultTemplate]
-            status = err.statusCode
         else:
             # setup the context
             ctx._pageNode = node
@@ -569,23 +568,23 @@ class Site(Resource.Resource):
 
             if not ctx.CanUseXHTML:
                 message = Message.HTMLMessage.fromXHTMLTree(resultTree,
-                    statusCode=status, encoding="utf-8",
+                    status=status, encoding="utf-8",
                     prettyPrint=self.prettyPrint
                 )
             else:
                 message = Message.XHTMLMessage(resultTree,
-                    statusCode=status, encoding="utf-8",
+                    status=status, encoding="utf-8",
                     prettyPrint=self.prettyPrint,
                     forceNamespaces=dict(self._forceNamespaces)
                 )
         elif isinstance(data, (ET._Element, ET._ElementTree)):
             message = Message.XMLMessage(data, contentType,
-                statusCode=status, encoding="utf-8",
+                status=status, encoding="utf-8",
                 cleanupNamespaces=True, prettyPrint=self.prettyPrint
             )
         elif isinstance(data, basestring):
             message = Message.TextMessage(data, contentType,
-                statusCode=status, encoding="utf-8"
+                status=status, encoding="utf-8"
             )
         else:
             raise TypeError("Cannot process node result: {0}".format(type(data)))
@@ -598,11 +597,11 @@ class Site(Resource.Resource):
         try:
             return self.getMessage(ctx)
         except Errors.Handler.InternalServerError as err:
-            return Message.HTMLMessage.fromXHTMLTree(err.xhtml, statusCode=500,
+            return Message.HTMLMessage.fromXHTMLTree(err.xhtml, status=Errors.HTTP500,
                 encoding="utf-8")
         except Errors.HTTPException:
             raise
         except Exception as err:
             xhtml = Errors.Handler.InternalServerError(ctx, *sys.exc_info()).xhtml
-            return Message.HTMLMessage.fromXHTMLTree(xhtml, statusCode=500,
+            return Message.HTMLMessage.fromXHTMLTree(xhtml, status=Errors.HTTP500,
                 encoding="utf-8")
