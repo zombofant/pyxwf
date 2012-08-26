@@ -599,7 +599,7 @@ class Site(Resource.Resource):
         except Errors.Handler.InternalServerError as err:
             return Message.HTMLMessage.fromXHTMLTree(err.xhtml, status=Errors.HTTP500,
                 encoding="utf-8")
-        except Errors.HTTPException:
+        except Errors.HTTPStatusBase:
             raise
         except Exception as err:
             xhtml = Errors.Handler.InternalServerError(ctx, *sys.exc_info()).xhtml
