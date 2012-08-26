@@ -127,16 +127,16 @@ class WebStackSite(Site.Site):
                 raise Errors.BadRequest(unicode(err))
             message = self.handle(ctx)
         except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
-            transaction.set_response_code(status.statusCode)
+            transaction.set_response_code(status.code)
             ctx.Cachable = False
-            self._setCacheStatus()
-            self._setPropertyHeaders()
-            self._headersToTX()
+            ctx._setCacheStatus()
+            ctx._setPropertyHeaders()
+            ctx._headersToTX()
         except Errors.NotModified as status:
-            transaction.set_response_code(status.statusCode)
-            self._setCacheStatus()
-            self._setPropertyHeaders()
-            self._headersToTX()
+            transaction.set_response_code(status.code)
+            ctx._setCacheStatus()
+            ctx._setPropertyHeaders()
+            ctx._headersToTX()
         except Errors.HTTPRedirection as status:
             loc = status.location
             if status.local:
@@ -150,12 +150,12 @@ class WebStackSite(Site.Site):
                     ctx.HostName,
                     loc
                 )
-            self._setCacheStatus()
-            self._setPropertyHeaders()
-            self._headersToTX()
-            transaction.redirect(loc, status.statusCode)
-        except (Errors.HTTP200, EndOfResponse) as status:
-            transaction.set_response_code(status.statusCode)
+            ctx._setCacheStatus()
+            ctx._setPropertyHeaders()
+            ctx._headersToTX()
+            transaction.redirect(loc, status.code)
+        except (Errors.HTTPSuccessful, EndOfResponse) as status:
+            transaction.set_response_code(status.code)
         else:
             ctx.sendResponse(message)
         transaction.commit()
