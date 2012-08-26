@@ -33,13 +33,13 @@ value of the respective ``@dest`` attribute.
     **Attributes**:
 
     :@host: *host name* — Host name to match against
-    :@mobile: *boolean* — The value to set the :prop:`PyXWF.Context.IsMobileClient` property to
+    :@mobile: *boolean* — The value to set the :attr:`~PyXWF.Context.IsMobileClient` property to
 
     **Allowed child nodes:** None
 
 If the current request is issued with the HTTP ``Host`` header equal to a host
 given in one of the force-mobile nodes ``@host`` attributes, the value of the
-:prop:`PyXWF.Context.IsMobileClient` property is set to the value of the
+:attr:`~PyXWF.Context.IsMobileClient` property is set to the value of the
 respective ``@mobile`` attribute.
 
 This is useful to create mobile versions of websites, based on the host name

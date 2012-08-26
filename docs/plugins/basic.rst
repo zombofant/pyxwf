@@ -42,7 +42,7 @@ Namespace: ``http://pyxwf.zombofant.net/xmlns/nodes/directory``, prefix: ``dir:`
 The nodes represents a directory of tree nodes which can be accessed by
 appending their ``@name`` to the path of the directory node, separated by a
 ``/``. If a name is requested which does not match the name of any child node,
-a :cls:`PyXWF.Errors.HTTP.NotFound` error is raised.
+a :class:`~PyXWF.Errors.NotFound` error is raised.
 
 ``<dir:node />`` and ``<dir:tree />`` nodes **require** a child node whose
 ``@name`` is the empty string (or unset).
