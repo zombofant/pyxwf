@@ -53,8 +53,6 @@ class Context(object):
         self._remainingPath = None
         self._queryData = None
         self._postData = None
-        self._cachePath = None
-        self._cacheTokens = set()
         self._forceNoCache = False
         self._cachable = True
         self._ifModifiedSince = None
