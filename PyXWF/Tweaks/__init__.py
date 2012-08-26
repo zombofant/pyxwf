@@ -22,7 +22,7 @@ class TweakSitleton(Sitleton.Sitleton):
             site.tweakRegistry.register(self,
                 # this creates the neccessary keys for the registry
                 itertools.izip(itertools.repeat(tweakNS),
-                    itertools.izip(itertools.repeat(self.tweak), tweakNames)
+                    itertools.izip(tweakNames, itertools.repeat(self.tweak))
                 )
             )
         if tweakHooks:
