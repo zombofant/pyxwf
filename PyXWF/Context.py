@@ -391,4 +391,4 @@ class Context(object):
             self.setResponseHeader(b"Content-Type", str(mimeType))
 
     def sendEmptyResponse(self, status):
-        self.sendResponse(Message.EmptyMessage(status=status))
+        return self.sendResponse(Message.EmptyMessage(status=status))
