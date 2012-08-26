@@ -369,10 +369,7 @@ class Context(object):
         self._vary.add(fieldName.lower())
 
     def setResponseHeader(self, header, value):
-        self._responseHeaders[header.lower()] = [value]
-
-    def appendResponseHeader(self, header, value):
-        self._responseHeaders.setdefault(header.lower(), []).append(value)
+        self._responseHeaders[header.lower()] = value
 
     def setResponseContentType(self, mimeType, charset):
         if charset:

@@ -22,8 +22,8 @@ class Context(unittest.TestCase):
         ctx = self.sendMessage()
         self.assertEqual(ctx.Out.getvalue(), b"""\
 200 Mocked Status Code
-vary: host
 content-type: text/plain; charset=utf-8
+vary: host
 
 Foo bar""")
 
@@ -31,8 +31,8 @@ Foo bar""")
         ctx = self.sendMessage(acceptCharset="ascii,utf-8;q=0.9")
         self.assertEqual(ctx.Out.getvalue(), b"""\
 200 Mocked Status Code
-vary: host
 content-type: text/plain; charset=ascii
+vary: host
 
 Foo bar""")
 
@@ -40,8 +40,8 @@ Foo bar""")
         ctx = self.sendMessage(body="äöü", acceptCharset="ascii")
         self.assertEqual(ctx.Out.getvalue(), b"""\
 200 Mocked Status Code
-vary: host
 content-type: text/plain; charset=iso-8859-1
+vary: host
 
 """+"""äöü""".encode("iso-8859-1"))
 
@@ -52,8 +52,8 @@ content-type: text/plain; charset=iso-8859-1
         ctx = self.sendMessage(body="😸", acceptCharset="ascii,latin-1;q=0.9,utf-32be;q=0.8,utf-32le;q=0.8,utf-8;q=0.7,*;q=0")
         self.assertEqual(ctx.Out.getvalue(), b"""\
 200 Mocked Status Code
-vary: host
 content-type: text/plain; charset=utf-32le
+vary: host
 
 """+"""😸""".encode("utf-32le"))
 
@@ -64,7 +64,7 @@ content-type: text/plain; charset=utf-32le
 
         self.assertEqual(ctx.Out.getvalue(), b"""\
 200 Mocked Status Code
-vary: host
 content-type: application/xhtml+xml; charset=utf-8
+vary: host
 
 """+message.getEncodedBody())

@@ -94,8 +94,9 @@ class MockedContext(Context.Context):
         out.write(b"{0:d} Mocked Status Code\n".format(message.StatusCode))
         self.setResponseContentType(message.MIMEType, message.Encoding)
         self._setCacheHeaders()
-        for header, value in self._responseHeaders.items():
-            out.write("{0}: {1}\n".format(header, ",".join(value)).encode("ascii"))
+        # sorting is important to create reproducible and easy to test responses
+        for header, value in sorted(self._responseHeaders.items()):
+            out.write("{0}: {1}\n".format(header, value).encode("ascii"))
         out.write(b"\n")
         self.Out.write(body)
 
