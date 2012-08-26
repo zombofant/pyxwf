@@ -69,7 +69,7 @@ def parseISODate(s):
 def XHTMLToHTML(tree):
     """
     Converts the given ETree *tree* from XHTML to HTML *in-place*. Raises
-    :cls:`ValueError` if a non-XHTML namespace is encountered.
+    :class:`ValueError` if a non-XHTML namespace is encountered.
     """
     import PyXWF.Namespaces as NS
     xhtmlNS = str(NS.XHTML)

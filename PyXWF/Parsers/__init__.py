@@ -6,7 +6,7 @@ import PyXWF.Sitleton as Sitleton
 class ParserBase(Sitleton.Sitleton):
     """
     Baseclass for Parser implementations. Derived classes should use
-    :cls:`PyXWF.Registry.ParserMeta` as metaclass to automatically register
+    :class:`PyXWF.Registry.ParserMeta` as metaclass to automatically register
     with the doctype registry. See there for further documentation.
 
     Parsers have to implement the `parse` method.
@@ -35,7 +35,7 @@ class ParserBase(Sitleton.Sitleton):
     def parse(self, fileref):
         """
         Take a file name or filelike in *fileref* and parse the hell out of it.
-        Return a :cls:`Document` instance with all data filled out.
+        Return a :class:`Document` instance with all data filled out.
 
         Derived classes must implement this.
         """

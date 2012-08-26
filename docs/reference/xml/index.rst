@@ -1,2 +1,0 @@
-PyXWF XML interface reference
-=============================

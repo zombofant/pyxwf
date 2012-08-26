@@ -21,7 +21,7 @@ class Cachable(object):
     * `_cache_lastAccess` -- timestamp of last access of the object via the
       cache. This is used as a metric of when an entry can be uncached if limits
       are reached.
-    * `_cache_master` -- The :cls:`Cache` instance holding the object.
+    * `_cache_master` -- The :class:`Cache` instance holding the object.
     """
 
     __metaclass__ = abc.ABCMeta
@@ -64,13 +64,13 @@ class Cachable(object):
 
 class SubCache(object):
     """
-    The big master cache (:cls:`Cache` instance) is subdivided into smaller
-    parts, :cls:`SubCache` instances, which can be thought of namespaces inside
+    The big master cache (:class:`Cache` instance) is subdivided into smaller
+    parts, :class:`SubCache` instances, which can be thought of namespaces inside
     the cache.
 
     They're used to separate different kinds of cachable objects, which can be
     handled by different `SubCache`-derived classes. See
-    :cls:`FileSourcedCache` as an example for optimizations possible using
+    :class:`FileSourcedCache` as an example for optimizations possible using
     this.
 
     SubCaches provide dictionary-like access to cachables, associating *keys*
@@ -163,9 +163,9 @@ class SubCache(object):
 class Cache(object):
     """
     Master object representing a full application cache. Objects are not
-    directly stored in the :cls:`Cache` instance but in sub-caches. The
-    :cls:`Cache` object provides dictionary-like access to sub caches. If no
-    cache is associated with a certain key, a new raw :cls:`SubCache` is created
+    directly stored in the :class:`Cache` instance but in sub-caches. The
+    :class:`Cache` object provides dictionary-like access to sub caches. If no
+    cache is associated with a certain key, a new raw :class:`SubCache` is created
     for that key.
 
     Specialized sub caches can be created using :meth:`specializedSubcache`.
@@ -320,7 +320,7 @@ class FileSourcedCache(SubCache):
 
     def getLastModified(self, key):
         """
-        In contrast to the implementation given in :cls:`SubCache`, this
+        In contrast to the implementation given in :class:`SubCache`, this
         implementation uses the timestamp of last modification of the file
         referenced by *key*. This implies that a resource is not neccessarily
         loaded (or even loadable!) even if a LastModified can be retrieved

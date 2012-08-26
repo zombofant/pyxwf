@@ -80,7 +80,7 @@ class Document(object):
     which resemble nodes to put into the xhtml header. These are used for
     stylesheet and script associations, but can also contain different elements.
 
-    *lastModified* is optionally a :cls:`datetime.datetime` object representing
+    *lastModified* is optionally a :class:`datetime.datetime` object representing
     the last modification date of the document. Can be *None* if unknown or not
     well defined and to prevent caching.
 
@@ -193,8 +193,8 @@ class FileDocument(DocumentResource):
 
 class FileDocumentCache(Cache.FileSourcedCache):
     """
-    A sub class of a :cls:`Cache.FileSourcedCache` which keeps
-    :cls:`FileDocument` instances.
+    A sub class of a :class:`Cache.FileSourcedCache` which keeps
+    :class:`FileDocument` instances.
     """
 
     def _load(self, path, overrideMIME=None, **kwargs):

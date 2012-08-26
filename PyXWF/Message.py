@@ -37,7 +37,7 @@ class Message(object):
     @property
     def MIMEType(self):
         """
-        The internet media type (aka *content type*) of the :cls:`Message`.
+        The internet media type (aka *content type*) of the :class:`Message`.
         """
         return self._mimeType
 
@@ -56,7 +56,7 @@ class Message(object):
     def getEncodedBody(self):
         """
         Return the bytes object resembling the contents encoded in the encoding
-        set up in :prop:`Encoding`.
+        set up in :attr:`Encoding`.
 
         Derived classes must implement this method.
         """
@@ -193,9 +193,9 @@ class HTMLMessage(Message):
     @classmethod
     def fromXHTMLTree(cls, docTree, version="HTML5", **kwargs):
         """
-        Return an :cls:`HTMLMessage` instance from the given XHTML *docTree*.
+        Return an :class:`HTMLMessage` instance from the given XHTML *docTree*.
         This performs automatic conversion by removing the XHTML namespace from
-        all elements. Raises :cls:`ValueError` if a non-xhtml namespace is
+        all elements. Raises :class:`ValueError` if a non-xhtml namespace is
         encountered.
         """
         docTree = copy.copy(docTree)

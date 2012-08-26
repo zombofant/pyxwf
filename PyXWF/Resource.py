@@ -10,7 +10,7 @@ import PyXWF.Cache as Cache
 class Resource(Cache.Cachable):
     """
     Resources represent data which was loaded and can be reloaded from an
-    original source. Resource derivates must implement :prop:`LastModified`
+    original source. Resource derivates must implement :attr:`LastModified`
     and :meth:`update` to allow for precise caching and on-demand reload.
     """
     __metaclass__ = abc.ABCMeta
@@ -18,7 +18,7 @@ class Resource(Cache.Cachable):
     @abc.abstractproperty
     def LastModified(self):
         """
-        Return a :cls:`datetime.datetime` object referring to the timestamp
+        Return a :class:`datetime.datetime` object referring to the timestamp
         of last modification of the resource stored in this object (not the one
         represented by this object).
 

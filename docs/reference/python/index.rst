@@ -1,3 +1,0 @@
-PyXWF API reference
-===================
-

@@ -1,6 +1,6 @@
 # encoding=utf-8
 """
-The heart of PyXWF is beating in the :cls:`Site` instance. It accepts requests
+The heart of PyXWF is beating in the :class:`Site` instance. It accepts requests
 and passes them through the tree defined in the sitemap xml.
 """
 from __future__ import unicode_literals

@@ -79,7 +79,7 @@ class Context(object):
     def _requirePost(self):
         """
         Extract the post data from the request and make it available at
-        :prop:`PostData`. This disables caching of the response altogether.
+        :attr:`PostData`. This disables caching of the response altogether.
         """
         self._forceNoCache = True
 
@@ -296,8 +296,8 @@ class Context(object):
     @abc.abstractmethod
     def sendResponse(self, message):
         """
-        Send the :cls:`Message.Message` object referred to by *message* as
-        response. This will render the filelike behind :prop:`Out` invalid for
+        Send the :class:`Message.Message` object referred to by *message* as
+        response. This will render the filelike behind :attr:`Out` invalid for
         use for writing. This must be implemented by a derived class.
         """
 
@@ -341,7 +341,7 @@ class Context(object):
         resources, see :meth:`useResource`) is older or equal to the
         If-Modified-Since value.
 
-        If so, and if caching is not disabled, a :cls:`Errors.HTTP.NotModified`
+        If so, and if caching is not disabled, a :class:`PyXWF.Errors.NotModified`
         is thrown.
         """
         if not self.Cachable:
