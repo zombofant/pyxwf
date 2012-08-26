@@ -16,10 +16,9 @@ import PyXWF.TimeUtils as TimeUtils
 
 class WebStackContext(Context.Context):
     def __init__(self, transaction):
-        super(WebStackContext, self).__init__(
-            transaction.get_request_method(),
-            transaction.get_path_info(encoding="utf-8"),
-            transaction.get_response_stream())
+        super(WebStackContext, self).__init__()
+        self._method = transaction.get_request_method()
+        self._path = transaction.get_path_info(encoding="utf-8")
         self._fullURI = transaction.get_path(encoding="utf-8")
         self._transaction = transaction
         self._parseIfModifiedSince()

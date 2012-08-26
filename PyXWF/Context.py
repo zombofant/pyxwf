@@ -46,14 +46,14 @@ class Context(object):
         "opera": 11.1
     }
 
-    def __init__(self, method, path, outfile):
-        self._method = method
-        self._path = path
-        self._outfile = outfile
+    def __init__(self):
+        self._method = None
+        self._path = None
+        self._outfile = None
         self._remainingPath = None
         self._queryData = None
         self._postData = None
-        self._cachePath = path
+        self._cachePath = None
         self._cacheTokens = set()
         self._forceNoCache = False
         self._cachable = True
@@ -178,13 +178,6 @@ class Context(object):
         return self._scheme
 
     Path = RequestPath
-
-    @property
-    def Out(self):
-        """
-        A filelike where the response shall go to.
-        """
-        return self._outfile
 
     @property
     def QueryData(self):

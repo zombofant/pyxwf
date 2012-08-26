@@ -68,11 +68,10 @@ class MockedContext(Context.Context):
             acceptCharset="utf-8",
             ifModifiedSince=None,
             queryData={}):
-        super(MockedContext, self).__init__(
-            method,
-            path,
-            responseStream or StringIO()
-        )
+        super(MockedContext, self).__init__()
+        self._method = method
+        self._path = path
+        self._outfile = responseStream or StringIO()
         self._fullURI = urlRoot + path
         self._scheme = scheme
         self._hostName = host
@@ -81,6 +80,10 @@ class MockedContext(Context.Context):
         self._determineHTMLContentType()
         self._ifModifiedSince = ifModifiedSince
         self._queryData = {}
+
+    @property
+    def Out(self):
+        return self._outfile
 
     def _requireQuery(self):
         pass
