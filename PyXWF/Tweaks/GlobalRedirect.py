@@ -38,6 +38,6 @@ class GlobalRedirect(object):
         for src, dst, kind in self.redirects:
             m = src.match(path)
             if m:
-                raise kind(newLocation=self._replace(m, dst))
+                raise kind(location=self._replace(m, dst))
 
 GlobalRedirect.NS = _NS

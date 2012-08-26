@@ -148,14 +148,14 @@ class DirectoryResolutionBehaviour(object):
 
         Raise a HTTPRedirect error if the resource can be found under a
         different location. Set *local* attribute of that exception to any value
-        and pass only the new key to *newLocation* to automatically generate
+        and pass only the new key to *location* to automatically generate
         correct paths.
         """
 
     def resolvePath(self, ctx, relPath):
         fullPath = ctx.Path
         if fullPath[-1:] != "/" and len(relPath) == 0 and len(fullPath) > 0:
-            raise Errors.Found(newLocation=fullPath+"/")
+            raise Errors.Found(location=fullPath+"/")
         try:
             pathHere, relPath = relPath.split("/", 1)
         except ValueError:
@@ -166,7 +166,7 @@ class DirectoryResolutionBehaviour(object):
         except Errors.HTTPRedirection as err:
             if hasattr(err, "local"):
                 trailPathLen = len(relPath)+len(pathHere)+1
-                newLocation = fullPath[:-(trailPathLen)] + err.newLocation + relPath
+                err.location = fullPath[:-(trailPathLen)] + err.location + relPath
             else:
                 raise
         if node is None:

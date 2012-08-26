@@ -70,7 +70,7 @@ class MirrorSwitch(Nodes.Node, Navigation.Info):
                     scheme = "http"
                 ctx.Cachable = False
                 raise Errors.Found(
-                    newLocation="{0}://{1}".format(scheme, postSchemeURL),
+                    location="{0}://{1}".format(scheme, postSchemeURL),
                     local=False
                 )
         raise Errors.NotFound()

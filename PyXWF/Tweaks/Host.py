@@ -50,7 +50,7 @@ class HostRedirect(Tweaks.TweakSitleton):
                     os.path.join(self.site.urlRoot, ctx.Path),
                     ctx.URLScheme
                 )
-                raise kind(newLocation=path, local=False)
+                raise kind(location=path, local=False)
 
 class HostForceMobile(Tweaks.TweakSitleton):
     __metaclass__ = Registry.SitletonMeta

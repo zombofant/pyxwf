@@ -59,7 +59,7 @@ class BlogYearDir(BlogFakeDir):
             highestMonth = next(iter(self._validMonthIter(reverse=True)))
         except StopIteration:
             raise Errors.NotFound()
-        raise Errors.Found(newLocation=highestMonth.Path)
+        raise Errors.Found(location=highestMonth.Path)
 
     def getDisplay(self):
         result = super(BlogYearDir, self).getDisplay()

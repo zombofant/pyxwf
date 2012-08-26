@@ -185,7 +185,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
         try:
             year = int(key)
             if str(year) != key:
-                exc = Errors.MovedPermanently(newLocation=str(k))
+                exc = Errors.MovedPermanently(location=str(k))
                 exc.local = True
                 raise exc
             return self._calendary[year]
@@ -231,7 +231,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
         return self._tagCloud.viewitems()
 
     def doGet(self, ctx):
-        raise Errors.Found(newLocation=self._years[0].Path)
+        raise Errors.Found(location=self._years[0].Path)
 
     def getNavigationInfo(self, ctx):
         return self.landingPage.getNavigationInfo(ctx)
