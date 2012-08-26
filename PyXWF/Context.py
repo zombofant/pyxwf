@@ -361,10 +361,9 @@ class Context(object):
             return
         if len(self._accept) == 0:
             return
-        for pref in self._accept:
-            if pref.value == contentType or fnmatch(contentType, pref.value):
-                return
-        else:
+        if isinstance(contentType, basestring):
+            contentType = AcceptHeaders.AcceptPreference.fromHeaderSection(contentType)
+        if self._accept.getQuality(contentType) <= 0.:
             raise Errors.NotAcceptable()
 
     def addCacheControl(self, token):
