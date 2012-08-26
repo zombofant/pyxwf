@@ -83,7 +83,7 @@ class Context(object):
         """
         self._forceNoCache = True
 
-    def _setCacheHeaders(self):
+    def _setCacheStatus(self):
         if self.Cachable:
             lastModified = self.LastModified
             if lastModified is not None:
@@ -92,10 +92,6 @@ class Context(object):
                     HTTPUtils.formatHTTPDate(lastModified))
         else:
             self.addCacheControl("no-cache")
-        if len(self._cacheControl) > 0:
-            self.setResponseHeader("Cache-Control", ",".join(self._cacheControl))
-        if len(self._vary) > 0:
-            self.setResponseHeader("Vary", ",".join(self._vary))
 
     def _determineHTMLContentType(self):
         logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
@@ -106,6 +102,17 @@ class Context(object):
         self._canUseXHTML = htmlContentType == ContentTypes.xhtml
         logging.debug("CanUseXHTML: {0}".format(self._canUseXHTML))
         return htmlContentType
+
+    def _setPropertyHeaders(self):
+        if self._vary:
+            self.setResponseHeader("vary", ",".join(self._vary))
+        else:
+            self.clearResponseHeader("vary")
+
+        if self._cacheControl:
+            self.setResponseHeader("cache-control", ",".join(self._cacheControl))
+        else:
+            self.clearResponseHeader("cache-control")
 
     def parseAccept(self, headerValue):
         prefs = AcceptHeaders.AcceptPreferenceList()
@@ -371,6 +378,12 @@ class Context(object):
 
     def setResponseHeader(self, header, value):
         self._responseHeaders[header.lower()] = value
+
+    def clearResponseHeader(self, header):
+        try:
+            del self._responseHeaders[header.lower()]
+        except KeyError:
+            pass
 
     def setResponseContentType(self, mimeType, charset):
         if charset:

@@ -110,7 +110,8 @@ class WebStackContext(Context.Context):
         tx.rollback()
         tx.set_response_code(message.StatusCode)
         self.setResponseContentType(message.MIMEType, message.Encoding)
-        self._setCacheHeaders()
+        self._setCacheStatus()
+        self._setPropertyHeaders()
         self._headersToTX()
         self.Out.write(body)
 
@@ -128,14 +129,16 @@ class WebStackSite(Site.Site):
         except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
             transaction.set_response_code(status.statusCode)
             ctx.Cachable = False
-            ctx._setCacheHeaders()
-            ctx._headersToTX()
+            self._setCacheStatus()
+            self._setPropertyHeaders()
+            self._headersToTX()
         except Errors.NotModified as status:
             transaction.set_response_code(status.statusCode)
-            ctx._setCacheHeaders()
-            ctx._headersToTX()
+            self._setCacheStatus()
+            self._setPropertyHeaders()
+            self._headersToTX()
         except Errors.HTTPRedirection as status:
-            loc = status.newLocation
+            loc = status.location
             if status.local:
                 if isinstance(loc, str):
                     loc = loc.decode("utf-8")
@@ -147,7 +150,9 @@ class WebStackSite(Site.Site):
                     ctx.HostName,
                     loc
                 )
-            ctx._setCacheHeaders()
+            self._setCacheStatus()
+            self._setPropertyHeaders()
+            self._headersToTX()
             transaction.redirect(loc, status.statusCode)
         except (Errors.HTTP200, EndOfResponse) as status:
             transaction.set_response_code(status.statusCode)

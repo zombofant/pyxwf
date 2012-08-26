@@ -93,7 +93,8 @@ class MockedContext(Context.Context):
         body = self.getEncodedBody(message)
         out.write(b"{0:d} {1}\n".format(message.Status.code, message.Status.title))
         self.setResponseContentType(message.MIMEType, message.Encoding)
-        self._setCacheHeaders()
+        self._setCacheStatus()
+        self._setPropertyHeaders()
         # sorting is important to create reproducible and easy to test responses
         for header, value in sorted(self._responseHeaders.items()):
             out.write("{0}: {1}\n".format(header, value).encode("ascii"))
