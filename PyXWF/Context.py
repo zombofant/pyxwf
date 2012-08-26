@@ -9,6 +9,7 @@ import PyXWF.Errors as Errors
 import PyXWF.TimeUtils as TimeUtils
 import PyXWF.ContentTypes as ContentTypes
 import PyXWF.AcceptHeaders as AcceptHeaders
+import PyXWF.Message as Message
 
 class Context(object):
     """
@@ -376,3 +377,6 @@ class Context(object):
             self.setResponseHeader("Content-Type", "{0}; charset={1}".format(mimeType, charset))
         else:
             self.setResponseHeader("Content-Type", mimeType)
+
+    def sendEmptyResponse(self, status):
+        self.sendResponse(Message.EmptyMessage(status))
