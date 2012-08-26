@@ -258,8 +258,8 @@ class HTTP505(HTTPServerError):
     title = "HTTP Version Not Supported"
 
 
-OK = HTTP202
-Created = HTTP202
+OK = HTTP200
+Created = HTTP201
 Accepted = HTTP202
 NonAuthorativeInformation = HTTP203
 NoContent = HTTP204
