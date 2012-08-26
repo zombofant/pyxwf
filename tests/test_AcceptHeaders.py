@@ -94,6 +94,20 @@ class CharsetPreferenceList(ListTest):
             ]
         )
 
+    def test_empty(self):
+        P = AcceptHeaders.CharsetPreference
+        l = AcceptHeaders.CharsetPreferenceList()
+        # identical to No Header Present
+        l.appendHeader("")
+        l.injectRFCValues()
+
+        # according to RFC, this is equivalent to all charaters sets are accepted
+        self.assertSequenceEqual(list(l),
+            [
+                P("*", 1.0)
+            ]
+        )
+
 class LanguagePreferenceList(ListTest):
     def test_parsing(self):
         P = AcceptHeaders.LanguagePreference

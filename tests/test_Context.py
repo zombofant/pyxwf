@@ -3,9 +3,11 @@ from __future__ import unicode_literals
 
 import unittest
 
+from PyXWF.utils import ET
 import PyXWF.Context as MContext
 import PyXWF.Message as Message
 import PyXWF.Errors as Errors
+import PyXWF.Namespaces as NS
 
 import tests.Mocks as Mocks
 
@@ -54,3 +56,15 @@ vary: host
 content-type: text/plain; charset=utf-32le
 
 """+"""😸""".encode("utf-32le"))
+
+    def test_xhtmlCharset(self):
+        ctx = Mocks.MockedContext("/", accept="")
+        message = Message.XHTMLMessage(NS.XHTML("html"))
+        ctx.sendResponse(message)
+
+        self.assertEqual(ctx.Out.getvalue(), b"""\
+200 Mocked Status Code
+vary: host
+content-type: application/xhtml+xml; charset=utf-8
+
+"""+message.getEncodedBody())

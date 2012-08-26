@@ -175,6 +175,8 @@ class PreferenceList(object):
         self._prefs = []
 
     def appendHeader(self, header, dropParameters=False):
+        if not header:
+            return
         # parse preferences
         prefGen = (
             self.preferenceClass.fromHeaderSection(section, dropParameters=dropParameters)
@@ -259,11 +261,14 @@ class CharsetPreferenceList(PreferenceList):
         super(CharsetPreferenceList, self).__init__(CharsetPreference, **kwargs)
 
     def injectRFCValues(self):
-        starCount = sum(map(lambda x: 1 if x.value == "*" else 0, self))
-        if starCount == 0:
-            # according to HTTP/1.1 spec, we _have_ to add iso-8859-1 if no "*"
-            # is in the list
-            self._prefs.append(CharsetPreference("iso-8859-1", 1.0))
+        if len(self) == 0:
+            self._prefs.append(CharsetPreference("*", 1.0))
+        else:
+            starCount = sum(map(lambda x: 1 if x.value == "*" else 0, self))
+            if starCount == 0:
+                # according to HTTP/1.1 spec, we _have_ to add iso-8859-1 if no "*"
+                # is in the list
+                self._prefs.append(CharsetPreference("iso-8859-1", 1.0))
 
 class LanguagePreferenceList(PreferenceList):
     def __init__(self, **kwargs):

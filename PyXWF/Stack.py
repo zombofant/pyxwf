@@ -91,6 +91,13 @@ class WebStackContext(Context.Context):
         for key, value in self._responseHeaders.viewitems():
             tx.set_header_value(key, ",".join(value))
 
+    def setResponseContentType(self, mimeType, charset):
+        tx = self._transaction
+        if charset:
+            tx.set_content_type(ContentType(mimeType, charset))
+        else:
+            tx.set_content_type(ContentType(mimeType))
+
     def sendResponse(self, message):
         tx = self._transaction
         # this must be done before setting the content type, as the method also
