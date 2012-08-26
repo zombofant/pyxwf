@@ -1,3 +1,4 @@
+# encoding=utf-8
 from __future__ import unicode_literals, print_function
 
 import operator, abc, collections, functools, logging, itertools
@@ -17,6 +18,15 @@ class Context(object):
     from the Node tree and can be used to store custom data. All the properties
     of the framework are named with a capital first letter or prefixed with an
     underscore, so you're safe to use all other names.
+
+    .. note::
+        Do not instanciate this class directly. The web backend will do it for
+        you.
+
+    If you are going to write a web backend, we suggest you have a look at
+    the :mod:`PyXWF.WebBackends.WSGI` module as a reference. There is a
+    whole bunch of internal attributes which need to be set up to get the
+    Context work properly.
     """
     __metaclass__ = abc.ABCMeta
 
@@ -48,24 +58,54 @@ class Context(object):
     }
 
     def __init__(self):
+        # Method of the HTTP request ("GET", "POST", ...)
         self._method = None
+
+        # path relative to the application's root
         self._path = None
-        self._outfile = None
-        self._remainingPath = None
+
+        # query data, as a python dict (can be initialized lazily in
+        # :meth:`_requireQuery` )
         self._queryData = None
+
+        # query data, as a python dict (can be initialized lazily in
+        # :meth:`_requirePost` )
         self._postData = None
-        self._forceNoCache = False
-        self._cachable = True
+
+        # datetime object representing the value of the incoming
+        # If-Modified-Since header, if any. Otherwise None
         self._ifModifiedSince = None
+
+        # :class:`AcceptPreferenceList` instance
+        self._accept = None
+
+        # :class:`CharsetPreferenceList` instance
+        self._acceptCharset = None
+
+        # :class:`LanguagePreferenceList` instance
+        self._acceptLanguage = None
+
+        # will be set to True if POST data was requested (can be avoided by not
+        # calling super()._requirePost when overriding _requirePost)
+        self._forceNoCache = False
+
+        # these are backing values for the properties below. See their
+        # docstrings for further information
+        self._cachable = True
         self._pageNode = None
         self._usedResources = set()
         self._lastModified = None
         self._canUseXHTML = False
         self._cacheControl = set()
         self._html5Support = False
-        self._vary = set(["host"])  # this is certainly used ;)
-        self._accept = None
+        self._vary = set(["host"])
         self._isMobileClient = False
+        self._responseHeaders = {}
+
+        # re-create the mutable attributes
+        self._usedResources = set()
+        self._cacheControl = set()
+        self._vary = set()
         self._responseHeaders = {}
 
     def _requireQuery(self):
@@ -73,6 +113,10 @@ class Context(object):
         Extract query string from the web frameworks transaction and make it
         accessible. Also make a note that the query string was used in this
         request and is thus needs to be appended to the cache path.
+
+        .. note::
+            This must be overridden when implementing a Context for a specific
+            web backend.
         """
         raise NotImplemented()
 
@@ -80,10 +124,19 @@ class Context(object):
         """
         Extract the post data from the request and make it available at
         :attr:`PostData`. This disables caching of the response altogether.
+
+        .. note::
+            This must be overridden when implementing a Context for a specific
+            web backend.
         """
         self._forceNoCache = True
 
     def _setCacheStatus(self):
+        """
+        Use the values of :attr:`Cachable` and :attr:`LastModified` to set up
+        the response headers which relate to caching. This may change the value
+        of the ``Last-Modified`` header and will add a cache control token.
+        """
         if self.Cachable:
             lastModified = self.LastModified
             if lastModified is not None:
@@ -94,6 +147,13 @@ class Context(object):
             self.addCacheControl("no-cache")
 
     def _determineHTMLContentType(self):
+        """
+        Use the :class:`AcceptPreferenceList` instance to figure out whether the
+        client properly supports XHTML.
+
+        Will set :attr:`CanUseXHTML` to True if the best match for all HTML
+        content types is the XHTML content type.
+        """
         logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
         htmlContentType = self._accept.bestMatch(
             self.htmlPreferences,
@@ -104,6 +164,10 @@ class Context(object):
         return htmlContentType
 
     def _setPropertyHeaders(self):
+        """
+        Convert :attr:`Vary` and :attr:`CacheControl` into HTTP headers and add
+        them to the response headers.
+        """
         if self._vary:
             self.setResponseHeader(b"vary", b",".join(self._vary))
         else:
@@ -115,17 +179,38 @@ class Context(object):
             self.clearResponseHeader(b"cache-control")
 
     def parseAccept(self, headerValue):
+        """
+        Parse *headerValue* as value of an HTTP ``Accept`` header and return the
+        resulting :class:`PyXWF.AcceptHeaders.AcceptPreferenceList` instance.
+        """
         prefs = AcceptHeaders.AcceptPreferenceList()
         prefs.appendHeader(headerValue)
         return prefs
 
     def parseAcceptCharset(self, headerValue):
+        """
+        Parse *headerValue* as value of an HTTP ``Accept-Charset`` header and
+        return the resulting :class:`PyXWF.AcceptHeaders.CharsetPreferenceList`
+        instance.
+        """
         prefs = AcceptHeaders.CharsetPreferenceList()
         prefs.appendHeader(headerValue)
         prefs.injectRFCValues()
         return prefs
 
     def getEncodedBody(self, message):
+        """
+        Try to get the best encoded version of the
+        :class:`PyXWF.Message.Message` instance *message*.
+
+        Use the contents of :attr:`_acceptCharset` (the parsed
+        ``Accept-Charset`` HTTP header) to figure out which charsets the client
+        prefers. Then mix in what charsets _we_ like to deliver and get the
+        best match, giving priority to the clients wishes.
+
+        If no matching encoding can be found,
+        :class:`PyXWF.Errors.NotAcceptable` is raised.
+        """
         candidates = self._acceptCharset.getCandidates(
             self.charsetPreferences,
             matchWildcard=True,
@@ -147,6 +232,12 @@ class Context(object):
 
     @classmethod
     def userAgentSupportsHTML5(cls, userAgent, version):
+        """
+        Guess whether the user agent *userAgent* with version *version* (as
+        obtained for example from :func:`PyXWF.utils.guessUserAgent`) can deal
+        with HTML5. This is only more or less accurate for the popular browsers.
+        Everyone else will just be served HTML5.
+        """
         try:
             minVersion = cls.userAgentHTML5Support[userAgent]
             return version >= minVersion
@@ -164,23 +255,31 @@ class Context(object):
     @property
     def RequestPath(self):
         """
-        The URL path for the request.
+        The URL path for the request, relative to the applications (not the
+        servers) root.
         """
         return self._path
 
     @property
     def FullURI(self):
         """
-        The URL path for the request.
+        The URL path for the request. This is everything behind the host name
+        and the port number.
         """
         return self._fullURI
 
     @property
     def HostName(self):
+        """
+        Host name the request was sent to.
+        """
         return self._hostName
 
     @property
     def URLScheme(self):
+        """
+        URL scheme used for the request (this is either ``http`` or ``https``).
+        """
         return self._scheme
 
     Path = RequestPath
@@ -219,7 +318,9 @@ class Context(object):
     def Cachable(self):
         """
         Set whether the response is cachable. This may be force-set to False
-        if POST data was accessed.
+        by the Context if POST data was accessed. Otherwise it is writable by
+        the application to define whether the response may be cached by the
+        client.
         """
         return self._cachable and not self._forceNoCache
 
@@ -268,7 +369,10 @@ class Context(object):
     @property
     def IsMobileClient(self):
         """
-        Return whether the user agent is a mobile phone or similar.
+        Return whether the user agent is a mobile phone or similar. This can be
+        overriden to disable mobile detection and force it to a static value.
+        This is for example useful to decide about mobile-suited responses
+        depending on the host name used in the request.
         """
         self.addVary("User-Agent")
         return self._isMobileClient
@@ -303,13 +407,15 @@ class Context(object):
 
     def useResource(self, resource):
         """
-        Mark the use of a given resource to build the response. This will later
-        be regarded when calculating the Last-Modified value of the response,
-        and thus whether the full response needs to be created.
+        Mark the use of a given resource (which is expected to be a
+        :class:`PyXWF.Resource.Resource` instance) to build the response.
+        This will later be regarded when calculating the Last-Modified value
+        of the response, and thus whether the full response needs to be
+        created.
 
         The resource is also asked to recheck its Last-Modified value and reload
         if neccessary, so this is a possible costy operation. However, a
-        resource will never be asked twice.
+        resource will never be asked twice during the same request.
         """
         if resource in self._usedResources:
             return
@@ -356,6 +462,13 @@ class Context(object):
             raise Errors.NotModified()
 
     def checkAcceptable(self, contentType):
+        """
+        Check whether the given *contentType* (which must be either a
+        :class:`basestring` or a :class:`PyXWF.AcceptHeaders.Preference`
+        instance) is acceptable by the client.
+
+        Raise :class:`PyXWF.Errors.NotAcceptable` if not.
+        """
         if self._accept is None:
             return
         if len(self._accept) == 0:
@@ -367,27 +480,50 @@ class Context(object):
 
     def addCacheControl(self, token):
         """
-        Add *token* to the list of Cache-Control HTTP tokens.
+        Add *token* to the set of Cache-Control HTTP tokens. Token must be a
+        valid Cache-Control response value according to HTTP/1.1 (this is not
+        enforced though (yet)).
         """
-        self._cacheControl.add(token)
+        self._cacheControl.add(token.lower())
 
     def addVary(self, fieldName):
+        """
+        Add a HTTP header field name to the Vary HTTP response. *fieldName* must
+        be a valid HTTP/1.1 header name and will be lower-cased.
+        """
         self._vary.add(fieldName.lower())
 
     def setResponseHeader(self, header, value):
+        """
+        Set the value of the HTTP/1.1 response header *header* to *value*. Both
+        are forced into non-unicode strings as per wsgi specification.
+        """
         self._responseHeaders[str(header).lower()] = str(value)
 
     def clearResponseHeader(self, header):
+        """
+        Clear the value from the response header *header*, if any.
+        """
         try:
             del self._responseHeaders[header.lower()]
         except KeyError:
             pass
 
     def setResponseContentType(self, mimeType, charset):
+        """
+        Set the content type of the response according to *mimeType* and
+        *charset*. Charset may be :data:`None` or the empty string if it should
+        be omitted.
+        """
         if charset:
             self.setResponseHeader(b"Content-Type", b"{0}; charset={1}".format(mimeType, charset))
         else:
             self.setResponseHeader(b"Content-Type", str(mimeType))
 
     def sendEmptyResponse(self, status):
+        """
+        Send an empty response with the HTTP status *status*. *status* may be
+        either a :class:`PyXWF.Errors.HTTPStatusBase` descendant class or
+        instance.
+        """
         return self.sendResponse(Message.EmptyMessage(status=status))

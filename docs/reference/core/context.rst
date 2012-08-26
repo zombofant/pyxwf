@@ -1,5 +1,6 @@
 :mod:`PyXWF.Context` – One HTTP transaction context
 ===================================================
 
-.. automodule:: PyXWF.Context
+.. autoclass:: PyXWF.Context.Context
     :members:
+    :private-members:

@@ -9,3 +9,4 @@ Various utilities
     httputils
     timeutils
     acceptheaders
+    errors
