@@ -276,7 +276,6 @@ class Context(object):
     @IsMobileClient.setter
     def IsMobileClient(self, value):
         self._isMobileClient = Types.Typecasts.bool(value)
-        print(self._isMobileClient)
 
     @property
     def HTML5Support(self):

@@ -5,7 +5,7 @@ and passes them through the tree defined in the sitemap xml.
 """
 from __future__ import unicode_literals
 
-import itertools, os, importlib, copy, mimetypes, warnings, re, sys
+import itertools, os, importlib, copy, mimetypes, warnings, re, sys, logging
 
 from PyXWF.utils import ET
 import PyXWF.Types as Types
@@ -226,12 +226,12 @@ class Site(Resource.Resource):
                 continue
             ns, name = utils.splitTag(child.tag)
             if ns == NS.Site.xmlns:
-                print("Warning: Unknown tweak parameter: {0}".format(name))
+                logging.warning("Unknown tweak parameter: {0}".format(name))
             else:
                 try:
                     self.tweakRegistry.submitTweak(child)
                 except Errors.MissingTweakPlugin as err:
-                    print("Warning: {0}".format(err))
+                    logging.warning(unicode(err))
 
     def _replaceChild(self, parent, oldNode, newNode):
         oldIdx = parent.index(oldNode)
@@ -463,7 +463,7 @@ class Site(Resource.Resource):
         """
         sitemapTimestamp = utils.fileLastModified(self.sitemapFile)
         if sitemapTimestamp > self.sitemapTimestamp:
-            print("sitemap xml changed -- reloading COMPLETE site.")
+            logging.info("sitemap xml changed -- reloading COMPLETE site.")
             self.hooks.call("global-reload")
             # Registry.clearAll()
             # self.savepoint.rollback()

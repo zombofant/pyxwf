@@ -1,4 +1,4 @@
-import re, os
+import re, os, logging
 
 import PyXWF.Registry as Registry
 import PyXWF.Namespaces as NS
@@ -76,6 +76,6 @@ class HostForceMobile(Tweaks.TweakSitleton):
     def forceMobile(self, ctx):
         try:
             ctx.IsMobileClient = self.hosts[ctx.HostName]
-            print("host-based mobileness set to {0}".format(ctx.IsMobileClient))
+            logging.debug("host-based mobileness set to {0}".format(ctx.IsMobileClient))
         except KeyError:
             pass

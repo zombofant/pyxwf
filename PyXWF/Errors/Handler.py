@@ -1,4 +1,4 @@
-import traceback
+import traceback, logging
 
 from PyXWF.utils import ET
 import PyXWF.Namespaces as NS
@@ -96,7 +96,7 @@ the following exception occured at {2}:
                 conn.sendmail(mail["From"], mail["To"], mail.as_string())
                 conn.quit()
             except Exception as e :
-                print("Could not send exception mail: {0}".format(e))
+                logging.error("Could not send exception mail: {0}".format(e))
 
         body = ET.Element(NS.XHTML.body)
         if True:

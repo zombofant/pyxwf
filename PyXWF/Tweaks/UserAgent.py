@@ -1,4 +1,4 @@
-import re
+import re, logging
 
 import PyXWF.Registry as Registry
 import PyXWF.Namespaces as NS
@@ -23,4 +23,4 @@ class ForceMobile(object):
 
     def forceMobile(self, ctx):
         ctx.IsMobileClient = self.forceMobile
-        print("enforced mobileness to {0}".format(self.forceMobile))
+        logging.debug("enforced mobileness to {0}".format(self.forceMobile))
