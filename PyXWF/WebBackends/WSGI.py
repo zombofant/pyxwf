@@ -1,6 +1,6 @@
 from __future__ import unicode_literals, print_function
 
-import logging, itertools, collections, abc, functools
+import logging, itertools, collections, abc, functools, urllib, os, gc, urlparse
 
 try:
     from io import StringIO
@@ -43,7 +43,7 @@ class WSGIContext(Context.Context):
         self._startResponse = start_response
         self._requestHeaders, \
         self._method, \
-        self._urlScheme, \
+        self._scheme, \
         self._hostName, \
         self._serverPort, \
         self._fullURI, \
@@ -103,6 +103,10 @@ class WSGIContext(Context.Context):
         )
         self._isMobileClient = utils.isMobileUserAgent(value)
 
+    def _requireQuery(self):
+        if self._queryData is None:
+            self._queryData = urlparse.parse_qs(self._queryString)
+
     def sendResponse(self, message):
         body = self.getEncodedBody(message)
         if body is not None:
@@ -117,6 +121,8 @@ class WSGIContext(Context.Context):
         )
         if hasattr(body, "__iter__") and not isinstance(body, str):
             return iter(body)
+        elif body is None:
+            return []
         else:
             return utils.chunkString(body)
 
@@ -133,7 +139,6 @@ class WSGISite(Site.Site):
                 raise Errors.BadRequest(unicode(err))
             message = self.handle(ctx)
         except Errors.NotModified as status:
-            ctx._setCacheHeaders()
             return ctx.sendEmptyResponse(status)
         except Errors.HTTPRedirection as status:
             loc = status.location
