@@ -5,6 +5,7 @@ import PyXWF.utils as utils
 import PyXWF.Site as Site
 import PyXWF.Context as Context
 import PyXWF.Namespaces as NS
+import PyXWF.Resource as Resource
 
 try:
     from cStringIO import StringIO
@@ -202,3 +203,15 @@ class SiteTest(DynamicSiteTest):
     def tearDown(self):
         del self.site
         super(SiteTest, self).tearDown()
+
+class FakeResource(Resource.Resource):
+    @property
+    def LastModified(self):
+        return self._lastModified
+
+    @LastModified.setter
+    def LastModified(self, value):
+        self._lastModified = value
+
+    def update(self):
+        pass
