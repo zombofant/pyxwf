@@ -98,15 +98,9 @@ class Context(object):
         self._canUseXHTML = False
         self._cacheControl = set()
         self._html5Support = False
-        self._vary = set(["host"])
         self._isMobileClient = False
         self._responseHeaders = {}
-
-        # re-create the mutable attributes
-        self._usedResources = set()
-        self._cacheControl = set()
-        self._vary = set()
-        self._responseHeaders = {}
+        self._vary = set(["host"])
 
     def _requireQuery(self):
         """
