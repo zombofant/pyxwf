@@ -24,18 +24,20 @@ class Info(object):
     @abc.abstractmethod
     def getDisplay(self):
         """
-        Return one of :class:`Hidden`, :class:`ReplaceWithChildren` or :class:`Show`
-        to designate how the entry shall be represented in the navigation.
+        Return one of :data:`Hidden`, :class:`ReplaceWithChildren` or
+        :data:`Show` to designate how the entry shall be represented in the
+        navigation.
         """
         return Show
 
     @abc.abstractmethod
     def getRepresentative(self):
         """
-        Return the :class:`NodeBase` which represents this navigation entry. This
-        is not neccessarily the same as the :class:`NodeBase` instance from which
-        this entry was obtained (for example for Directories returning their
-        index node or redirects).
+        Return the :class:`~PyXWF.Nodes.Node` which represents this
+        navigation entry. This is not neccessarily the same as the
+        :class:`~PyXWF.Nodes.Node` instance from which this entry was
+        obtained (for example for Directories returning their index node or
+        redirects).
         """
         return None
 

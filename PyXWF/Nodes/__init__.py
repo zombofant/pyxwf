@@ -178,7 +178,7 @@ class Node(object):
         :class:`~PyXWF.Errors.NotFound` is raised.
 
         Subclasses override this method to add children to the path, see
-        :class:`PyXWF.Nodes.DirectoryResolutionBehaviour` for an example.
+        :class:`~PyXWF.Nodes.DirectoryResolutionBehaviour` for an example.
         """
         if relPath == "":
             return self

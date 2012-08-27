@@ -11,11 +11,14 @@ import PyXWF.Parsers as Parsers
 import PyXWF.Document as Document
 import PyXWF.Namespaces as NS
 
-
 map = itertools.imap
 
-
 class PyWebXML(Parsers.ParserBase):
+    """
+    This class parses PyWebXML documents. Usually, you don't create instances of
+    this, you just access it using via the :attr:`~PyXWF.Site.parserRegistry`
+    attribute of your :class:`~PyXWF.Site` instance.
+    """
     __metaclass__ = Registry.SitletonMeta
 
     mimeTypes = ["application/x-pywebxml"]
@@ -61,6 +64,14 @@ class PyWebXML(Parsers.ParserBase):
         return meta.findall(NS.XHTML.meta)
 
     def parseTree(self, root, headerOffset=1):
+        """
+        Take the root element of an ElementTree and interpret it as PyWebXML
+        document. Return the resulting :class:`~PyXWF.Document.Document`
+        instance on success and raise on error.
+
+        *headerOffset* works as documented in the base class'
+        :meth:`~PyXWF.Parsers.ParserBase.transformHeaders` method.
+        """
         if root.tag != NS.PyWebXML.page:
             raise ValueError("This is not a pyxwf-xml document.")
 
@@ -89,6 +100,10 @@ class PyWebXML(Parsers.ParserBase):
             ext=ext, date=date, authors=authors, hmeta=hmeta)
 
     def parse(self, fileref, **kwargs):
+        """
+        Parse the file referenced by *fileref* as PyWebXML document and return
+        the resulting :class:`~PyXWF.Document.Document` instance.
+        """
         tree = ET.parse(fileref)
         root = tree.getroot()
         return self.parseTree(root, **kwargs)

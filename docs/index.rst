@@ -31,6 +31,7 @@ Table of contents
 
    tutorial/index
    plugins/index
+   pywebxml/index
    reference/index
 
 Indices and tables

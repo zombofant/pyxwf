@@ -20,7 +20,7 @@ class TweakSitleton(Sitleton.Sitleton):
 
     1.  *tweakNames* takes a list of strings and is by default the empty list.
         Each string you pass will be combined with *tweakNS* and passed to the
-        :class:`PyXWF.Registry.TweakRegistry` instance of the site together
+        :class:`~PyXWF.Registry.TweakRegistry` instance of the site together
         with the method :meth:`tweak` _you_ have to declare and implement.
 
         It is not declared as abstractmethod in this class as this won't be
@@ -30,7 +30,7 @@ class TweakSitleton(Sitleton.Sitleton):
         local-name of the node you want to register a hook for. This is again
         combined with the *tweakNS* to form a fully qualified XML node name.
         The second element must be a callable which will be called whenever the
-        :class:`PyXWF.Site` instance hits a node with the respective tag.
+        :class:`~PyXWF.Site` instance hits a node with the respective tag.
 
     Both :meth:`tweak` and the callables you pass in *tweakHooks* must take
     exactly one positional argument, which will be the node which was

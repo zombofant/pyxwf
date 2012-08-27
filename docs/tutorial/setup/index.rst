@@ -125,7 +125,7 @@ The root element of a PyWebXML document must be a ``<py:page />`` node in
 the namespace given above. We usually choose the ``py:`` prefix to reference
 this namespace (for more elements and attributes which can be used in that
 namespace have a look at the respective documentation). For more information
-about PyWebXML documents see the respective section. The only thing you need
+about PyWebXML documents see :ref:`<py-namespace>`. The only thing you need
 to know now is that you can use arbitary XHTML (and anything you can use in
 XHTML) inside the ``<h:body />`` element. It will be displayed on page, a correct
 template presumed.

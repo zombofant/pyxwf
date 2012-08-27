@@ -148,10 +148,10 @@ class Context(object):
 
     def _determineHTMLContentType(self):
         """
-        Use the :class:`AcceptPreferenceList` instance to figure out whether the
-        client properly supports XHTML.
+        Use the :class:`~PyXWF.AcceptHeaders.AcceptPreferenceList` instance to
+        figure out whether the client properly supports XHTML.
 
-        Will set :attr:`CanUseXHTML` to True if the best match for all HTML
+        Will set :attr:`~.CanUseXHTML` to True if the best match for all HTML
         content types is the XHTML content type.
         """
         logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
@@ -165,8 +165,8 @@ class Context(object):
 
     def _setPropertyHeaders(self):
         """
-        Convert :attr:`Vary` and :attr:`CacheControl` into HTTP headers and add
-        them to the response headers.
+        Convert :attr:`~.Vary` and :attr:`~.CacheControl` into HTTP headers and
+        add them to the response headers.
         """
         if self._vary:
             self.setResponseHeader(b"vary", b",".join(self._vary))
@@ -181,7 +181,7 @@ class Context(object):
     def parseAccept(self, headerValue):
         """
         Parse *headerValue* as value of an HTTP ``Accept`` header and return the
-        resulting :class:`PyXWF.AcceptHeaders.AcceptPreferenceList` instance.
+        resulting :class:`~PyXWF.AcceptHeaders.AcceptPreferenceList` instance.
         """
         prefs = AcceptHeaders.AcceptPreferenceList()
         prefs.appendHeader(headerValue)
@@ -190,7 +190,7 @@ class Context(object):
     def parseAcceptCharset(self, headerValue):
         """
         Parse *headerValue* as value of an HTTP ``Accept-Charset`` header and
-        return the resulting :class:`PyXWF.AcceptHeaders.CharsetPreferenceList`
+        return the resulting :class:`~PyXWF.AcceptHeaders.CharsetPreferenceList`
         instance.
         """
         prefs = AcceptHeaders.CharsetPreferenceList()
@@ -201,7 +201,7 @@ class Context(object):
     def getEncodedBody(self, message):
         """
         Try to get the best encoded version of the
-        :class:`PyXWF.Message.Message` instance *message*.
+        :class:`~PyXWF.Message.Message` instance *message*.
 
         Use the contents of :attr:`_acceptCharset` (the parsed
         ``Accept-Charset`` HTTP header) to figure out which charsets the client
@@ -209,7 +209,7 @@ class Context(object):
         best match, giving priority to the clients wishes.
 
         If no matching encoding can be found,
-        :class:`PyXWF.Errors.NotAcceptable` is raised.
+        :class:`~PyXWF.Errors.NotAcceptable` is raised.
         """
         candidates = self._acceptCharset.getCandidates(
             self.charsetPreferences,
@@ -400,15 +400,15 @@ class Context(object):
     @abc.abstractmethod
     def sendResponse(self, message):
         """
-        Send the :class:`Message.Message` object referred to by *message* as
-        response. This will render the filelike behind :attr:`Out` invalid for
-        use for writing. This must be implemented by a derived class.
+        Send the :class:`~PyXWF.Message.Message` object referred to by *message*
+        as response. This will render the filelike behind :attr:`Out` invalid
+        for use for writing. This must be implemented by a derived class.
         """
 
     def useResource(self, resource):
         """
         Mark the use of a given resource (which is expected to be a
-        :class:`PyXWF.Resource.Resource` instance) to build the response.
+        :class:`~PyXWF.Resource.Resource` instance) to build the response.
         This will later be regarded when calculating the Last-Modified value
         of the response, and thus whether the full response needs to be
         created.
@@ -447,8 +447,8 @@ class Context(object):
         resources, see :meth:`useResource`) is older or equal to the
         If-Modified-Since value.
 
-        If so, and if caching is not disabled, a :class:`PyXWF.Errors.NotModified`
-        is thrown.
+        If so, and if caching is not disabled, a
+        :class:`~PyXWF.Errors.NotModified` is thrown.
         """
         if not self.Cachable:
             return
@@ -464,10 +464,10 @@ class Context(object):
     def checkAcceptable(self, contentType):
         """
         Check whether the given *contentType* (which must be either a
-        :class:`basestring` or a :class:`PyXWF.AcceptHeaders.Preference`
+        :class:`basestring` or a :class:`~PyXWF.AcceptHeaders.Preference`
         instance) is acceptable by the client.
 
-        Raise :class:`PyXWF.Errors.NotAcceptable` if not.
+        Raise :class:`~PyXWF.Errors.NotAcceptable` if not.
         """
         if self._accept is None:
             return
@@ -523,7 +523,7 @@ class Context(object):
     def sendEmptyResponse(self, status):
         """
         Send an empty response with the HTTP status *status*. *status* may be
-        either a :class:`PyXWF.Errors.HTTPStatusBase` descendant class or
+        either a :class:`~PyXWF.Errors.HTTPStatusBase` descendant class or
         instance.
         """
         return self.sendResponse(Message.EmptyMessage(status=status))

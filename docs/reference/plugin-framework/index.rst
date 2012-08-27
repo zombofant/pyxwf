@@ -10,3 +10,4 @@ Plugin framework
     tweaks
     nodes
     crumbs
+    parsers

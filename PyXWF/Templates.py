@@ -118,8 +118,8 @@ class XSLTTemplate(Template):
 
 class XSLTTemplateCache(Cache.FileSourcedCache):
     """
-    A :class:`Cache.FileSourcedCache` which is specialized for
-    :class:`XSLTTemplate` instances.
+    A :class:`~PyXWF.Cache.FileSourcedCache` which is specialized for
+    :class:`~XSLTTemplate` instances.
     """
     def _load(self, path):
         return XSLTTemplate(self.site, path)

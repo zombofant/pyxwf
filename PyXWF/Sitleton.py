@@ -3,8 +3,8 @@ class Sitleton(object):
     """
     .. note::
         If you want to create a sitleton, you probably want to be able to
-        configure it. For that purpose, :class:`PyXWF.Tweaks.TweakSitleton`
-        is the right baseclass.
+        configure it. For that purpose, :class:`~PyXWF.Tweaks.TweakSitleton`
+        is the correct baseclass.
 
     This is a pretty dumb baseclass which does nothing more than storing the
     value of *site* as :attr:`site`.

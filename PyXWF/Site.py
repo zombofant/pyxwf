@@ -1,6 +1,6 @@
 # encoding=utf-8
 """
-The heart of PyXWF is beating in the :class:`Site` instance. It accepts requests
+The heart of PyXWF is beating in the :class:`~Site` instance. It accepts requests
 and passes them through the tree defined in the sitemap xml.
 """
 from __future__ import unicode_literals
@@ -27,6 +27,16 @@ class Site(Resource.Resource):
     Represent and maintain a complete PyXWF framework instance. The sitemap is
     loaded from *sitemapFile*. Optionally, one can specify a *defaultURLRoot*
     which is used if no URL root is specified in the sitemap XML.
+
+    .. attribute:: parserRegistry
+
+        An instance of :class:`~PyXWF.Registry.ParserRegistry` local to the
+        current site. This is the preferred method to access parsers.
+
+    .. attribute:: hooks
+
+        An instance of :class:`~PyXWF.Registry.HookRegistry` for this site.
+        See :ref:`site-hooks` for a reference of existing hooks.
     """
 
     urnScheme = re.compile("^\w+:")
@@ -242,7 +252,14 @@ class Site(Resource.Resource):
 
     def transformReferences(self, ctx, tree):
         """
-        Transform references to authors inside the element tree *tree*.
+        Transform all ``<py:author />`` elements in *tree* which have an ``@id``
+        attribute by copying all relevant attributes of the
+        :class:`~PyXWF.Document.Author` object referred to by the ``@id`` to the
+        element. This overrides existing attributes.
+
+        If the ``@id`` is not known to the site, the text of the element is
+        replaced with a easy-to-recognize placeholder and the element is
+        converted to a ``<h:span />`` element.
         """
         for author in tree.iter(NS.PyWebXML.author):
             id = author.get("id")
@@ -271,6 +288,9 @@ class Site(Resource.Resource):
         This method will iterate over all matching elements, so it can also be
         a whole XHTML html document or just a snippet or something completely
         outside the XHTML namespace.
+
+        See :ref:`<py-namespace>` for documentation on what can be done with
+        in that XML namespace.
         """
         if not hasattr(ctx, "crumbCache"):
             ctx.crumbCache = {}

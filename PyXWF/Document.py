@@ -193,8 +193,8 @@ class FileDocument(DocumentResource):
 
 class FileDocumentCache(Cache.FileSourcedCache):
     """
-    A sub class of a :class:`Cache.FileSourcedCache` which keeps
-    :class:`FileDocument` instances.
+    A sub class of a :class:`~PyXWF.Cache.FileSourcedCache` which keeps
+    :class:`~FileDocument` instances.
     """
 
     def _load(self, path, overrideMIME=None, **kwargs):

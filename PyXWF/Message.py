@@ -37,7 +37,7 @@ class Message(object):
     @property
     def MIMEType(self):
         """
-        The internet media type (aka *content type*) of the :class:`Message`.
+        The internet media type (aka *content type*) of the :class:`~Message`.
         """
         return self._mimeType
 
@@ -193,7 +193,7 @@ class HTMLMessage(Message):
     @classmethod
     def fromXHTMLTree(cls, docTree, version="HTML5", **kwargs):
         """
-        Return an :class:`HTMLMessage` instance from the given XHTML *docTree*.
+        Return an :class:`~HTMLMessage` instance from the given XHTML *docTree*.
         This performs automatic conversion by removing the XHTML namespace from
         all elements. Raises :class:`ValueError` if a non-xhtml namespace is
         encountered.
