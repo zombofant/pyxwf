@@ -66,8 +66,16 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         meta = article.find(NS.PyWebXML.meta)
         nodePath = ET.SubElement(meta, getattr(NS.PyBlog, "node-path"))
         nodePath.text = self.Path
+
+        description = meta.find(NS.PyWebXML.description)
+        if description is None:
+            legacyAbstract = document.ext.find(NS.PyBlog.abstract)
+            if legacyAbstract is not None:
+                description = ET.SubElement(meta, NS.PyWebXML.description)
+                description.text = legacyAbstract.text
+
         abstractText = ET.SubElement(meta, getattr(NS.PyBlog, "abstract-text"))
-        abstractText.text = unicode(document.ext.findtext(NS.PyBlog.abstract))
+        abstractText.text = unicode(meta.findtext(NS.PyWebXML.description))
 
         for kw in meta.findall(NS.PyWebXML.kw):
             kw.set("href", self.blog.getTagPath(kw.text))

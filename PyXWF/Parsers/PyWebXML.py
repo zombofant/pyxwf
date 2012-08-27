@@ -63,6 +63,10 @@ class PyWebXML(Parsers.ParserBase):
     def getMeta(cls, meta):
         return meta.findall(NS.XHTML.meta)
 
+    @classmethod
+    def getDescription(cls, meta):
+        return meta.findtext(NS.PyWebXML.description)
+
     def parseTree(self, root, headerOffset=1):
         """
         Take the root element of an ElementTree and interpret it as PyWebXML
@@ -93,11 +97,13 @@ class PyWebXML(Parsers.ParserBase):
         date = self.getDate(meta)
         authors = self.getAuthors(meta)
         hmeta = self.getMeta(meta)
+        description = self.getDescription(meta)
 
         ext = meta
 
         return Document.Document(title, keywords, links, body,
-            ext=ext, date=date, authors=authors, hmeta=hmeta)
+            ext=ext, date=date, authors=authors, hmeta=hmeta,
+            description=description)
 
     def parse(self, fileref, **kwargs):
         """

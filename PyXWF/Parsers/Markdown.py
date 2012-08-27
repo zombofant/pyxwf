@@ -119,6 +119,7 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
         title = metadata.get("Title", None)
         date = utils.parseISODate(metadata.get("Date", None))
         authors = metadata.get("Authors", None)
+        description = metadata.get("Description", None)
         if authors is not None:
             authors = map(self._authorFromId, self._smartSplit(authors))
         keywords = self._smartSplit(metadata.get("Keywords", ""))
@@ -136,4 +137,4 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
             node.text = value
 
         return Document.Document(title, keywords, [], body,
-            authors=authors, ext=ext, date=date)
+            authors=authors, ext=ext, date=date, description=description)

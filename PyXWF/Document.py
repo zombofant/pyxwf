@@ -98,7 +98,8 @@ class Document(object):
             authors=None,
             date=None,
             license=None,
-            hmeta=None):
+            hmeta=None,
+            description=None):
         super(Document, self).__init__()
         self.title = title
         self.authors = list(authors or [])
@@ -108,6 +109,7 @@ class Document(object):
         self.body = body
         self.etag = etag
         self.date = date
+        self.description = description
         self.license = license
         self.ext = ET.Element("blank") if ext is None else ext
 
@@ -141,6 +143,9 @@ class Document(object):
 
         if self.license:
             meta.append(self.license.toNode())
+
+        if self.description:
+            ET.SubElement(meta, NS.PyWebXML.description).text = self.description
 
         page.append(self.body)
 
