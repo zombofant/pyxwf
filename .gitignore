@@ -1,3 +1,4 @@
 *.pyc
 .htaccess
 pyweb.geany
+utils
