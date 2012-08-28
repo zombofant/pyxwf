@@ -150,7 +150,7 @@ class Node(object):
         node = self
         while node is not None and node is not stopAt:
             yield node
-            node = node.parent
+            node = node.Parent
 
     def handle(self, ctx):
         """
