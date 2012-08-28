@@ -34,7 +34,7 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
     def update(self):
         # this is pretty lazy; it will not load the document but only retrieve
         # the datetime object from the file system
-        docLastModified = self.site.fileDocumentCache\
+        docLastModified = self.Site.fileDocumentCache\
                 .getLastModified(self.fileName)
         if self._lastModified is None or docLastModified is None or \
                 self._lastModified < docLastModified:
@@ -45,7 +45,7 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
             self.title = self.navTitle or docRef.doc.title
 
     def _getDocRef(self):
-        return self.site.fileDocumentCache.get(self.fileName, self.mimeType)
+        return self.Site.fileDocumentCache.get(self.fileName, self.mimeType)
 
     def doGet(self, ctx):
         return self._getDocRef().doc

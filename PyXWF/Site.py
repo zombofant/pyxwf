@@ -401,9 +401,10 @@ class Site(Resource.Resource):
         method is used to register the *node* under a given *ID*. This will
         raise a ValueError if the ID is duplicated.
         """
-        #if ID in self.nodes:
-        #    raise ValueError("Duplicate node id: {0}".format(ID))
         self.nodes[ID] = node
+
+    def unregisterNodeID(self, ID):
+        del self.nodes[ID]
 
     def getNode(self, ID):
         """

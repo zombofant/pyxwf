@@ -118,24 +118,27 @@ class Node(object):
 
     _navTitleWithNoneType = Types.DefaultForNone(None, Types.Typecasts.unicode)
 
-    def __init__(self, site, parent, node):
-        super(Node, self).__init__()
-        self.parent = parent
-        self.site = site
-        if node is not None:
-            self._id = node.get("id")
-            self._name = node.get("name", "")
-            self._template = node.get("template", None)
-            parentPath = (parent.Path + "/") if parent is not None and parent.Path is not None else ""
-            self._path = parentPath + self._name
-        else:
-            self._id = None
-            self._name = None
-            self._template = None
-            self._path = None
+    def __init__(self, site, parent, node, **kwargs):
+        super(Node, self).__init__(**kwargs)
+        self.Parent = parent
+        self.Site = site
+        self._id = None
+        self._name = None
+        self._template = None
+        self._path = None
 
-        if self.ID is not None:
-            site.registerNodeID(self.ID, self)
+        if node is not None:
+            self.loadFromNode(node)
+
+    def loadFromNode(self, node):
+        self.ID = node.get("id")
+        self._name = node.get("name", "")
+        self._template = node.get("template", None)
+        if self.Parent and self.Parent.Path:
+            parentPath = self.Parent.Path + "/"
+        else:
+            parentPath = ""
+        self._path = parentPath + self._name
 
     def iterUpwards(self, stopAt=None):
         """
@@ -204,8 +207,8 @@ class Node(object):
         :attr:`.Template`.
         """
         template = self._template
-        if template is None and self.parent is not None:
-            template = self.parent.Template
+        if template is None and self.Parent is not None:
+            template = self.Parent.Template
         return template
 
     @Template.setter
@@ -223,8 +226,22 @@ class Node(object):
     def Path(self):
         """
         The full path from the application root to this node.
+
+        .. warning::
+            Do not assume that, while this property is writable, changing it
+            will make the node available at a given path. Path resolution takes
+            place along the chain of nodes from the tree root downwards. So this
+            property is just informational and will be initialized correctly by
+            the node itself or the parent node respectively (if the parent node
+            does something fancy)
         """
         return self._path
+
+    @Path.setter
+    def Path(self, value):
+        """
+        Change the path under which the node assumes it's available.
+        """
 
     @property
     def ID(self):
@@ -234,6 +251,18 @@ class Node(object):
         :meth:`~PyXWF.Site.getNode` to retrieve the node.
         """
         return self._id
+
+    @ID.setter
+    def ID(self, value):
+        value = str(value) if value is not None else None
+        if self._id == value:
+            return
+        if self._id is not None:
+            del self.Site.nodes[self._id]
+        self._id = value
+        if self._id is not None:
+            self.Site.registerNodeID(self._id, self)
+
 
     @abc.abstractmethod
     def getNavigationInfo(self, ctx):
