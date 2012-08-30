@@ -3,6 +3,7 @@ import re
 import PyXWF.Registry as Registry
 import PyXWF.Namespaces as NS
 import PyXWF.Errors as Errors
+import PyXWF.Tweaks as Tweaks
 
 class _NS(object):
     __metaclass__ = NS.__metaclass__

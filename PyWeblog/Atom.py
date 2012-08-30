@@ -34,7 +34,7 @@ class AtomFeedRoot(object):
 
     def prepare(self, ctx, posts):
         ctx.useResources(posts)
-        self.template = self.blog.site.templateCache[self.templateName]
+        self.template = self.Site.templateCache[self.templateName]
         ctx.useResource(self.template)
 
     def render(self, ctx, posts, title, kind, path):

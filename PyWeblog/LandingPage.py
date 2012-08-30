@@ -30,7 +30,7 @@ class LandingPage(Directories.WithFeedMixin, Nodes.Node, Navigation.Info):
     def resolvePath(self, ctx, relPath):
         self.posts = self.getPosts()
         ctx.useResources(self.posts)
-        self.template = self.blog.site.templateCache[self.templateName]
+        self.template = self.Site.templateCache[self.templateName]
         ctx.useResource(self.template)
         return super(LandingPage, self).resolvePath(ctx, relPath)
 
