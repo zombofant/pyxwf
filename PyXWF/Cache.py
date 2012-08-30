@@ -85,7 +85,7 @@ class SubCache(object):
         self.master = cache
         self.entries = {}
         self.reverseMap = {}
-        self._lookupLock = threading.Lock()
+        self._lookupLock = threading.RLock()
 
     def _kill(self, cachable):
         """
@@ -197,12 +197,12 @@ class Cache(object):
     Specialized sub caches can be created using :meth:`specializedSubcache`.
     """
     def __init__(self, site, limit=0):
+        self._lookupLock = threading.RLock()
+        self._limitLock = threading.RLock()
         self.site = site
         self.subCaches = {}
         self._limit = 0
         self.Limit = limit
-        self._lookupLock = threading.Lock()
-        self._limitLock = threading.RLock()
 
     def _add(self, cachable):
         """
