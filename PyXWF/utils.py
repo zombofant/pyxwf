@@ -1,9 +1,21 @@
 # encoding=utf-8
 
-import abc, os, re
+import abc, os, re, logging
 from datetime import datetime
 
 import lxml.etree as ET
+
+# http://plumberjack.blogspot.de/2010/10/supporting-alternative-formatting.html
+class BraceMessage(object):
+    def __init__(self, fmt, *args, **kwargs):
+        self.fmt = fmt
+        self.args = args
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return self.fmt.format(*self.args, **self.kwargs)
+
+_F = BraceMessage
 
 class NoInstance(type):
     def _notInstanciable(*args):
@@ -209,15 +221,9 @@ def chunkString(s, chunkSize=1024):
         off += chunkSize
         if off >= len(s):
             return
-
-# http://plumberjack.blogspot.de/2010/10/supporting-alternative-formatting.html
-class BraceMessage(object):
-    def __init__(self, fmt, *args, **kwargs):
-        self.fmt = fmt
-        self.args = args
-        self.kwargs = kwargs
-
-    def __str__(self):
-        return self.fmt.format(*self.args, **self.kwargs)
-
-_F = BraceMessage
+try:
+    import threading
+except ImportError as err:
+    logging.warning(_F("Could not import threading: {0}", err))
+    logging.warning("Will fallback to dummy_threading; expect promlems")
+    import dummy_threading as threading

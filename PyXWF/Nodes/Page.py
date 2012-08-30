@@ -38,10 +38,8 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
                 .getLastModified(self.fileName)
         if self._lastModified is None or docLastModified is None or \
                 self._lastModified < docLastModified:
-
-            docRef = self._getDocRef()
-            docRef.update()
-            self._lastModified = docRef.LastModified
+            self.Site.fileDocumentCache.update(self.fileName)
+            self._lastModified = docLastModified
             self.title = self.navTitle or docRef.doc.title
 
     def _getDocRef(self):
@@ -65,7 +63,7 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
 
     def getNavigationInfo(self, ctx):
         if self.title is None:
-            self.update()
+            self.threadSafeUpdate()
         return self
 
     requestHandlers = {

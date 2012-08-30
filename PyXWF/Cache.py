@@ -8,6 +8,7 @@ It may, in the future, also be used to cache complete rendered pages.
 
 import abc, functools, time, os, operator
 
+from PyXWF.utils import threading
 import PyXWF.Nodes as Nodes
 import PyXWF.Errors as Errors
 import PyXWF.utils as utils
@@ -84,6 +85,7 @@ class SubCache(object):
         self.master = cache
         self.entries = {}
         self.reverseMap = {}
+        self._lookupLock = threading.Lock()
 
     def _kill(self, cachable):
         """
@@ -99,10 +101,14 @@ class SubCache(object):
         Try to get an object from the cache and return *default* (defaults to
         ``None``) if no object is associated with *key*.
         """
+        self._lookupLock.acquire()
         try:
-            return self[key]
-        except KeyError:
-            return default
+            try:
+                return self[key]
+            except KeyError:
+                return default
+        finally:
+            self._lookupLock.release()
 
     def remove(self, cachable):
         """
@@ -116,21 +122,33 @@ class SubCache(object):
         return cachable
 
     def __setitem__(self, key, cachable):
-        if key in self:
-            raise KeyError("Cache key already in use: {0}".format(key))
-        self.entries[key] = cachable
-        self.reverseMap[cachable] = key
+        self._lookupLock.acquire()
+        try:
+            if key in self:
+                raise KeyError("Cache key already in use: {0}".format(key))
+            self.entries[key] = cachable
+            self.reverseMap[cachable] = key
 
-        self.master._add(cachable)
-        cachable._cache_master = self.master
-        cachable._cache_subcache = self
+            self.master._add(cachable)
+            cachable._cache_master = self.master
+            cachable._cache_subcache = self
+        finally:
+            self._lookupLock.release()
 
     def __delitem__(self, key):
-        cachable = self.entries[key]
-        cachable.uncache()
+        self._lookupLock.acquire()
+        try:
+            cachable = self.entries[key]
+            cachable.uncache()
+        finally:
+            self._lookupLock.release()
 
     def __contains__(self, key):
-        return key in self.entries
+        self._lookupLock.acquire()
+        try:
+            return key in self.entries
+        finally:
+            self._lookupLock.release()
 
     def __len__(self):
         return len(self.entries)
@@ -144,7 +162,11 @@ class SubCache(object):
         Derived classes may (and should!) provide mechanisms which can query
         the LastModified timestamp without completely loading an object.
         """
-        return self[key].LastModified
+        self._lookupLock.acquire()
+        try:
+            return self[key].LastModified
+        finally:
+            self._lookupLock.release()
 
     def update(self, key):
         """
@@ -153,11 +175,15 @@ class SubCache(object):
         used to ensure that cached entries are reloaded if they wouldn't be
         reloaded anyways on the next access.
         """
+        self._lookupLock.acquire()
         try:
-            entry = self.entries[key]
-        except KeyError:
-            return
-        entry.update()
+            try:
+                entry = self.entries[key]
+            except KeyError:
+                return
+        finally:
+            self._lookupLock.release()
+        entry.threadSafeUpdate()
 
 
 class Cache(object):
@@ -175,26 +201,36 @@ class Cache(object):
         self.subCaches = {}
         self._limit = 0
         self.Limit = limit
+        self._lookupLock = threading.Lock()
+        self._limitLock = threading.RLock()
 
     def _add(self, cachable):
         """
         Add a cachable. Do not call this directly. Only used for bookkeeping.
         """
-        if self._limit:
-            self.entries.append(cachable)
+        self._limitLock.acquire()
+        try:
+            if self._limit:
+                self.entries.append(cachable)
+        finally:
+            self._limitLock.release()
 
     def _changed(self, entry):
         """
         Resort the container keeping track of all entries to enforce cache
         limits.
         """
-        if not self._limit:
-            return
-        self.entries.sort()
+        self._limitLock.acquire()
+        try:
+            if not self._limit:
+                return
+            self.entries.sort()
+        finally:
+            self._limitLock.release()
 
     def _remove(self, cachable):
         """
-        Remove a cachable from the cache.
+        Remove a cachable from the cache. This already holds the limit lock.
         """
         if self._limit:
             # no need to resort here
@@ -204,18 +240,26 @@ class Cache(object):
         del cachable._cache_subcache
 
     def __getitem__(self, key):
+        self._lookupLock.acquire()
         try:
-            return self.subCaches[key]
-        except KeyError:
-            subCache = SubCache(self)
-            self.subCaches[key] = subCache
-            return subCache
+            try:
+                return self.subCaches[key]
+            except KeyError:
+                subCache = SubCache(self)
+                self.subCaches[key] = subCache
+                return subCache
+        finally:
+            self._lookupLock.release()
 
     def __delitem__(self, key):
-        cache = self.subCaches[key]
-        for entry in cache.entries.values():
-            entry.uncache()
-        del self.subCaches[key]
+        self._lookupLock.acquire()
+        try:
+            cache = self.subCaches[key]
+            for entry in cache.entries.values():
+                entry.uncache()
+            del self.subCaches[key]
+        finally:
+            self._lookupLock.release()
 
     def specializedCache(self, key, cls, *args, **kwargs):
         """
@@ -226,9 +270,13 @@ class Cache(object):
         Return the new *cls* instance.
         """
         cache = cls(self, *args, **kwargs)
-        if key in self.subCaches:
-            raise KeyError("SubCache key already in use: {0}".format(key))
-        self.subCaches[key] = cache
+        self._lookupLock.acquire()
+        try:
+            if key in self.subCaches:
+                raise KeyError("SubCache key already in use: {0}".format(key))
+            self.subCaches[key] = cache
+        finally:
+            self._lookupLock.release()
         return cache
 
     def remove(self, cachable):
@@ -236,20 +284,28 @@ class Cache(object):
         Remove one entry from the cache. You can either use this or
         :meth:`CacheEntry.delete`, which does the same thing.
         """
-        self._remove(cachable)
+        self._limitLock.acquire()
+        try:
+            self._remove(cachable)
+        finally:
+            self._limitLock.release()
 
     def enforceLimit(self):
         """
         Remove those entries with the oldest lastAccess from the cache.
         """
-        if not self._limit:
-            return
-        tooMany = len(self.entries) - self._limit
-        if tooMany > 0:
-            overflow = self.entries[:tooMany]
-            self.entries = self.entries[tooMany:]
-            for entry in overflow:
-                entry._cache_subcache._kill(entry)
+        self._limitLock.acquire()
+        try:
+            if not self._limit:
+                return
+            tooMany = len(self.entries) - self._limit
+            if tooMany > 0:
+                overflow = self.entries[:tooMany]
+                self.entries = self.entries[tooMany:]
+                for entry in overflow:
+                    entry._cache_subcache._kill(entry)
+        finally:
+            self._limitLock.release()
 
     @property
     def Limit(self):
@@ -260,27 +316,35 @@ class Cache(object):
 
         Setting this limit to 0 will disable limiting.
         """
-        return self.limit
+        self._limitLock.acquire()
+        try:
+            return self.limit
+        finally:
+            self._limitLock.release()
 
     @Limit.setter
     def Limit(self, value):
-        if value is None:
-            value = 0
-        value = int(value)
-        if value == self._limit:
-            return
-        if value < 0:
-            raise ValueError("Cache limit must be non-negative.")
+        self._limitLock.acquire()
+        try:
+            if value is None:
+                value = 0
+            value = int(value)
+            if value == self._limit:
+                return
+            if value < 0:
+                raise ValueError("Cache limit must be non-negative.")
 
-        if value == 0:
-            del self.heap
-        else:
-            self.entries = []
-            for cache in self.subCaches.viewvalues():
-                self.entries.extend(cache.entries.viewvalues())
-            self.entries.sort(key=operator.attrgetter("_cache_lastAccess"))
-            self.enforceLimit()
-        self._limit = value
+            if value == 0:
+                del self.heap
+            else:
+                self.entries = []
+                for cache in self.subCaches.viewvalues():
+                    self.entries.extend(cache.entries.viewvalues())
+                self.entries.sort(key=operator.attrgetter("_cache_lastAccess"))
+                self.enforceLimit()
+            self._limit = value
+        finally:
+            self._limitLock.release()
 
 
 class FileSourcedCache(SubCache):

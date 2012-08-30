@@ -2,10 +2,11 @@ from __future__ import unicode_literals, print_function
 
 import abc
 
-from PyXWF.utils import ET
+from PyXWF.utils import ET, threading
 import PyXWF.utils as utils
 import PyXWF.Errors as Errors
 import PyXWF.Cache as Cache
+
 
 class Resource(Cache.Cachable):
     """
@@ -14,6 +15,10 @@ class Resource(Cache.Cachable):
     and :meth:`update` to allow for precise caching and on-demand reload.
     """
     __metaclass__ = abc.ABCMeta
+
+    def __init__(self, **kwargs):
+        super(Resource, self).__init__(**kwargs)
+        self._updateLock = threading.Lock()
 
     @abc.abstractproperty
     def LastModified(self):
@@ -35,6 +40,21 @@ class Resource(Cache.Cachable):
         reload the data if neccessary. Should also update the value returned
         by LastModified.
         """
+
+    def threadSafeUpdate(self):
+        """
+        The :class:`Resource` class provides basic means to make your update
+        thread safe: The :meth:`update` method will only be called with the
+        :attr:`_updateLock` held, if you don't overwrite this method.
+
+        Note that this method will only be called by the framework itself; If
+        you call :meth:`update` on your own, you will not be safeguarded.
+        """
+        self._updateLock.acquire()
+        try:
+            self.update()
+        finally:
+            self._updateLock.release()
 
 
 class XMLTree(Resource):

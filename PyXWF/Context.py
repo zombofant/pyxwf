@@ -414,7 +414,7 @@ class Context(object):
         if resource in self._usedResources:
             return
         self._usedResources.add(resource)
-        resource.update()
+        resource.threadSafeUpdate()
         lastModified = resource.LastModified
         if lastModified is not None:
             if self._lastModified is not None:
