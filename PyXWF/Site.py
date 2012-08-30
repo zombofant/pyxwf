@@ -7,7 +7,8 @@ from __future__ import unicode_literals
 
 import itertools, os, importlib, copy, mimetypes, warnings, re, sys, logging
 
-from PyXWF.utils import ET
+from PyXWF.utils import ET, _F
+import PyXWF
 import PyXWF.Types as Types
 import PyXWF.ContentTypes as ContentTypes
 import PyXWF.Errors as Errors
@@ -42,6 +43,11 @@ class Site(Resource.Resource):
     urnScheme = re.compile("^\w+:")
 
     def __init__(self, sitemapFile, defaultURLRoot=None, **kwargs):
+        logging.info(_F(
+"Initializing PyXWF/{0} with lxml.etree/{1}",
+            PyXWF.__version__,
+            ET.__version__
+        ))
         super(Site, self).__init__(**kwargs)
         self.startCWD = os.getcwd()
         self.defaultURLRoot = defaultURLRoot
@@ -476,6 +482,7 @@ class Site(Resource.Resource):
 
         self.hooks.call("crumbs-loaded")
         self.hooks.call("loading-finished")
+        logging.debug("Sitemap loaded successfully")
 
     def update(self):
         """
