@@ -34,8 +34,8 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
     def _reload(self, initial=False):
         if not initial:
             self.blog.removeFromIndex(self)
-        self.site.fileDocumentCache.update(self.fileName)
-        docRef = self.site.fileDocumentCache.get(self.fileName, headerOffset=2)
+        self.Site.fileDocumentCache.update(self.fileName)
+        docRef = self.Site.fileDocumentCache.get(self.fileName, headerOffset=2)
         self._processDocument(docRef)
 
         urlName = os.path.basename(self.fileName)
@@ -55,9 +55,9 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
     def __init__(self, blog, fileName):
         self.fileName = fileName
         self.blog = blog
-        self.site = blog.site
+        self.Site = blog.Site
         parent, name, path = self._reload(initial=True)
-        super(BlogPost, self).__init__(blog.site, parent, None)
+        super(BlogPost, self).__init__(blog.Site, parent, None)
         self._path = path
         self._name = name
 
@@ -86,7 +86,7 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         self.article = article
 
     def _createPost(self):
-        date_long = self.creationDate.strftime(self.site.longDateFormat)
+        date_long = self.creationDate.strftime(self.Site.longDateFormat)
         self.post = self.blog.PostTemplate.transform(self.article, {
             b"date_long": utils.unicodeToXPathStr(date_long),
             b"last_modified": utils.unicodeToXPathStr(self._lastModified.isoformat()+"Z")
@@ -94,7 +94,7 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         return self.post
 
     def _createAbstract(self):
-        date_long = self.creationDate.strftime(self.site.longDateFormat)
+        date_long = self.creationDate.strftime(self.Site.longDateFormat)
         self.abstract = self.blog.AbstractTemplate.xsltTransform(self.article,
             date_long=utils.unicodeToXPathStr(date_long)
         ).getroot()

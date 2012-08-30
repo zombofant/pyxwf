@@ -18,7 +18,7 @@ class BlogFakeDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Inf
     def __init__(self, blog, parent, name=None, node=None):
         if node is None and name is None:
             raise ValueError("One of name and node must be set")
-        super(BlogFakeDir, self).__init__(blog.site, parent, node)
+        super(BlogFakeDir, self).__init__(blog.Site, parent, node)
         self.blog = blog
         if node is None:
             self._name = unicode(name)
@@ -104,7 +104,7 @@ class BlogMonthDir(BlogFakeDir):
         self.pathDict = {}
         self.children = []
         self._fullMonthName = time.strftime("%B %Y",
-            (self.parent._year, self._month, 1, 0, 0, 0, 0, 0, -1))
+            (self.Parent._year, self._month, 1, 0, 0, 0, 0, 0, -1))
         self._monthName = time.strftime("%B",
             (2000, self._month, 1, 0, 0, 0, 0, 0, -1))
 

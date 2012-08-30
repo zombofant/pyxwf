@@ -105,23 +105,23 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
 
     @property
     def AbstractListTemplate(self):
-        return self.site.templateCache[self.abstractListTemplate]
+        return self.Site.templateCache[self.abstractListTemplate]
 
     @property
     def AbstractTemplate(self):
-        return self.site.templateCache[self.abstractTemplate]
+        return self.Site.templateCache[self.abstractTemplate]
 
     @property
     def PostTemplate(self):
-        return self.site.templateCache[self.postTemplate]
+        return self.Site.templateCache[self.postTemplate]
 
     @property
     def LandingPageTemplate(self):
-        return self.site.templateCache[self.landingPageTemplate]
+        return self.Site.templateCache[self.landingPageTemplate]
 
     @property
     def TagDirTemplate(self):
-        return self.site.templateCache[self.tagDirTemplate]
+        return self.Site.templateCache[self.tagDirTemplate]
 
     @property
     def LastModified(self):

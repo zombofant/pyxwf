@@ -13,7 +13,7 @@ class AtomFeedRoot(object):
     def __init__(self, cfgNode, blog):
         super(AtomFeedRoot, self).__init__()
         self.blog = blog
-        self.site = blog.site
+        self.Site = blog.Site
 
         self.templateName = Types.NotNone(cfgNode.get("template"))
         self.rootId = cfgNode.get("root-id")
@@ -64,19 +64,19 @@ class AtomFeedRoot(object):
             postUpdated.text = updatedKey(post).isoformat() + "Z"
             postNode.append(post.getArticle())
 
-        self.site.transformReferences(ctx, root)
+        self.Site.transformReferences(ctx, root)
         feed = self.template.rawTransform(root, {})
-        self.site.transformPyNamespace(ctx, feed, crumbs=False, link=False)
+        self.Site.transformPyNamespace(ctx, feed, crumbs=False, link=False)
         for localLink in feed.iter(NS.PyWebXML.link):
             localLink.tag = NS.Atom.link
-            self.site.transformHref(ctx, localLink)
+            self.Site.transformHref(ctx, localLink)
             localLink.text = self.linkPrefix[:-1]+localLink.get("href")
             del localLink.attrib["href"]
         return feed
 
 class AtomFeedNode(Nodes.Node):
     def __init__(self, blogDir, title, kind):
-        super(AtomFeedNode, self).__init__(blogDir.site, blogDir, None)
+        super(AtomFeedNode, self).__init__(blogDir.Site, blogDir, None)
         self.directory = blogDir
         self.title = title
         self.kind = kind

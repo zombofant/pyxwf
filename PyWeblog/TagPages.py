@@ -12,10 +12,10 @@ class TagPage(Directories.WithFeedMixin, Nodes.Node, Navigation.Info):
     __metaclass__ = Nodes.NodeMeta
 
     def __init__(self, tagDir, tag):
-        super(TagPage, self).__init__(tagDir.site, tagDir, None)
+        super(TagPage, self).__init__(tagDir.Site, tagDir, None)
         self.blog = tagDir.blog
         self.tag = tag
-        self._path = self.parent.Path + "/" + tag
+        self._path = self.Parent.Path + "/" + tag
         self.feedNode = Atom.AtomFeedNode(self, self.tag, "tag")
         self._feedTitle = tagDir._pageFeedTitle.format(tag=self.tag)
 

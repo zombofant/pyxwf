@@ -14,7 +14,7 @@ class LandingPage(Directories.WithFeedMixin, Nodes.Node, Navigation.Info):
     __metaclass__ = Nodes.NodeMeta
 
     def __init__(self, blog, node):
-        super(LandingPage, self).__init__(blog.site, blog, node)
+        super(LandingPage, self).__init__(blog.Site, blog, node)
         if self._name != "":
             raise ValueError("Invalid landing page name.")
         self.blog = blog
