@@ -38,7 +38,9 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
                 .getLastModified(self.fileName)
         if self._lastModified is None or docLastModified is None or \
                 self._lastModified < docLastModified:
-            doc = self.Site.fileDocumentCache.get(self.fileName, self.mimeType).doc
+            docProxy = self.Site.fileDocumentCache.get(self.fileName, self.mimeType)
+            docProxy.update()
+            doc = docProxy.doc
             self._lastModified = docLastModified
             self.title = self.navTitle or doc.title
 
