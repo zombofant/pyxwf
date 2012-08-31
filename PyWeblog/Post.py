@@ -8,7 +8,7 @@ class PostNode(Nodes.Node, Navigation.Info):
     def __init__(self, parent, post):
         super(PostNode, self).__init__(parent.Site, parent, None)
         self.Blog = parent.Blog
-        self._path = parent.Path + "/" + post.basename
+        self._path = parent.Path + post.basename
         self._name = post.basename
         self.post = post
 
