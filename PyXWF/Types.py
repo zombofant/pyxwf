@@ -141,6 +141,13 @@ def _NotNoneHelper(v):
 
 NotNone = WrapFunction(_NotNoneHelper, "not none")
 
+def _NotEmpty(v):
+    if len(v) == 0:
+        raise ValueError("Value is empty")
+    return v
+
+NotEmpty = WrapFunction(_NotEmpty, "not empty")
+
 class Typecasts(object):
     int = WrapFunction(int, "integer number")
     long = WrapFunction(long, "integer number")

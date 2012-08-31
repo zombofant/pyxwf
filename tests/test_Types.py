@@ -116,3 +116,26 @@ class NumericRange(unittest.TestCase):
         self.assertEqual(numericRange(10), 10)
         self.assertEqual(numericRange(9), 9)
         self.assertRaises(ValueError, numericRange, 8)
+
+
+class NotEmpty(unittest.TestCase):
+    def test_empty(self):
+        notEmpty = Types.NotEmpty
+        self.assertRaises(ValueError, notEmpty, "")
+        self.assertRaises(ValueError, notEmpty, [])
+        self.assertRaises(ValueError, notEmpty, ())
+        self.assertRaises(ValueError, notEmpty, set())
+        self.assertRaises(ValueError, notEmpty, {})
+
+    def test_nonEmpty(self):
+        notEmpty = Types.NotEmpty
+        s = "foo"
+        l = ["bar"]
+        d = {"baz": "foo"}
+        self.assertIs(notEmpty(s), s)
+        self.assertIs(notEmpty(l), l)
+        self.assertIs(notEmpty(d), d)
+
+    def test_None(self):
+        notEmpty = Types.NotEmpty
+        self.assertRaises(TypeError, notEmpty, None)
