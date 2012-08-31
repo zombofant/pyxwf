@@ -117,7 +117,9 @@ class Post(Resource.Resource):
     def update(self):
         newLastModified = self._calcLastModified()
         if newLastModified > self._lastModified:
-            doc = self.cache[self.fileName].doc
+            docProxy = self.cache[self.fileName]
+            docProxy.update()
+            doc = docProxy.doc
             self._cacheMetadata(doc)
             self._lastModified = newLastModified
 
@@ -227,8 +229,6 @@ class Index(Resource.Resource):
             logging.warning(_F("No blog posts found in {0}", self._dir))
 
         if len(missing) or added or updated or errors:
-            if self._postsChangedCallback:
-                self._postsChangedCallback()
             logging.info(_F(
     "Updated blog index; {0} removed, {1} added, {2} updated, {3} errors",
                 len(missing),
@@ -236,6 +236,8 @@ class Index(Resource.Resource):
                 updated,
                 errors
             ))
+            if self._postsChangedCallback:
+                self._postsChangedCallback()
 
     @property
     def LastModified(self):
@@ -244,8 +246,7 @@ class Index(Resource.Resource):
         return self._lastModified
 
     def update(self):
-        # todo
-        pass
+        self._reload()
 
     def _autocreateMonthDir(self, year, month):
         try:
@@ -304,6 +305,7 @@ class Index(Resource.Resource):
         for keyword in post.keywords:
             self._autocreateKeywordDir(keyword).add(post)
         self._posts.add(post)
+        self._postFiles[fileName] = post
         return post
 
     def getAllPosts(self):

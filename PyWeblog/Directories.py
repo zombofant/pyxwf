@@ -161,7 +161,7 @@ class MonthDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
             "month": unicode(self.month),
             "year": unicode(self.year)
         })
-        self._childMap.clear()
+        self._childMap = {}
         self._children = []
         for post in reversed(self.Blog.index.getPostsByMonth(self.year, self.month)):
             name = post.basename
