@@ -15,7 +15,8 @@ class NodeMeta(abc.ABCMeta):
         you need the :class:`PyXWF.Registry.NodeMeta` metaclass.
     """
 
-    def _raiseNoValidRequestHandlers(mcls):
+    @classmethod
+    def _raiseNoValidRequestHandlers(mcls, name):
         raise TypeError("{0} requires requestHandlers as dict (or dict-compatible) or callable".format(name))
 
     def __new__(mcls, name, bases, dct):
@@ -29,7 +30,7 @@ class NodeMeta(abc.ABCMeta):
                 except AttributeError:
                     pass
             else:
-                mcls._raiseNoValidRequestHandlers(mcls)
+                mcls._raiseNoValidRequestHandlers(name)
         if requestHandlers is None:
             raise TypeError("requestHandlers has been set to None intentionally in {0}".format(name))
 
@@ -41,7 +42,7 @@ class NodeMeta(abc.ABCMeta):
                 try:
                     methods = dict(requestHandlers.items())
                 except (ValueError, TypeError, AttributeError):
-                    mcls._raiseNoValidRequestHandlers(mcls)
+                    mcls._raiseNoValidRequestHandlers(name)
         else:
             defaultHandler = requestHandlers
             requestHandlers = collections.defaultdict(lambda: defaultHandler)
