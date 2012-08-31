@@ -238,4 +238,4 @@ try:
 except ImportError as err:
     logging.warning(_F("Could not import blist: {0}", err))
     logging.warning("Will fallback to surrogate; sortedlist will be slow")
-    import Suggorates.blist as blist
+    import PyXWF.Suggorates.blist as blist
