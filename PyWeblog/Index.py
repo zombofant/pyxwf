@@ -17,7 +17,7 @@ class Post(Resource.Resource):
         self.cache = cache
         self.fileName = fileName
 
-        self.basename = os.path.basename(self.fileName)
+        self.basename = os.path.splitext(os.path.basename(self.fileName))[0]
         self.title = None
         self.authors = None
         self.keywords = None
