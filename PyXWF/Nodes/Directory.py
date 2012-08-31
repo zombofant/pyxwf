@@ -10,7 +10,7 @@ import PyXWF.Navigation as Navigation
 
 class DirectoryBase(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
 
-    class NavigationInfo(Navigation.Info):
+    class Info(Navigation.Info):
         def __init__(self, ctx, directory):
             self.children = directory.children
             self.display = directory.display
@@ -70,7 +70,7 @@ class DirectoryBase(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         return len(self.children)
 
     def getNavigationInfo(self, ctx):
-        return self.NavigationInfo(ctx, self)
+        return self.Info(ctx, self)
 
 class Directory(DirectoryBase):
     __metaclass__ = Registry.NodeMeta

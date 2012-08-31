@@ -54,7 +54,7 @@ class RedirectInternal(RedirectBase):
     namespace = RedirectBase.namespace
     names = ["internal"]
 
-    class NavigationInfo(Navigation.Info):
+    class Info(Navigation.Info):
         def __init__(self, ctx, redirect):
             self.redirect = redirect
             self.superInfo = redirect.TargetNode.getNavigationInfo(ctx)
@@ -90,4 +90,4 @@ class RedirectInternal(RedirectBase):
         return self.TargetNode.Path.encode("utf-8")
 
     def getNavigationInfo(self, ctx):
-        return self.NavigationInfo(ctx, self)
+        return self.Info(ctx, self)
