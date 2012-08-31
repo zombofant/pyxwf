@@ -236,6 +236,6 @@ try:
         # blist doesn't have version tag
         blist.__version__ = "native"
 except ImportError as err:
-    logging.warning(_("Could not import blist: {0}", err))
+    logging.warning(_F("Could not import blist: {0}", err))
     logging.warning("Will fallback to surrogate; sortedlist will be slow")
     import Suggorates.blist as blist
