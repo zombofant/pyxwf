@@ -74,3 +74,54 @@ class UnknownMIMEType(Exception):
             "No idea what type that file is: {0}".format(basename)
         )
         self.path = fileName
+
+class ConfigurationError(Exception):
+    def __init__(self, message):
+        super(ConfigurationError, self).__init__(message)
+
+class NodeConfigurationError(ConfigurationError):
+    def __init__(self, message, node):
+        self.node = node
+        super(NodeConfigurationError, self).__init__(message)
+
+class NodeNameConflict(ConfigurationError):
+    def __init__(self, parent, child, name, other=None):
+        self.parent = parent
+        self.child = child
+        self.name = name
+        self.other = other
+        if other is not None:
+            self.message = "Name {0!r} of node {1} in {2} conflicts with {3}".\
+                format(
+                    name,
+                    child,
+                    parent,
+                    other
+                )
+        else:
+            self.message = "Name {0!r} of node {1} in {2} conflicts with \
+                            existing node".\
+                format(
+                    name,
+                    child,
+                    parent
+                )
+        super(NodeNameConflict, self).__init__(message)
+
+class BadParent(NodeConfigurationError):
+    def __init__(self, node, parent):
+        self.child = node
+        self.parent = parent
+        super(BadParent, self).__init__(
+            "{0} is not a valid parent for {1}".format(self.parent, self.child),
+            self.parent
+        )
+
+class BadChild(NodeConfigurationError):
+    def __init__(self, node, parent):
+        self.child = node
+        self.parent = parent
+        super(BadChild, self).__init__(
+            "{1} is not a valid child for {0}".format(self.parent, self.child),
+            self.parent
+        )
