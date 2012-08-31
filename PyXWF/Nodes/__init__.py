@@ -136,7 +136,7 @@ class Node(object):
         self._name = node.get("name", "")
         self._template = node.get("template", None)
         if self.Parent and self.Parent.Path:
-            parentPath = self.Parent.Path + "/"
+            parentPath = self.Parent.Path
         else:
             parentPath = ""
         self._path = parentPath + self._name
@@ -315,6 +315,13 @@ class DirectoryResolutionBehaviour(object):
         and pass only the new key to *location* to automatically generate
         correct paths.
         """
+
+    @property
+    def Path(self):
+        path = super(DirectoryResolutionBehaviour, self).Path
+        if not path or path[-1] != "/":
+            path += "/"
+        return path
 
     def resolvePath(self, ctx, relPath):
         fullPath = ctx.Path
