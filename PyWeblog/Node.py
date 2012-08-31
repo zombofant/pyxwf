@@ -1,253 +1,237 @@
-from __future__ import unicode_literals
+from __future__ import unicode_literals, print_function, absolute_import
 
-import os, mimetypes, abc, itertools, copy, operator
-from datetime import datetime
-import time
+import operator, itertools, logging
 
-from PyXWF.utils import ET
+from PyXWF.utils import ET, blist, _F
 import PyXWF.utils as utils
-import PyXWF.Registry as Registry
-import PyXWF.Navigation as Navigation
-import PyXWF.Types as Types
-import PyXWF.Errors as Errors
 import PyXWF.Nodes as Nodes
 import PyXWF.Navigation as Navigation
+import PyXWF.Registry as Registry
 import PyXWF.Namespaces as NS
-import PyXWF.Resource as Resource
-import PyXWF.TimeUtils as TimeUtils
+import PyXWF.Errors as Errors
+import PyXWF.Types as Types
 
-import PyWeblog.Post as Post
-import PyWeblog.Atom as Atom
+import PyWeblog.Protocols as Protocols
+import PyWeblog.Index as Index
 import PyWeblog.Directories as Directories
-import PyWeblog.LandingPage as LandingPage
-import PyWeblog.TagPages as TagPages
 
-try:
-    from blist import sortedlist
+class Tweak(object):
+    def __init__(self, site, parent, node):
+        if not isinstance(parent, Blog):
+            raise Errors.BadParent(self, parent)
+        super(Tweak, self).__init__()
+        self.Site = site
+        self.Parent = parent
+        self.Blog = parent
 
-    class SortedPostList(sortedlist):
-        def __init__(self, iterable=[]):
-            super(SortedPostList, self).__init__(iterable)
-except ImportError:
-    class SortedPostList(list):
-        def add(self, post):
-            self.append(post)
-            self.sort()
-
-class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Resource.Resource):
+class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     __metaclass__ = Registry.NodeMeta
 
-    namespace = unicode(NS.PyBlog)
+    namespace = str(NS.PyBlog)
     names = ["node"]
+
+    _childOrderType = Types.DefaultForNone(True,
+        Types.EnumMap({
+            "posts+static": True,
+            "static+posts": False
+        })
+    )
+    _structureType = Types.EnumMap({
+        # "year/month": True,
+        "year+month": False
+    })
+
+    class Info(Navigation.Info):
+        def __init__(self, blog, ctx):
+            self.blog = blog
+            self.landingPage = self.blog._landingPage
+            self.superInfo = self.landingPage.getNavigationInfo(ctx)
+
+        def getTitle(self):
+            return self.superInfo.getTitle()
+
+        def getRepresentative(self):
+            return self.superInfo.getRepresentative()
+
+        def getDisplay(self):
+            self.blog._navDisplay
+
+        def __iter__(self):
+            if self.blog._postsFirst:
+                return itertools.chain(
+                    self.blog._postContainers,
+                    self.blog._childNodeList
+                )
+            else:
+                return itertools.chain(
+                    self.blog._childNodeList,
+                    self.blog._postContainers
+                )
+
+        def __len__(self):
+            return len(self.blog._childNodeList) + len(self.blog._postContainers)
 
     def __init__(self, site, parent, node):
         super(Blog, self).__init__(site, parent, node)
-        self.entriesDir = os.path.join(site.root,
-            Types.Typecasts.unicode(node.get("entries-dir")))
-        self.indexFile = node.get("index-file")
-        self.navTitle = Types.Typecasts.unicode(node.get("nav-title"))
-        self.navDisplay = Types.DefaultForNone(Navigation.Show,
-            Navigation.DisplayMode)(node.get("nav-display"))
-        self._reloadTrigger = Types.DefaultForNone("blog.reload")\
-            (node.get("index-trigger"))
-        self._reloadTrigger = os.path.join(self.entriesDir, self._reloadTrigger)
+        self._childNodes = {}
+        self._childNodeList = []
+        self._postContainers = blist.sortedlist(key=lambda x: -x.year)
+        self._tweaks = []
+        self._yearNodes = {}
 
-        templates = node.find(NS.PyBlog.templates)
-        if templates is None:
-            templates = ET.Element(NS.PyBlog.templates)
-        self.abstractListTemplate = self._cfgTemplate(templates, "abstract-list")
-        self.abstractTemplate = self._cfgTemplate(templates, "abstract")
-        self.postTemplate = self._cfgTemplate(templates, "post")
-        self.tagDirTemplate = self._cfgTemplate(templates, "tag-dir")
+        # some plugin hook points. These are accessible via their respective
+        # properties, see their documentation for more details
+        self._tagDir = None
+        self._feeds = None
 
-        structure = node.find(NS.PyBlog.structure)
-        self.combinedStyle = Types.DefaultForNone(False, Types.EnumMap({
-            "year+month": True,
-            "separate": False
-        }))(structure.get("nav"))
-        self.showPostsInNav = Types.DefaultForNone(False,
-            Types.Typecasts.bool
-        )(structure.get("show-posts-in-nav"))
+        self._navDisplay = Navigation.DisplayMode(node.get("nav-display", "show"))
+        self._postsFirst = self._childOrderType(node.get("child-order"))
+        self._nestMonths = self._structureType(node.get("structure"))
 
-        landingPage = node.find(getattr(NS.PyBlog, "landing-page"))
-        if landingPage is None:
-            landingPage = ET.Element(getattr(NS.PyBlog, "landing-page"))
-        landingPage.set("name", "")
-        self.landingPage = LandingPage.LandingPage(self, landingPage)
+        self.monthTemplate = Types.NotNone(node.get("month-template"))
+        self.postTemplate = Types.NotNone(node.get("post-template"))
+        self.showPostsInNav = Types.Typecasts.bool(node.get("show-posts-in-nav", True))
 
-        tagDir = node.find(getattr(NS.PyBlog, "tag-dir"))
-        if tagDir is None:
-            tagDir = ET.Element(getattr(NS.PyBlog, "tag-dir"))
-        self.tagDir = TagPages.TagDir(self, tagDir)
+        entryDir = Types.NotNone(node.get("entry-dir"))
+        self.index = Index.Index(self, site.fileDocumentCache, entryDir,
+            self.Path + "{year}/{month}/{basename}",
+            self.Site.longDateFormat,
+            postsChangedCallback=self._postsChanged)
+        self.index._reload()
 
-        atomFeed = node.find(getattr(NS.PyBlog, "atom"))
-        if atomFeed is None:
-            self.atomFeed = None
+        self._loadChildren(node)
+        try:
+            self._landingPage = self._childNodes[""]
+        except KeyError:
+            raise Errors.NodeConfigurationError(\
+                "Blog requires landing page (child node with empty name)", self)
+
+    def _addChild(self, plugin):
+        name = plugin.Name
+        try:
+            int(name)
+        except ValueError:
+            # valid name, but not an integer, that's fine
+            pass
+        except TypeError:
+            raise Errors.NodeConfigurationError(\
+                "Blog children must not ".format(plugin.Name), self)
         else:
-            self.atomFeed = Atom.AtomFeedRoot(atomFeed, self)
+            raise Errors.NodeConfigurationError(\
+                "Conflict: Blog children cannot have names which are parsable \
+                as an integer: {0}.".format(plugin.Name), self)
+        if name in self._childNodes:
+            raise Errors.NodeNameConflict(self, plugin, name,
+                    self._childNodes[name])
+        self._childNodes[name] = plugin
+        self._childNodeList.append(plugin)
 
-        self._pathDict = {
-            "": self.landingPage,
-            self.tagDir.Name: self.tagDir,
-        }
-        self._navChildren = [self.tagDir]
+    def _autocreateYearNode(self, year):
+        year = int(year)
+        try:
+            return self._yearNodes[year]
+        except KeyError:
+            node = Directories.YearDir(self, year)
+            self._yearNodes[year] = node
+            self._postContainers.add(node)
+            return node
 
-        if not os.path.isfile(self._reloadTrigger):
-            open(self._reloadTrigger, "w").close()
-
-        self._lastIndexUpdate = None
-        self._lastTrigger = None
-
-    def _cfgTemplate(self, node, attr):
-        templateFmt = "templates/{0}/{1}.xsl"
-        return Types.DefaultForNone(templateFmt.format(self.Name, attr))\
-                (node.get(attr))
-
-    @property
-    def AbstractListTemplate(self):
-        return self.Site.templateCache[self.abstractListTemplate]
-
-    @property
-    def AbstractTemplate(self):
-        return self.Site.templateCache[self.abstractTemplate]
-
-    @property
-    def PostTemplate(self):
-        return self.Site.templateCache[self.postTemplate]
-
-    @property
-    def LandingPageTemplate(self):
-        return self.Site.templateCache[self.landingPageTemplate]
-
-    @property
-    def TagDirTemplate(self):
-        return self.Site.templateCache[self.tagDirTemplate]
-
-    @property
-    def LastModified(self):
-        return self._lastIndexUpdate
-
-    def update(self):
-        indexTriggerDate = utils.fileLastModified(self._reloadTrigger)
-        if self._lastTrigger is None or \
-                indexTriggerDate > self._lastTrigger:
-            self._lastTrigger = indexTriggerDate
-            self._createIndex()
-
-    def addToIndex(self, post):
-        year = post.creationDate.year
-        month = post.creationDate.month
-        yearDir = self._calendary.get(year, None)
-        if yearDir is None:
-            yearDir = Directories.BlogYearDir(self, year)
-            self._calendary[year] = yearDir
-            self._years.append(yearDir)
-            self._years.sort(key=lambda x: x._year)
-        monthDir = yearDir[month+1]
-        monthDir.add(post)
-        self._allPosts.add(post)
-        for tag in post.tags:
-            self._tagCloud.setdefault(tag, []).append(post)
-        self._lastIndexUpdate = TimeUtils.stripMicroseconds(datetime.utcnow())
-        return monthDir
-
-    def removeFromIndex(self, post):
-        self._allPosts.remove(post)
-        year = post.creationDate.year
-        yearDir = self._calendary[year]
-        yearDir.remove(post)
-        for tag in post.tags:
-            self._tagCloud[tag].remove(post)
-        self._lastIndexUpdate = TimeUtils.stripMicroseconds(datetime.utcnow())
-
-    def _clearIndex(self):
-        self._allPosts = SortedPostList()
-        self._tagCloud = {}
-        self._categories = {}
-        self._calendary = {}
-        self._years = []
-
-    def _createIndex(self):
-        self._clearIndex()
-        for dirpath, dirnames, filenames in os.walk(self.entriesDir):
-            for filename in filenames:
-                fullFile = os.path.join(dirpath, filename)
-                try:
-                    post = Post.BlogPost(self, fullFile)
-                except (Errors.MissingParserPlugin, Errors.UnknownMIMEType):
-                    pass
+    def resolvePath(self, ctx, relPath):
+        ctx.useResource(self.index)
+        return super(Blog, self).resolvePath(ctx, relPath)
 
     def _getChildNode(self, key):
         try:
-            return self._pathDict[key]
-        except KeyError:
-            pass
-        try:
             year = int(key)
-            if str(year) != key:
-                exc = Errors.MovedPermanently(location=str(k))
-                exc.local = True
-                raise exc
-            return self._calendary[year]
-        except (ValueError, TypeError, KeyError):
-            return None
-
-    def resolvePath(self, ctx, relPath):
-        ctx.useResource(self)  # as even 404 may be dependent on our index state
-        return super(Blog, self).resolvePath(ctx, relPath)
-
-    def iterRecent(self, count):
-        return itertools.islice(self._allPosts, 0, count)
-
-    def getTagPath(self, tag):
-        return self.tagDir.Path + "/" + tag
-
-    def getTagsByPostCount(self):
-        return sorted(self._tagCloud.viewitems(),
-            key=lambda x: len(x[1]), reverse=True)
-
-    def getPostsByTag(self, tag):
-        try:
-            return self._tagCloud[tag]
-        except KeyError:
-            return []
-
-    def getPreviousAndNext(self, post):
-        posts = self._allPosts
-        index = posts.index(post)
-        # cannot do try-except here, otherwise we get the last element from the
-        # list!
-        if index > 0:
-            next = posts[index-1]
+        except ValueError:
+            try:
+                return self._childNodes[key]
+            except KeyError:
+                return None
         else:
-            next = None
+            return self._yearNodes[year]
+
+    def _loadChildren(self, node):
+        # this must only run on a fresh blog node
+        assert not self._tweaks
+        assert not self._childNodes
+
+        site = self.Site
+        for child in node:
+            if child.tag is ET.Comment:
+                continue
+            plugin = Registry.NodePlugins.getPluginInstance(child, site, self)
+            if isinstance(plugin, Tweak):
+                self._tweaks.append(plugin)
+            else:
+                self._addChild(plugin)
+
+    def _postsChanged(self):
+        logging.debug("Posts changed callback")
+        knownYears = set(map(operator.attrgetter("year"), self._yearNodes.viewvalues()))
+        currYears = set()
+        for year, monthIter in self.index.iterDeep():
+            yearNode = self._autocreateYearNode(year)
+            for month in monthIter:
+                monthNode = yearNode.autocreateMonthNode(month)
+            yearNode.purgeEmpty()
+            currYears.add(year)
+
+        deleted = knownYears - currYears
+        for deletedYear in deleted:
+            node = self._yearNodes.pop(deletedYear)
+            self._postContainers.remove(node)
+
         try:
-            prev = posts[index+1]
-        except IndexError:
-            prev = None
-        return (prev, next)
+            callable = self._tagDir.updateChildren
+        except AttributeError:
+            pass
+        else:
+            callable()
 
-    def viewTagPosts(self):
-        return self._tagCloud.viewitems()
+    @property
+    def TagDirectory(self):
+        """
+        Store a reference to the :class:`~PyWeblog.TagDir.TagDirBase` instance
+        to be used by this blog instance. This should be set by the respective
+        :class:`~PyWeblog.TagDir.TagDirBase` instance upon initialization and
+        will be used by the blog to create links to tag pages.
+        """
+        return self._tagDir
 
-    def doGet(self, ctx):
-        raise Errors.Found(location=self._years[0].Path)
+    @TagDirectory.setter
+    def TagDirectory(self, value):
+        if not isinstance(value, Protocols.TagDir):
+            raise TypeError("TagDirectory must implement TagDir protocol.")
+        logging.debug(_F("Blog was assigned a new tag dir: {0}", value))
+        self._tagDir = value
+        if self._tagDir is not None:
+            self._tagDir.updateChildren()
+
+    @property
+    def Feeds(self):
+        """
+        A provider class for feeds like Atom, RSS and so on. Such a class must
+        implement the FeedBase protocol. This property will be set automatically
+        by the respective objects upon creation, i.e. when they're encountered
+        in the sitemap.
+        """
+        return self._feeds
+
+    @Feeds.setter
+    def Feeds(self, value):
+        if not isinstance(value, Protocols.Feeds):
+            raise TypeError("Feeds must implement Feeds protocol.")
+        logging.debug(_F("Blog was assigned a new feed provider: {0}", value))
+        self._feeds = value
+
+    def getTransformArgs(self):
+        args = {}
+        try:
+            args[b"tag-root"] = utils.unicodeToXPathStr(self._tagDir.Path + "/")
+        except AttributeError:
+            args[b"tag-root"] = "0"
+        return args
 
     def getNavigationInfo(self, ctx):
-        return self.landingPage.getNavigationInfo(ctx)
-
-    def getTitle(self):
-        return self.navTitle
-
-    def getDisplay(self):
-        return self.navDisplay
-
-    def __iter__(self):
-        return itertools.chain(
-            self._years,
-            self._navChildren
-        )
-
-    requestHandlers = {
-        "GET": doGet
-    }
+        return self.Info(self, ctx)

@@ -26,17 +26,18 @@ class TagCloud(Crumbs.CrumbBase):
 
     def __init__(self, site, node):
         super(TagCloud, self).__init__(site, node)
-        self.blog = site.getNode(node.get("blog-id"))
+        self.Blog = site.getNode(node.get("blog-id"))
         self.maxLevel = self._levelsType(node.get("level-count")) - 1
         self.maxTags = self._maxTagsType(node.get("max-tags"))
         self.classPrefix = self._classPrefixType(node.get("css-class-prefix"))
 
     def render(self, ctx, intoNode, atIndex):
         ul = ET.Element(NS.XHTML.ul)
-        ctx.useResource(self.blog)
+        index = self.Blog.index
+        tagDir = self.Blog.TagDirectory
+        ctx.useResource(index)
         tags = ((tag, len(posts)) for tag, posts in
-                            self.blog.viewTagPosts())
-        tags = itertools.ifilter(lambda x: x[1], tags)  # remove empty tags
+                            index.getKeywordPosts())
 
         # sort by count and remove those with lower counts
         tags = sorted(tags, key=operator.itemgetter(1), reverse=True)
@@ -53,7 +54,7 @@ class TagCloud(Crumbs.CrumbBase):
                 "class": self.classPrefix + str(level)
             })
             a = ET.SubElement(li, NS.PyWebXML.a, attrib={
-                "href": self.blog.getTagPath(tag)
+                "href": tagDir.getTagPagePath(tag)
             })
             a.text = tag
         intoNode.insert(atIndex, ul)
