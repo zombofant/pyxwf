@@ -34,7 +34,7 @@ class Template(Resource.Resource):
         return self._lastModified
 
     @abc.abstractmethod
-    def transform(self, body, templateArgs):
+    def transform(self, body, templateArgs={}):
         pass
 
     def final(self, ctx, document, licenseFallback=None):
@@ -111,7 +111,7 @@ class XSLTTemplate(Template):
     def rawTransform(self, body, templateArgs):
         return self.xsltTransform(body, **templateArgs)
 
-    def transform(self, body, templateArgs, customBody=NS.XHTML.body):
+    def transform(self, body, templateArgs={}, customBody=NS.XHTML.body):
         newDoc = self.rawTransform(body, templateArgs)
         return self.site.parserRegistry[ContentTypes.PyWebXML].parseTree(newDoc.getroot(), headerOffset=0)
 
