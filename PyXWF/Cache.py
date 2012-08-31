@@ -390,7 +390,10 @@ class FileSourcedCache(SubCache):
         loaded (or even loadable!) even if a LastModified can be retrieved
         successfully.
         """
-        return utils.fileLastModified(self._transformKey(key))
+        timestamp = utils.fileLastModified(self._transformKey(key))
+        if timestamp is None:
+            raise Errors.ResourceLost(self._transformKey(key))
+        return timestamp
 
     def update(self, key):
         super(FileSourcedCache, self).update(self._transformKey(key))
