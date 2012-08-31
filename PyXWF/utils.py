@@ -227,3 +227,15 @@ except ImportError as err:
     logging.warning(_F("Could not import threading: {0}", err))
     logging.warning("Will fallback to dummy_threading; expect promlems")
     import dummy_threading as threading
+
+try:
+    import blist
+    try:
+        blist.__version__
+    except AttributeError:
+        # blist doesn't have version tag
+        blist.__version__ = "native"
+except ImportError as err:
+    logging.warning(_("Could not import blist: {0}", err))
+    logging.warning("Will fallback to surrogate; sortedlist will be slow")
+    import Suggorates.blist as blist

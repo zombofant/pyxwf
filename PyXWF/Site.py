@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 import itertools, os, importlib, copy, mimetypes, warnings, re, sys, logging
 
-from PyXWF.utils import ET, _F, threading
+from PyXWF.utils import ET, _F, threading, blist
 import PyXWF
 import PyXWF.Types as Types
 import PyXWF.ContentTypes as ContentTypes
@@ -44,10 +44,11 @@ class Site(Resource.Resource):
 
     def __init__(self, sitemapFile, defaultURLRoot=None, **kwargs):
         logging.info(_F(
-"Initializing PyXWF/{0} with lxml.etree/{1}, {2}",
+"Initializing PyXWF/{0} with lxml.etree/{1}, {2}, blist/{3}",
             PyXWF.__version__,
             ET.__version__,
-            threading.__name__
+            threading.__name__,
+            blist.__version__
         ))
         super(Site, self).__init__(**kwargs)
         self.startCWD = os.getcwd()
