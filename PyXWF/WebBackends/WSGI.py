@@ -30,8 +30,8 @@ class WSGIContext(Context.Context):
             serverPort = int(environ.get("SERVER_PORT"))
         except (ValueError, TypeError):
             serverPort = None
-        relPath = environ.get("PATH_INFO")
-        fullURI = environ.get("SCRIPT_NAME") + relPath
+        relPath = environ.get("PATH_INFO").decode("utf-8")
+        fullURI = environ.get("SCRIPT_NAME").decode("utf-8") + relPath
         urlScheme = environ.get("wsgi.scheme", "http")
         method = environ.get("REQUEST_METHOD")
         queryString = environ.get("QUERY_STRING", "")
