@@ -89,7 +89,7 @@ class WebStackContext(Context.Context):
     def _headersToTX(self):
         tx = self._transaction
         for key, value in self._responseHeaders.viewitems():
-            tx.set_header_value(key, ",".join(value))
+            tx.set_header_value(key, value)
 
     def setResponseContentType(self, mimeType, charset):
         tx = self._transaction
