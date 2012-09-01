@@ -335,8 +335,12 @@ class Site(Resource.Resource):
                 if Types.Typecasts.bool(mobileSwitch.get("mobile", True)) != ctx.IsMobileClient:
                     toDelete.add(mobileSwitch)
                     continue
-
-                mobileSwitch.tag = getattr(NS.XHTML, mobileSwitch.get("xhtml-element", "span"))
+                try:
+                    xhtmlElement = mobileSwitch.attrib.pop("xhtml-element")
+                except KeyError:
+                    xhtmlElement = "span"
+                mobileSwitch.tag = getattr(NS.XHTML, xhtmlElement)
+                del mobileSwitch.attrib["mobile"]
             for mobileSwitch in toDelete:
                 mobileSwitch.getparent().remove(mobileSwitch)
         if contentAttr:
