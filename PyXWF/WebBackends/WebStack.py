@@ -76,6 +76,7 @@ class WebStackContext(Context.Context):
 
         header = values[0]
         userAgent, version = utils.guessUserAgent(header)
+        self._userAgentName, self._userAgentVersion = userAgent, version
         self._html5Support = self.userAgentSupportsHTML5(userAgent, version)
         self._isMobileClient = utils.isMobileUserAgent(header)
 

@@ -54,6 +54,8 @@ class WSGIContext(Context.Context):
         self._parseAcceptHeaders()
         self._parseNonAcceptHeaders()
 
+        self._determineHTMLContentType()
+
     def _loadPreferenceList(self, headerName, prefList, default):
         try:
             headerValue = self._requestHeaders[headerName]
@@ -79,8 +81,6 @@ class WSGIContext(Context.Context):
 
         self._acceptLanguage = AcceptHeaders.LanguagePreferenceList()
         self._loadPreferenceList("accept-language", self._acceptLanguage, "*")
-
-        self._determineHTMLContentType()
 
     def _parseNonAcceptHeaders(self):
         self._parseIfPresent("if-modified-since", self._parseIfModifiedSince)

@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function
 import operator, abc, collections, functools, logging, itertools
 from fnmatch import fnmatch
 
+from PyXWF.utils import _F
 import PyXWF.Types as Types
 import PyXWF.Errors as Errors
 import PyXWF.TimeUtils as TimeUtils
@@ -98,6 +99,8 @@ class Context(object):
         self._canUseXHTML = False
         self._cacheControl = set()
         self._html5Support = False
+        self._userAgentName = None
+        self._userAgentVersion = None
         self._isMobileClient = False
         self._responseHeaders = {}
         self._vary = set(["host"])
@@ -148,11 +151,20 @@ class Context(object):
         Will set :attr:`~.CanUseXHTML` to True if the best match for all HTML
         content types is the XHTML content type.
         """
-        logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
-        htmlContentType = self._accept.bestMatch(
-            self.htmlPreferences,
-            matchWildcard=False
-        )
+        logging.debug(_F("Finding out HTML content type to use. User agent: {0}/{1:.2f}",
+            self._userAgentName, self._userAgentVersion))
+        # thank you, microsoft, for your really verbose accept headers - which
+        # do _not_ include an explicit mention of text/html, instead, you just
+        # assume you can q=1.0 everything.
+        if self._userAgentName == "ie" and self._userAgentVersion < 9:
+            logging.debug("Forcing XHTML support to false: MSIE < 9 detected!")
+            htmlContentType = ContentTypes.html
+        else:
+            logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
+            htmlContentType = self._accept.bestMatch(
+                self.htmlPreferences,
+                matchWildcard=False
+            )
         self._canUseXHTML = htmlContentType == ContentTypes.xhtml
         logging.debug("CanUseXHTML: {0}".format(self._canUseXHTML))
         return htmlContentType
