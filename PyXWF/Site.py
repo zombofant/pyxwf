@@ -348,7 +348,10 @@ class Site(Resource.Resource):
                 except KeyError:
                     xhtmlElement = "span"
                 mobileSwitch.tag = getattr(NS.XHTML, xhtmlElement)
-                del mobileSwitch.attrib["mobile"]
+                try:
+                    del mobileSwitch.attrib["mobile"]
+                except KeyError:
+                    pass
             for mobileSwitch in toDelete:
                 mobileSwitch.getparent().remove(mobileSwitch)
         if contentAttr:
