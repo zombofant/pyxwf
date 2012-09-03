@@ -101,14 +101,11 @@ class SubCache(object):
         Try to get an object from the cache and return *default* (defaults to
         ``None``) if no object is associated with *key*.
         """
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             try:
                 return self[key]
             except KeyError:
                 return default
-        finally:
-            self._lookupLock.release()
 
     def remove(self, cachable):
         """
@@ -122,8 +119,7 @@ class SubCache(object):
         return cachable
 
     def __setitem__(self, key, cachable):
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             if key in self:
                 raise KeyError("Cache key already in use: {0}".format(key))
             self.entries[key] = cachable
@@ -132,23 +128,15 @@ class SubCache(object):
             self.master._add(cachable)
             cachable._cache_master = self.master
             cachable._cache_subcache = self
-        finally:
-            self._lookupLock.release()
 
     def __delitem__(self, key):
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             cachable = self.entries[key]
             cachable.uncache()
-        finally:
-            self._lookupLock.release()
 
     def __contains__(self, key):
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             return key in self.entries
-        finally:
-            self._lookupLock.release()
 
     def __len__(self):
         return len(self.entries)
@@ -162,11 +150,8 @@ class SubCache(object):
         Derived classes may (and should!) provide mechanisms which can query
         the LastModified timestamp without completely loading an object.
         """
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             return self[key].LastModified
-        finally:
-            self._lookupLock.release()
 
     def update(self, key):
         """
@@ -175,14 +160,11 @@ class SubCache(object):
         used to ensure that cached entries are reloaded if they wouldn't be
         reloaded anyways on the next access.
         """
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             try:
                 entry = self.entries[key]
             except KeyError:
                 return
-        finally:
-            self._lookupLock.release()
         entry.threadSafeUpdate()
 
 
@@ -208,25 +190,19 @@ class Cache(object):
         """
         Add a cachable. Do not call this directly. Only used for bookkeeping.
         """
-        self._limitLock.acquire()
-        try:
+        with self._limitLock:
             if self._limit:
                 self.entries.append(cachable)
-        finally:
-            self._limitLock.release()
 
     def _changed(self, entry):
         """
         Resort the container keeping track of all entries to enforce cache
         limits.
         """
-        self._limitLock.acquire()
-        try:
+        with self._limitLock:
             if not self._limit:
                 return
             self.entries.sort()
-        finally:
-            self._limitLock.release()
 
     def _remove(self, cachable):
         """
@@ -240,26 +216,20 @@ class Cache(object):
         del cachable._cache_subcache
 
     def __getitem__(self, key):
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             try:
                 return self.subCaches[key]
             except KeyError:
                 subCache = SubCache(self)
                 self.subCaches[key] = subCache
                 return subCache
-        finally:
-            self._lookupLock.release()
 
     def __delitem__(self, key):
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             cache = self.subCaches[key]
             for entry in cache.entries.values():
                 entry.uncache()
             del self.subCaches[key]
-        finally:
-            self._lookupLock.release()
 
     def specializedCache(self, key, cls, *args, **kwargs):
         """
@@ -270,13 +240,10 @@ class Cache(object):
         Return the new *cls* instance.
         """
         cache = cls(self, *args, **kwargs)
-        self._lookupLock.acquire()
-        try:
+        with self._lookupLock:
             if key in self.subCaches:
                 raise KeyError("SubCache key already in use: {0}".format(key))
             self.subCaches[key] = cache
-        finally:
-            self._lookupLock.release()
         return cache
 
     def remove(self, cachable):
@@ -284,18 +251,14 @@ class Cache(object):
         Remove one entry from the cache. You can either use this or
         :meth:`CacheEntry.delete`, which does the same thing.
         """
-        self._limitLock.acquire()
-        try:
+        with self._limitLock:
             self._remove(cachable)
-        finally:
-            self._limitLock.release()
 
     def enforceLimit(self):
         """
         Remove those entries with the oldest lastAccess from the cache.
         """
-        self._limitLock.acquire()
-        try:
+        with self._limitLock:
             if not self._limit:
                 return
             tooMany = len(self.entries) - self._limit
@@ -304,8 +267,6 @@ class Cache(object):
                 self.entries = self.entries[tooMany:]
                 for entry in overflow:
                     entry._cache_subcache._kill(entry)
-        finally:
-            self._limitLock.release()
 
     @property
     def Limit(self):
@@ -316,16 +277,12 @@ class Cache(object):
 
         Setting this limit to 0 will disable limiting.
         """
-        self._limitLock.acquire()
-        try:
+        with self._limitLock:
             return self.limit
-        finally:
-            self._limitLock.release()
 
     @Limit.setter
     def Limit(self, value):
-        self._limitLock.acquire()
-        try:
+        with self._limitLock:
             if value is None:
                 value = 0
             value = int(value)
@@ -343,8 +300,6 @@ class Cache(object):
                 self.entries.sort(key=operator.attrgetter("_cache_lastAccess"))
                 self.enforceLimit()
             self._limit = value
-        finally:
-            self._limitLock.release()
 
 
 class FileSourcedCache(SubCache):
@@ -374,13 +329,14 @@ class FileSourcedCache(SubCache):
         return os.path.join(self.rootPath, key)
 
     def __getitem__(self, key, **kwargs):
-        path = self._transformKey(key)
-        try:
-            return super(FileSourcedCache, self).__getitem__(path)
-        except KeyError:
-            obj = self._load(path, **kwargs)
-            super(FileSourcedCache, self).__setitem__(path, obj)
-            return obj
+        with self._lookupLock:
+            path = self._transformKey(key)
+            try:
+                return super(FileSourcedCache, self).__getitem__(path)
+            except KeyError:
+                obj = self._load(path, **kwargs)
+                super(FileSourcedCache, self).__setitem__(path, obj)
+                return obj
 
     def getLastModified(self, key):
         """

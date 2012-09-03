@@ -50,11 +50,8 @@ class Resource(Cache.Cachable):
         Note that this method will only be called by the framework itself; If
         you call :meth:`update` on your own, you will not be safeguarded.
         """
-        self._updateLock.acquire()
-        try:
+        with self._updateLock:
             self.update()
-        finally:
-            self._updateLock.release()
 
 
 class XMLTree(Resource):
