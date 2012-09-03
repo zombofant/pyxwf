@@ -94,6 +94,7 @@ class TagDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
 
     def updateChildren(self):
         self._children = {}
+        self._childList = [];
         for keyword, posts in self.index.getKeywordPosts():
             try:
                 page = self._fixedChildren[keyword]
