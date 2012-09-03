@@ -7,6 +7,7 @@ try:
 except ImportError:
     from cStringIO import StringIO
 
+from PyXWF.utils import _F
 import PyXWF.utils as utils
 import PyXWF.AcceptHeaders as AcceptHeaders
 import PyXWF.Errors as Errors

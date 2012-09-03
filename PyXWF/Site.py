@@ -174,12 +174,19 @@ class Site(Resource.Resource):
             perf = ET.Element(NS.Site.performance)
 
         # cache limit
-        maxCache = Types.DefaultForNone(0,
-            Types.NumericRange(Types.Typecasts.int, 0, None)
-        )(perf.get("max-cache-items"))
+        try:
+            maxCache = Types.NumericRange(Types.Typecasts.int, 0, None)\
+                    (perf.attrib.pop("cache-limit"))
+        except KeyError:
+            maxCache = 0
         # xml pretty printing
         self.cache.Limit = maxCache
-        self.prettyPrint = Types.Typecasts.bool(perf.get("pretty-print", False))
+        try:
+            self.prettyPrint = Types.Typecasts.bool(perf.attrib.pop("pretty-print"))
+        except KeyError:
+            self.prettyPrint = False
+        if len(perf.attrib):
+            logging.debug(_F("Unused attributes on <performance />: {0}", perf.attrib))
 
         # mime overrides
         mimeMap = workingCopy.find(getattr(NS.Site, "mime-map"))
