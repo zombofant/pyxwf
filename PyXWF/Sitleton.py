@@ -17,3 +17,18 @@ class Sitleton(object):
     def __init__(self, site, **kwargs):
         super(Sitleton, self).__init__(**kwargs)
         self.site = site
+
+    @classmethod
+    def atSite(cls, site):
+        """
+        Return the sitleton instance of the class at which this method is called
+        which has been instanciated at the :class:`~PyXWF.Site.Site` *site*.
+
+        Raises :class:`~PyXWF.Errors.SitletonNotAvailable` if the sitleton has
+        not been instanciated with exactly the class this method was called on
+        at the given *site*.
+        """
+        try:
+            return site.sitletons[cls]
+        except KeyError:
+            raise Errors.SitletonNotAvailable(cls, site)

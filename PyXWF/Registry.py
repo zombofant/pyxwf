@@ -105,7 +105,7 @@ class SitletonRegistry(object):
         self.classes.add(cls)
 
     def instanciate(self, site):
-        return [cls(site) for cls in self.classes]
+        return dict((cls, cls(site)) for cls in self.classes)
 
 
 class ParserRegistry(object):

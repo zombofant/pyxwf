@@ -59,6 +59,15 @@ class PluginConflict(Exception):
         self.plugin1 = plugin1
         self.plugin2 = plugin2
 
+class CacheConflict(Exception):
+    def __init__(self, key):
+        self.key = key
+        super(CacheConflict, self).__init__(
+            "Attempt to register two sub-caches for cache key {0}".format(
+                key
+            )
+        )
+
 class ResourceLost(Exception):
     def __init__(self, fileName):
         basename = os.path.basename(fileName)
@@ -124,4 +133,12 @@ class BadChild(NodeConfigurationError):
         super(BadChild, self).__init__(
             "{1} is not a valid child for {0}".format(self.parent, self.child),
             self.parent
+        )
+
+class SitletonNotAvailable(Exception):
+    def __init__(self, cls, site):
+        self.sitletonClass = cls
+        self.site = site
+        super(SitletonNotAvailable, self).__init__(
+            "Sitleton {0} is not available at site {1}".format(cls, site)
         )
