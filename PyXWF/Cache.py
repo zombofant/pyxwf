@@ -5,13 +5,17 @@ PyXWF instance.
 
 It may, in the future, also be used to cache complete rendered pages.
 """
+from __future__ import unicode_literals
 
 import abc, functools, time, os, operator
+import logging
 
-from PyXWF.utils import threading
+from PyXWF.utils import threading, _F
 import PyXWF.Nodes as Nodes
 import PyXWF.Errors as Errors
 import PyXWF.utils as utils
+
+logging = logging.getLogger(__name__)
 
 class Cachable(object):
     """
@@ -266,6 +270,7 @@ class Cache(object):
                 overflow = self.entries[:tooMany]
                 self.entries = self.entries[tooMany:]
                 for entry in overflow:
+                    logging.debug(_F("PURGE: {0}", entry))
                     entry._cache_subcache._kill(entry)
 
     @property
@@ -300,6 +305,7 @@ class Cache(object):
                 self.entries.sort(key=operator.attrgetter("_cache_lastAccess"))
                 self.enforceLimit()
             self._limit = value
+            logging.debug(_F("CONF: Limit now at {0}", value))
 
 
 class FileSourcedCache(SubCache):
@@ -334,6 +340,7 @@ class FileSourcedCache(SubCache):
             try:
                 return super(FileSourcedCache, self).__getitem__(path)
             except KeyError:
+                logging.debug(_F("MISS: {0}", path, self))
                 obj = self._load(path, **kwargs)
                 super(FileSourcedCache, self).__setitem__(path, obj)
                 return obj
@@ -353,5 +360,8 @@ class FileSourcedCache(SubCache):
 
     def update(self, key):
         super(FileSourcedCache, self).update(self._transformKey(key))
+
+    def __repr__(self):
+        return "<FSCache {0}>".format(self.rootPath)
 
     __setitem__ = None
