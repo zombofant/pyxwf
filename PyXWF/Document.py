@@ -156,10 +156,8 @@ class Document(object):
             b"doc_title": utils.unicodeToXPathStr(self.title)
         }
 
-
 class DocumentResource(Resource.Resource):
     pass
-
 
 class FileDocument(DocumentResource):
     """
