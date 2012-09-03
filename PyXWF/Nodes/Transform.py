@@ -1,6 +1,6 @@
-import os, abc
+import os, abc, logging
 
-from PyXWF.utils import ET
+from PyXWF.utils import ET, _F
 import PyXWF.utils as utils
 import PyXWF.Nodes as Nodes
 import PyXWF.ContentTypes as ContentTypes
@@ -11,8 +11,12 @@ import PyXWF.Document as Document
 import PyXWF.Resource as Resource
 import PyXWF.Namespaces as NS
 import PyXWF.Types as Types
+import PyXWF.Cache as Cache
+import PyXWF.Sitleton as Sitleton
 
 import PyXWF.Nodes.Directory as Directory
+
+cacheLogging = logging.getLogger("PyXWF.Cache")
 
 class TransformNS(object):
     __metaclass__ = NS.__metaclass__
@@ -59,14 +63,6 @@ class TransformBase(Nodes.Node, Resource.Resource):
     def LastModified(self):
         return self._lastModified
 
-    def update(self):
-        lastModified = self._calcLastModified()
-        if lastModified > self._lastModified:
-            self._transforms.update(self._transformFile)
-            self._xmlData.update(self._sourceFile)
-            self._rebuild()
-            self._lastModified = lastModified
-
 class TransformNode(TransformBase, Navigation.Info):
     __metaclass__ = Registry.NodeMeta
 
@@ -76,13 +72,22 @@ class TransformNode(TransformBase, Navigation.Info):
     def __init__(self, site, parent, node):
         super(TransformNode, self).__init__(site, parent, node)
         self._navTitle = self._navTitleType(node.get("nav-title"))
+        self._cache = TransformCacheSitleton.getCache(site)
 
     def _rebuild(self):
         transform = self._transforms[self._transformFile]
         source = self._xmlData[self._sourceFile]
         parser = self._parser
         docPage = transform.rawTransform(source.Tree, self._args).getroot()
-        self._doc = parser.parseTree(docPage)
+        return parser.parseTree(docPage)
+
+    def update(self):
+        lastModified = self._calcLastModified()
+        if lastModified > self._lastModified:
+            self._transforms.update(self._transformFile)
+            self._xmlData.update(self._sourceFile)
+            self._cache.update(self)
+            self._cache[self]
 
     def resolvePath(self, ctx, relPath):
         result = super(TransformNode, self).resolvePath(ctx, relPath)
@@ -91,7 +96,7 @@ class TransformNode(TransformBase, Navigation.Info):
         return result
 
     def doGet(self, ctx):
-        return self._doc
+        return self._cache[self]
 
     def getTitle(self):
         return self._navTitle
@@ -135,6 +140,14 @@ class TransformTree(TransformBase):
         ctx.useResource(self)
         return self._tree.getNavigationInfo(ctx)
 
+    def update(self):
+        lastModified = self._calcLastModified()
+        if lastModified > self._lastModified:
+            self._transforms.update(self._transformFile)
+            self._xmlData.update(self._sourceFile)
+            self._rebuild()
+            self._lastModified = lastModified
+
 
 class TransformRoot(Directory.DirectoryBase):
     def __init__(self, tree, node):
@@ -143,3 +156,42 @@ class TransformRoot(Directory.DirectoryBase):
         self._path = tree.Path
 
         self._loadChildren(node)
+
+class TransformCache(Cache.SubCache):
+    def getLastModified(self, node):
+        return node._calcLastModified()
+
+    def update(self, node):
+        with self._lookupLock:
+            try:
+                del self[node]
+            except KeyError:
+                pass
+
+    def _load(self, node):
+        return node._rebuild()
+
+    def __getitem__(self, node):
+        with self._lookupLock:
+            try:
+                return super(TransformCache, self).__getitem__(node)
+            except KeyError:
+                cacheLogging.debug(_F("MISS: {0} in {1}", node, self))
+                obj = self._load(node)
+                self[node] = obj
+                return obj
+
+    def __repr__(self):
+        return "<TransformCache>"
+
+class TransformCacheSitleton(Sitleton.Sitleton):
+    __metaclass__ = Registry.SitletonMeta
+
+    def __init__(self, site):
+        super(TransformCacheSitleton, self).__init__(site)
+        self.key = id(self)
+        self.cache = site.cache.specializedCache(self.key, TransformCache)
+
+    @classmethod
+    def getCache(cls, site):
+        return cls.atSite(site).cache
