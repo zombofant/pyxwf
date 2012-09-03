@@ -242,7 +242,7 @@ class Cache(object):
         cache = cls(self, *args, **kwargs)
         with self._lookupLock:
             if key in self.subCaches:
-                raise KeyError("SubCache key already in use: {0}".format(key))
+                raise Errors.CacheConflict(key)
             self.subCaches[key] = cache
         return cache
 
