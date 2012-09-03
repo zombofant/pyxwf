@@ -71,7 +71,7 @@ class License(object):
         return node
 
 
-class Document(object):
+class Document(Cache.Cachable):
     """
     Contains all relevant information about a Document. *body* must be a valid
     xhtml body (as :mod:`lxml.etree` nodes). *title* must be a string-like

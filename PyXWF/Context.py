@@ -13,6 +13,8 @@ import PyXWF.HTTPUtils as HTTPUtils
 import PyXWF.AcceptHeaders as AcceptHeaders
 import PyXWF.Message as Message
 
+logging = logging.getLogger(__name__)
+
 class Context(object):
     """
     The context of a request. It is passed around when retrieving the Document
