@@ -155,11 +155,19 @@ class Context(object):
         """
         logging.debug(_F("Finding out HTML content type to use. User agent: {0}/{1:.2f}",
             self._userAgentName, self._userAgentVersion))
-        # thank you, microsoft, for your really verbose accept headers - which
-        # do _not_ include an explicit mention of text/html, instead, you just
-        # assume you can q=1.0 everything.
         if self._userAgentName == "ie" and self._userAgentVersion < 9:
+            # thank you, microsoft, for your really verbose accept headers -
+            # which do _not_ include an explicit mention of text/html, instead,
+            # you just assume you can q=1.0 everything.
             logging.debug("Forcing XHTML support to false: MSIE < 9 detected!")
+            htmlContentType = ContentTypes.html
+        elif self._userAgentName == "chrome" and self._userAgentVersion < 7:
+            # but open browsers are not neccessarily better -- chromium with
+            # version <= 6.0 sends:
+            # application/xml;q=1.00, application/xhtml+xml;q=1.00, \
+            # text/html;q=0.90, text/plain;q=0.80, image/png;q=1.00, */*;q=0.50
+            # but is in fact unable to parse valid XHTML.
+            logging.debug("Forcing XHTML support to false: Chrome < 7 detected!")
             htmlContentType = ContentTypes.html
         else:
             logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
