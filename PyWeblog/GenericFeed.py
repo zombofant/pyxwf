@@ -73,7 +73,7 @@ class GenericFeed(Protocols.Feed):
 
         posts = list(itertools.islice(node.getPosts(), 0, self._limit))
         if len(posts) > 0:
-            ET.SubElement(root, getattr(NS.PyBlog, "feed-path")).text = \
+            ET.SubElement(root, getattr(NS.PyBlog, "updated")).text = \
                 max(map(updatedKey, posts)).isoformat() + "Z"
         ET.SubElement(root, getattr(NS.PyBlog, "feed-path")).text = ctx.FullURI
         ET.SubElement(root, getattr(NS.PyBlog, "node-path")).text = node.Path
