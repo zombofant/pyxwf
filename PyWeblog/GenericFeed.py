@@ -65,7 +65,7 @@ class GenericFeed(Protocols.Feed):
             "title": node.SelectionValue
         })
         rootID = ET.SubElement(root, NS.PyBlog.id).text = \
-            self._rootID or (self._idPrefix + self.Blog.Path)
+            self._rootID or (self._idPrefix + node.Path)
         if self._mapUpdatedToLastModified:
             updatedKey = operator.attrgetter("LastModified")
         else:
@@ -78,6 +78,7 @@ class GenericFeed(Protocols.Feed):
         ET.SubElement(root, getattr(NS.PyBlog, "feed-path")).text = ctx.FullURI
         ET.SubElement(root, getattr(NS.PyBlog, "node-path")).text = node.Path
         ET.SubElement(root, getattr(NS.PyBlog, "blog-path")).text = self.Blog.Path
+        print(ET.tostring(root))
         for post in posts:
             postNode = ET.SubElement(root, NS.PyBlog.post)
             ET.SubElement(postNode, NS.PyBlog.id).text = self._idPrefix + post.path

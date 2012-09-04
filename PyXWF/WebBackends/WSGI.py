@@ -32,10 +32,11 @@ class WSGIContext(Context.Context):
         except (ValueError, TypeError):
             serverPort = None
         relPath = environ.get("PATH_INFO").decode("utf-8")
-        fullURI = environ.get("SCRIPT_NAME").decode("utf-8") + relPath
         urlScheme = environ.get("wsgi.scheme", "http")
         method = environ.get("REQUEST_METHOD")
         queryString = environ.get("QUERY_STRING", "")
+        fullURI = environ.get("SCRIPT_NAME").decode("utf-8") + relPath + \
+            (("?" + queryString) if queryString else "")
         return (httpHeaders, method, urlScheme, hostName, serverPort,
                 fullURI, relPath, queryString)
 
