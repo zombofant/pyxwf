@@ -30,6 +30,12 @@ class WSGIContext(unittest.TestCase):
             key = b"HTTP_"+str(header).replace(b"-", b"_").upper()
             environ[key] = str(value)
 
+    def queryStringEnv(self, environ, root="/", local="", query="", **kwargs):
+        self.setUpEnviron(environ, **kwargs)
+        environ["QUERY_STRING"] = query
+        environ["SCRIPT_NAME"] = root
+        environ["PATH_INFO"] = local
+
     def sendMessage(self, body="Foo bar", **kwargs):
         ctx = self.getContext(**kwargs)
         message = Message.TextMessage(body, encoding="utf-8")
@@ -61,6 +67,12 @@ class WSGIContext(unittest.TestCase):
         ctx = self.getContext(customHeaders=myHeaders)
         myHeaders.update({"host": ctx.HostName})
         self.assertEqual(ctx._requestHeaders, myHeaders)
+
+    def test_uriProperties(self):
+        ctx = self.getContext(self.queryStringEnv, local="foo/bar", query="quux=baz")
+        self.assertEqual(ctx.FullURI, "/foo/bar?quux=baz")
+        self.assertEqual(ctx.Path, "foo/bar")
+        self.assertEqual(ctx.QueryData, {"quux": ["baz"]})
 
     def test_ifModifiedSince_BadRequest(self):
         self.assertRaises(Errors.BadRequest, self.getContext, customHeaders={
