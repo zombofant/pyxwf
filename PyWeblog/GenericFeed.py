@@ -78,7 +78,6 @@ class GenericFeed(Protocols.Feed):
         ET.SubElement(root, getattr(NS.PyBlog, "feed-path")).text = ctx.FullURI
         ET.SubElement(root, getattr(NS.PyBlog, "node-path")).text = node.Path
         ET.SubElement(root, getattr(NS.PyBlog, "blog-path")).text = self.Blog.Path
-        print(ET.tostring(root))
         for post in posts:
             postNode = ET.SubElement(root, NS.PyBlog.post)
             ET.SubElement(postNode, NS.PyBlog.id).text = self._idPrefix + post.path

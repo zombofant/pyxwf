@@ -25,10 +25,7 @@ class Atom(GenericFeed.GenericFeed):
         transformHref = self.Site.transformHref
         for localLink in feed.iter(NS.PyWebXML.link):
             localLink.tag = NS.Atom.link
-            print(localLink.get("rel", None))
-            print(localLink.get("href", None))
             transformHref(ctx, localLink)
-            print(localLink.get("href", None))
             localLink.text = self._linkPrefix[:-1]+localLink.get("href")
             del localLink.attrib["href"]
         return feed
