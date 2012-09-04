@@ -41,10 +41,7 @@ class TweakPropagation(Mocks.DynamicSiteTest):
 
     def getDummySitleton(self):
         self.setupSite(self.getSitemap(self.setUpSitemap))
-        for sitleton in self.site.sitletons:
-            if isinstance(sitleton, DummySitleton):
-                return sitleton
-        return None
+        return DummySitleton.atSite(self.site)
 
     def test_sitleton(self):
         self.assertIsNotNone(self.getDummySitleton())
