@@ -177,9 +177,9 @@ class HTTP405(HTTPClientError):
     code = 405
     title = "Method Not Allowed"
 
-    def __init__(self, methodName=None, **kwargs):
+    def __init__(self, allow, **kwargs):
+        self.allow = list(allow)
         super(HTTP405, self).__init__(**kwargs)
-        self.methodName = methodName
 
 class HTTP406(HTTPClientError):
     code = 406

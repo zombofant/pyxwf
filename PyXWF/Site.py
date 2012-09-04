@@ -644,6 +644,10 @@ class Site(Resource.Resource):
         except Errors.Handler.InternalServerError as err:
             return Message.HTMLMessage.fromXHTMLTree(err.xhtml, status=Errors.HTTP500,
                 encoding="utf-8")
+        except Errors.MethodNotAllowed as status:
+            ctx.Cachable = False
+            ctx.setResponseHeader("allow", ",".join(status.allow))
+            raise
         except Errors.HTTPStatusBase:
             raise
         except Exception as err:

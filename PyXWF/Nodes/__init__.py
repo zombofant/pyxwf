@@ -168,7 +168,7 @@ class Node(object):
         try:
             handler = self.requestHandlers[ctx.Method]
         except KeyError:
-            raise Errors.MethodNotAllowed(ctx.Method)
+            raise Errors.MethodNotAllowed(self.requestHandlers.viewkeys())
         except TypeError:
             return self.requestHandlers(ctx)
         return handler(self, ctx)
