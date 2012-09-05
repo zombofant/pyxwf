@@ -576,7 +576,7 @@ class Site(Resource.Resource):
                 template = self.template_cache[self.default_template]
         else:
             # setup the context
-            ctx._pagenode = node
+            ctx.PageNode = node
             # load the template and mark it for use
             template = self.template_cache[node.Template]
             ctx.use_resource(template)

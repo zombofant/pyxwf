@@ -95,7 +95,7 @@ class Context(object):
         # these are backing values for the properties below. See their
         # docstrings for further information
         self._cachable = True
-        self._page_node = None
+        self._pagenode = None
         self._used_resources = set()
         self._last_modified = None
         self._can_use_xhtml = False
@@ -357,7 +357,11 @@ class Context(object):
         """
         The PyXWF node responsible for serving the page.
         """
-        return self._page_node
+        return self._pagenode
+
+    @PageNode.setter
+    def PageNode(self, value):
+        self._pagenode = value
 
     @property
     def LastModified(self):
