@@ -8,20 +8,20 @@ from calendar import timegm
 
 monthname = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-def toTimestamp(datetime):
+def to_timestamp(datetime):
     """
     Convert *datetime* to a UTC unix timestamp.
     """
     return timegm(datetime.utctimetuple())
 
-def toDatetime(timestamp):
+def to_datetime(timestamp):
     """
-    Convert a timestamp like returned by :func:`toTimestamp` to a utc datetime
+    Convert a timestamp like returned by :func:`to_timestamp` to a utc datetime
     object.
     """
     return datetime.utcfromtimestamp(timestamp)
 
-def nowDate():
+def now_date():
     """
     The current time in UTC as datetime object.
     """
@@ -31,9 +31,9 @@ def now():
     """
     The current time in UTC as unix timestamp.
     """
-    return toTimestamp(nowDate())
+    return to_timestamp(now_date())
 
-def nextMonth(dt):
+def next_month(dt):
     """
     Get the datetime representing the first day of the month after the month
     set in *dt*.
@@ -43,24 +43,24 @@ def nextMonth(dt):
     else:
         return datetime(year=dt.year, month=dt.month+1, day=1)
 
-def normalizeDate(dateTime):
+def normalize_date(date_time):
     """
     Returns a plain date (with time information reset to midnight) from the
-    given *dateTime* object.
+    given *date_time* object.
     """
-    return datetime(year=dateTime.year, month=dateTime.month, day=dateTime.day)
+    return datetime(year=date_time.year, month=date_time.month, day=date_time.day)
 
-def stripMicroseconds(dateTime):
+def strip_microseconds(date_time):
     """
-    Remove microseconds from the given *dateTime* object.
+    Remove microseconds from the given *date_time* object.
     """
     return datetime(
-        dateTime.year,
-        dateTime.month,
-        dateTime.day,
-        dateTime.hour,
-        dateTime.minute,
-        dateTime.second
+        date_time.year,
+        date_time.month,
+        date_time.day,
+        date_time.hour,
+        date_time.minute,
+        date_time.second
     )
 
-fromTimestamp = toDatetime
+from_timestamp = to_datetime

@@ -17,123 +17,123 @@ import PyXWF.HTTPUtils as HTTPUtils
 
 class WSGIContext(Context.Context):
     @classmethod
-    def wsgiParseEnviron(self, environ):
-        httpHeaders = {}
-        httpIterator = itertools.ifilter(
+    def wsgi_parse_environ(self, environ):
+        http_headers = {}
+        httpiter = itertools.ifilter(
             lambda x: x[0].startswith(b"HTTP_"),
             environ.iteritems())
-        for key, value in httpIterator:
+        for key, value in httpiter:
             header = key[5:].lower().replace(b"_", b"-")
-            httpHeaders[header] = value
+            http_headers[header] = value
 
-        hostName = httpHeaders.get("host", None) or environ.get("SERVER_NAME", None)
+        hostname = http_headers.get("host", None) or environ.get("SERVER_NAME", None)
         try:
-            serverPort = int(environ.get("SERVER_PORT"))
+            server_port = int(environ.get("SERVER_PORT"))
         except (ValueError, TypeError):
-            serverPort = None
-        relPath = environ.get("PATH_INFO").decode("utf-8")
-        urlScheme = environ.get("wsgi.scheme", "http")
+            server_port = None
+        relpath = environ.get("PATH_INFO").decode("utf-8")
+        url_scheme = environ.get("wsgi.scheme", "http")
         method = environ.get("REQUEST_METHOD")
-        queryString = environ.get("QUERY_STRING", "")
-        fullURI = environ.get("SCRIPT_NAME").decode("utf-8") + relPath + \
-            (("?" + queryString) if queryString else "")
-        return (httpHeaders, method, urlScheme, hostName, serverPort,
-                fullURI, relPath, queryString)
+        query_string = environ.get("QUERY_STRING", "")
+        fulluri = environ.get("SCRIPT_NAME").decode("utf-8") + relpath + \
+            (("?" + query_string) if query_string else "")
+        return (http_headers, method, url_scheme, hostname, server_port,
+                fulluri, relpath, query_string)
 
     def __init__(self, environ, start_response):
         super(WSGIContext, self).__init__()
-        self._startResponse = start_response
-        self._requestHeaders, \
+        self._start_response = start_response
+        self._request_headers, \
         self._method, \
         self._scheme, \
-        self._hostName, \
-        self._serverPort, \
-        self._fullURI, \
+        self._hostname, \
+        self._server_port, \
+        self._fulluri, \
         self._path, \
-        self._queryString, \
-            = self.wsgiParseEnviron(environ)
+        self._query_string, \
+            = self.wsgi_parse_environ(environ)
 
-        self._parseAcceptHeaders()
-        self._parseNonAcceptHeaders()
+        self._parse_accept_headers()
+        self._parse_non_accept_headers()
 
-        self._determineHTMLContentType()
+        self._determine_html_content_type()
 
-    def _loadPreferenceList(self, headerName, prefList, default):
+    def _load_preference_list(self, headername, preflist, default):
         try:
-            headerValue = self._requestHeaders[headerName]
+            headervalue = self._request_headers[headername]
         except KeyError:
-            headerValue = default
-        prefList.appendHeader(headerValue)
+            headervalue = default
+        preflist.append_header(headervalue)
 
-    def _parseIfPresent(self, headerName, parseFunc, *args, **kwargs):
+    def _parse_if_present(self, headername, parsefunc, *args, **kwargs):
         try:
-            headerValue = self._requestHeaders[headerName]
+            headervalue = self._request_headers[headername]
         except KeyError:
             return None
         else:
-            return parseFunc(headerValue, *args, **kwargs)
+            return parsefunc(headervalue, *args, **kwargs)
 
-    def _parseAcceptHeaders(self):
+    def _parse_accept_headers(self):
         self._accept = AcceptHeaders.AcceptPreferenceList()
-        self._loadPreferenceList("accept", self._accept, "*/*")
+        self._load_preference_list("accept", self._accept, "*/*")
 
-        self._acceptCharset = AcceptHeaders.CharsetPreferenceList()
-        self._loadPreferenceList("accept-charset", self._acceptCharset, "")
-        self._acceptCharset.injectRFCValues()
+        self._accept_charset = AcceptHeaders.CharsetPreferenceList()
+        self._load_preference_list("accept-charset", self._accept_charset, "")
+        self._accept_charset.inject_rfc_values()
 
-        self._acceptLanguage = AcceptHeaders.LanguagePreferenceList()
-        self._loadPreferenceList("accept-language", self._acceptLanguage, "*")
+        self._accept_language = AcceptHeaders.LanguagePreferenceList()
+        self._load_preference_list("accept-language", self._accept_language, "*")
 
-    def _parseNonAcceptHeaders(self):
-        self._parseIfPresent("if-modified-since", self._parseIfModifiedSince)
-        self._parseIfPresent("user-agent", self._parseUserAgent)
+    def _parse_non_accept_headers(self):
+        self._parse_if_present("if-modified-since", self._parse_if_modified_since)
+        self._parse_if_present("user-agent", self._parse_user_agent)
 
-    def _parseIfModifiedSince(self, value):
+    def _parse_if_modified_since(self, value):
         try:
-            self._ifModifiedSince = HTTPUtils.parseHTTPDate(value)
+            self._if_modified_since = HTTPUtils.parse_http_date(value)
         except Exception as err:
             raise Errors.BadRequest(message=str(err))
 
-    def _parseUserAgent(self, value):
-        self._userAgentName, \
-        self._userAgentVersion \
-            = utils.guessUserAgent(value)
+    def _parse_user_agent(self, value):
+        self._useragent_name, \
+        self._useragent_version \
+            = utils.guess_useragent(value)
 
-        self._html5Support = self.userAgentSupportsHTML5(
-            self._userAgentName,
-            self._userAgentVersion
+        self._html5_support = self.useragent_supports_html5(
+            self._useragent_name,
+            self._useragent_version
         )
-        self._isMobileClient = utils.isMobileUserAgent(value)
+        self._is_mobile_client = utils.is_mobile_useragent(value)
 
-    def _requireQuery(self):
-        if self._queryData is None:
-            self._queryData = urlparse.parse_qs(self._queryString)
+    def _require_query(self):
+        if self._query_data is None:
+            self._query_data = urlparse.parse_qs(self._query_string)
 
-    def sendResponse(self, message):
-        body = self.getEncodedBody(message)
+    def send_response(self, message):
+        body = self.get_encoded_body(message)
         if body is not None:
-            self.setResponseContentType(message.MIMEType, message.Encoding)
-        self._setCacheStatus()
-        self._setPropertyHeaders()
-        self._startResponse(
+            self.set_response_content_type(message.MIMEType, message.Encoding)
+        self._set_cache_status()
+        self._set_property_headers()
+        self._start_response(
             b"{0:d} {1}".format(
                 message.Status.code, message.Status.title
             ),
-            self._responseHeaders.items()
+            self._response_headers.items()
         )
         if hasattr(body, "__iter__") and not isinstance(body, str):
             return iter(body)
         elif body is None:
             return []
         else:
-            return utils.chunkString(body)
+            return utils.chunk_string(body)
 
 
 class WSGISite(Site.Site):
-    def __init__(self, sitemapFile, **kwargs):
-        super(WSGISite, self).__init__(sitemapFile, **kwargs)
+    def __init__(self, sitemap_file, **kwargs):
+        super(WSGISite, self).__init__(sitemap_file, **kwargs)
 
-    def getResponse(self, environ, start_response):
+    def get_response(self, environ, start_response):
         try:
             try:
                 ctx = WSGIContext(environ, start_response)
@@ -141,7 +141,7 @@ class WSGISite(Site.Site):
                 raise Errors.BadRequest(unicode(err))
             message = self.handle(ctx)
         except Errors.NotModified as status:
-            return ctx.sendEmptyResponse(status)
+            return ctx.send_empty_response(status)
         except Errors.HTTPRedirection as status:
             loc = status.location
             if status.local:
@@ -149,26 +149,26 @@ class WSGISite(Site.Site):
                     loc = loc.decode("utf-8")
                 if len(loc) > 0 and loc[0] == "/":
                     loc = loc[1:]
-                loc = urllib.quote(os.path.join(self.urlRoot, loc).encode("utf-8"))
+                loc = urllib.quote(os.path.join(self.urlroot, loc).encode("utf-8"))
                 loc = b"{0}://{1}{2}".format(
                     ctx.URLScheme,
                     ctx.HostName,
                     loc
                 )
-            ctx.setResponseHeader(b"Location", loc)
-            return ctx.sendEmptyResponse(status)
+            ctx.set_response_header(b"Location", loc)
+            return ctx.send_empty_response(status)
         except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
             ctx.Cachable = False
             if status.message is not None:
                 message = Message.PlainTextMessage(contents=status.message,
                     status=status)
-                return ctx.sendResponse(status)
+                return ctx.send_response(status)
             else:
-                return ctx.sendEmptyResponse(status)
+                return ctx.send_empty_response(status)
         else:
-            return ctx.sendResponse(message)
+            return ctx.send_response(message)
 
     def __call__(self, environ, start_response):
-        for item in self.getResponse(environ, start_response):
+        for item in self.get_response(environ, start_response):
             yield item
         gc.collect()

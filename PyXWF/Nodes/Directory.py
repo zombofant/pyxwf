@@ -15,52 +15,52 @@ class DirectoryBase(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
             self.children = directory.children
             self.display = directory.display
             self.index = directory.index
-            self.superInfo = self.index.getNavigationInfo(ctx)
+            self.super_info = self.index.get_navigation_info(ctx)
 
-        def getTitle(self):
-            return self.superInfo.getTitle()
+        def get_title(self):
+            return self.super_info.get_title()
 
-        def getDisplay(self):
+        def get_display(self):
             return self.display
 
-        def getRepresentative(self):
+        def get_representative(self):
             return self.index
 
         def __iter__(self):
             try:
-                superIter = iter(self.superInfo)
+                superiter = iter(self.super_info)
             except (ValueError, TypeError):
-                superIter = iter([])
+                superiter = iter([])
             return iter(itertools.chain(
-                iter(superIter),
+                iter(superiter),
                 itertools.ifilter(lambda x: x is not self.index, self.children)
             ))
 
     def __init__(self, site, parent, node):
         super(DirectoryBase, self).__init__(site, parent, node)
-        self.pathDict = {}
+        self.pathdict = {}
         self.children = []
         self.display = Navigation.DisplayMode(
             node.get("nav-display", Navigation.Show) if node is not None else Navigation.Show)
 
-    def _loadChildren(self, fromNode):
+    def _load_children(self, from_node):
         site = self.Site
-        for child in fromNode:
+        for child in from_node:
             if child.tag is ET.Comment:
                 continue
             self.append(Registry.NodePlugins(child, site, self))
         try:
-            self.index = self.pathDict[""]
+            self.index = self.pathdict[""]
         except KeyError:
             raise ValueError("Directory requires index node (i.e. child node with unset or empty name)")
 
-    def _getChildNode(self, key):
-        return self.pathDict.get(key, None)
+    def _get_child(self, key):
+        return self.pathdict.get(key, None)
 
     def append(self, plugin):
-        if plugin.Name in self.pathDict:
+        if plugin.Name in self.pathdict:
             raise ValueError("Duplicate path name {0!r} in {1}".format(plugin.Name, self.Path))
-        self.pathDict[plugin.Name] = plugin
+        self.pathdict[plugin.Name] = plugin
         self.children.append(plugin)
 
     def __iter__(self):
@@ -69,7 +69,7 @@ class DirectoryBase(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     def __len__(self):
         return len(self.children)
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self.Info(ctx, self)
 
 class Directory(DirectoryBase):
@@ -80,7 +80,7 @@ class Directory(DirectoryBase):
 
     def __init__(self, site, parent, node):
         super(Directory, self).__init__(site, parent, node)
-        self._loadChildren(node)
+        self._load_children(node)
 
 class RootDirectory(Directory):
     __metaclass__ = Registry.NodeMeta

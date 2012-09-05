@@ -38,49 +38,49 @@ class Navigation(Crumbs.CrumbBase):
     names = ["crumb"]
 
     def __init__(self, site, node):
-        depthRange = Types.NumericRange(int, 0, None)
+        depth_range = Types.NumericRange(int, 0, None)
         super(Navigation, self).__init__(site, node)
-        self.root = site.getNode(node.get("root"))
-        self.showRoot = Types.DefaultForNone(False, Types.Typecasts.bool)\
+        self.root = site.get_node(node.get("root"))
+        self.show_root = Types.DefaultForNone(False, Types.Typecasts.bool)\
                                             (node.get("show-root"))
-        self.maxDepth = Types.DefaultForNone(None, depthRange)\
+        self.maxdepth = Types.DefaultForNone(None, depth_range)\
                                             (node.get("max-depth"))
-        self.minDepth = Types.DefaultForNone(None, depthRange)\
+        self.mindepth = Types.DefaultForNone(None, depth_range)\
                                             (node.get("min-depth"))
-        self.activeClass = node.get("active-class", "nav-active")
-        self.childActiveClass = node.get("child-active-class")
-        self.minDisplay = Types.Typecasts.int(node.get("min-display", 1))
-        self.rootAsHeader = Types.DefaultForNone(False,
+        self.active_class = node.get("active-class", "nav-active")
+        self.child_active_class = node.get("child-active-class")
+        self.mindisplay = Types.Typecasts.int(node.get("min-display", 1))
+        self.root_as_header = Types.DefaultForNone(False,
             Types.NumericRange(int, 1, 6))(node.get("root-as-header"))
 
-    def _propagateActive(self, eNode):
-        if not self.childActiveClass:
+    def _propagate_active(self, enode):
+        if not self.child_active_class:
             return
-        cls = self.childActiveClass
-        while eNode is not None:
-            if eNode.tag == NS.XHTML.li:
-                a = eNode.find(NS.XHTML.a)
+        cls = self.child_active_class
+        while enode is not None:
+            if enode.tag == NS.XHTML.li:
+                a = enode.find(NS.XHTML.a)
                 if a is not None:
-                    utils.addClass(a, cls)
-            eNode = eNode.getparent()
+                    utils.add_class(a, cls)
+            enode = enode.getparent()
 
-    def _markupA(self, ctx, parent, node, navInfo, propagate=True):
+    def _markupA(self, ctx, parent, node, nav_info, propagate=True):
         a = ET.SubElement(parent, NS.PyWebXML.a, href=node.Path)
-        a.text = navInfo.getTitle()
-        if navInfo.getRepresentative() is ctx.PageNode:
-            utils.addClass(a, self.activeClass)
+        a.text = nav_info.get_title()
+        if nav_info.get_representative() is ctx.PageNode:
+            utils.add_class(a, self.active_class)
             if propagate:
-                self._propagateActive(a)
+                self._propagate_active(a)
         return a
 
-    def _navTree(self, parent, ctx, info, depth=0, activeChain=set(), active=False):
-        if self.maxDepth is not None and depth > self.maxDepth:
+    def _nav_tree(self, parent, ctx, info, depth=0, active_chain=set(), active=False):
+        if self.maxdepth is not None and depth > self.maxdepth:
             return
-        if not (active or self.minDepth is None or depth <= self.minDepth):
+        if not (active or self.mindepth is None or depth <= self.mindepth):
             return
-        nodeIterable = IteratorStack()
+        nodeiter = IteratorStack()
         try:
-            nodeIterable.push(iter(info))
+            nodeiter.push(iter(info))
         except (ValueError, TypeError):
             return
         if parent is not None:
@@ -88,50 +88,50 @@ class Navigation(Crumbs.CrumbBase):
         else:
             ul = ET.Element(NS.XHTML.ul)
 
-        for child in nodeIterable:
-            navInfo = child.getNavigationInfo(ctx)
-            displayMode = navInfo.getDisplay()
-            if displayMode is Nav.ReplaceWithChildren:
-                nodeIterable.push(iter(navInfo))
-            elif displayMode >= self.minDisplay:
+        for child in nodeiter:
+            nav_info = child.get_navigation_info(ctx)
+            display_mode = nav_info.get_display()
+            if display_mode is Nav.ReplaceWithChildren:
+                nodeiter.push(iter(nav_info))
+            elif display_mode >= self.mindisplay:
                 li = ET.SubElement(ul, NS.XHTML.li)
-                self._markupA(ctx, li, child, navInfo, True)
-                subtree = self._navTree(li, ctx, navInfo, depth+1, activeChain,
-                    active=child in activeChain)
+                self._markupA(ctx, li, child, nav_info, True)
+                subtree = self._nav_tree(li, ctx, nav_info, depth+1, active_chain,
+                    active=child in active_chain)
                 if subtree is not None:
                     li.append(subtree)
         return ul
 
-    def render(self, ctx, intoNode, atIndex):
+    def render(self, ctx, into_node, at_index):
         if ctx.PageNode:
-            activeChain = frozenset(ctx.PageNode.iterUpwards())
+            active_chain = frozenset(ctx.PageNode.iter_upwards())
         else:
-            activeChain = frozenset()
-        if self.showRoot:
-            if self.rootAsHeader is not None:
-                tree = self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
+            active_chain = frozenset()
+        if self.show_root:
+            if self.root_as_header is not None:
+                tree = self._nav_tree(None, ctx, self.root.get_navigation_info(ctx),
                     depth=1,
-                    activeChain=activeChain,
-                    active=self.root in activeChain)
+                    active_chain=active_chain,
+                    active=self.root in active_chain)
                 if tree is not None:
-                    intoNode.insert(atIndex, tree)
+                    into_node.insert(at_index, tree)
                 header = ET.Element(NS.XHTML.header)
                 hX = ET.SubElement(header,
-                    getattr(NS.XHTML, "h{0}".format(self.rootAsHeader)))
+                    getattr(NS.XHTML, "h{0}".format(self.root_as_header)))
                 self._markupA(ctx, hX, self.root,
-                    self.root.getNavigationInfo(ctx),
+                    self.root.get_navigation_info(ctx),
                     propagate=False)
-                intoNode.insert(atIndex, header)
+                into_node.insert(at_index, header)
             else:
-                tree = self._navTree(None, ctx, [self.root],
+                tree = self._nav_tree(None, ctx, [self.root],
                     depth=0,
-                    activeChain=activeChain,
+                    active_chain=active_chain,
                     active=True)
                 if tree is not None:
-                    intoNode.insert(atIndex, tree)
+                    into_node.insert(at_index, tree)
         else:
-            tree = self._navTree(None, ctx, self.root.getNavigationInfo(ctx),
-                activeChain=activeChain,
+            tree = self._nav_tree(None, ctx, self.root.get_navigation_info(ctx),
+                active_chain=active_chain,
                 active=True)
             if tree is not None:
-                intoNode.insert(atIndex, tree)
+                into_node.insert(at_index, tree)

@@ -12,30 +12,30 @@ class PostNode(Nodes.Node, Navigation.Info):
         self._name = post.basename
         self.post = post
 
-    def resolvePath(self, ctx, relPath):
-        node = super(PostNode, self).resolvePath(ctx, relPath)
+    def resolve_path(self, ctx, relpath):
+        node = super(PostNode, self).resolve_path(ctx, relpath)
         if node is self:
-            ctx.useResource(self.post)
+            ctx.use_resource(self.post)
         return node
 
-    def doGet(self, ctx):
-        return self.Site.templateCache[self.Blog.postTemplate].transform(
-            self.post.getPyWebXML(),
-            self.Blog.getTransformArgs()
+    def do_GET(self, ctx):
+        return self.Site.template_cache[self.Blog.post_template].transform(
+            self.post.get_PyWebXML(),
+            self.Blog.get_transform_args()
         )
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self
 
-    def getTitle(self):
+    def get_title(self):
         return self.post.title
 
-    def getDisplay(self):
+    def get_display(self):
         return Navigation.Show
 
-    def getRepresentative(self):
+    def get_representative(self):
         return self
 
-    requestHandlers = {
-        "GET": doGet
+    request_handlers = {
+        "GET": do_GET
     }

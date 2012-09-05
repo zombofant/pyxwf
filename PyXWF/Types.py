@@ -21,7 +21,7 @@ class WrapFunction(object):
     def __unicode__(self):
         return self.description
 
-boolNames = {
+bool_names = {
     "false": False,
     "no": False,
     "off": False,
@@ -30,20 +30,20 @@ boolNames = {
     "on": True
 }
 
-def _boolHelper(value):
-    global boolNames
+def _bool_helper(value):
+    global bool_names
     if isinstance(value, (int, long, float)):
         return bool(value)
     elif isinstance(value, basestring):
         try:
-            return boolNames[value.lower()]
+            return bool_names[value.lower()]
         except KeyError:
             pass
     elif isinstance(value, bool):
         return value
     raise ValueError("Not a valid boolean: {0!r}".format(value))
 
-def _emptyHelper(value):
+def _empty_helper(value):
     if not isinstance(value, basestring):
         value = unicode(value)
     value = value.strip()
@@ -55,34 +55,34 @@ def NumericRange(typecast, min, max):
     if min is None and max is None:
         return typecast
     elif min is None:
-        rangeStr = "-∞..{0}".format(max)
+        range_str = "-∞..{0}".format(max)
         def tc(value):
             numeric = typecast(value)
             if value > max:
                 raise ValueError("numeric value {0} out of bounds: {1}".format(
-                    numeric, rangeStr
+                    numeric, range_str
                 ))
             return numeric
     elif max is None:
-        rangeStr = "{0}..∞".format(min)
+        range_str = "{0}..∞".format(min)
         def tc(value):
             numeric = typecast(value)
             if value < min:
                 raise ValueError("numeric value {0} out of bounds: {1}".format(
-                    numeric, rangeStr
+                    numeric, range_str
                 ))
             return numeric
     else:
-        rangeStr = "{0}..{1}".format(min, max)
+        range_str = "{0}..{1}".format(min, max)
         def tc(value):
             numeric = typecast(value)
             if not (min <= numeric <= max):
                 raise ValueError("numeric value {0} out of bounds: {1}".format(
-                    numeric, rangeStr
+                    numeric, range_str
                 ))
             return numeric
     return WrapFunction(tc, "{0} within a range of {1}".format(
-        unicode(typecast), rangeStr
+        unicode(typecast), range_str
     ))
 
 def AllowBoth(type1, type2):
@@ -120,7 +120,7 @@ def DefaultForNone(default, typecast=None):
         )
 
 def EnumMap(mapping):
-    def validValues():
+    def valid_values():
         return ", ".join(repr(v) for v in mapping.viewkeys())
     def tc(value, **kwargs):
         try:
@@ -130,23 +130,23 @@ def EnumMap(mapping):
                 return mapping[value]
         except KeyError as err:
             raise ValueError("{0!r} is invalid, must be one of {1}".format(
-                value, validValues()
+                value, valid_values()
             ))
-    return WrapFunction(tc, "one of {0}".format(validValues()))
+    return WrapFunction(tc, "one of {0}".format(valid_values()))
 
-def _NotNoneHelper(v):
+def _not_none_helper(v):
     if v is None:
         raise ValueError("Value is None")
     return v
 
-NotNone = WrapFunction(_NotNoneHelper, "not none")
+NotNone = WrapFunction(_not_none_helper, "not none")
 
-def _NotEmpty(v):
+def _not_empty(v):
     if len(v) == 0:
         raise ValueError("Value is empty")
     return v
 
-NotEmpty = WrapFunction(_NotEmpty, "not empty")
+NotEmpty = WrapFunction(_not_empty, "not empty")
 
 class Typecasts(object):
     int = WrapFunction(int, "integer number")
@@ -154,5 +154,5 @@ class Typecasts(object):
     float = WrapFunction(float, "decimal number")
     unicode = WrapFunction(unicode, "character string")
     str = WrapFunction(str, "character string")
-    bool = WrapFunction(_boolHelper , """boolean value (e.g. "true" or "false")""")
-    emptyString = WrapFunction(_emptyHelper, "empty string")
+    bool = WrapFunction(_bool_helper , """boolean value (e.g. "true" or "false")""")
+    empty_string = WrapFunction(_empty_helper, "empty string")

@@ -23,39 +23,39 @@ class Template(Resource.Resource):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, site, fileName):
+    def __init__(self, site, filename):
         super(Template, self).__init__()
         self.site = site
-        self.fileName = fileName
-        self._lastModified = utils.fileLastModified(fileName)
+        self.filename = filename
+        self._last_modified = utils.file_last_modified(filename)
 
     @property
     def LastModified(self):
-        return self._lastModified
+        return self._last_modified
 
     @abc.abstractmethod
-    def transform(self, body, templateArgs={}):
+    def transform(self, body, template_args={}):
         pass
 
-    def final(self, ctx, document, licenseFallback=None):
+    def final(self, ctx, document, license_fallback=None):
         """
         Do the final transformation on *document*. This includes adding
         keywords and author information, setting up the title, loading crumbs,
         replacing local links and more.
         """
-        templateArgs = self.site.getTemplateArguments(ctx)
-        templateArgs.update(document.getTemplateArguments())
+        template_args = self.site.get_template_arguments(ctx)
+        template_args.update(document.get_template_arguments())
 
-        metaPath = NS.PyWebXML.meta
-        licensePath = metaPath + "/" + NS.PyWebXML.license
-        page = document.toPyWebXMLPage()
-        if licenseFallback is not None and page.find(licensePath) is None:
-            page.find(metaPath).append(licenseFallback.toNode())
-        self.site.transformReferences(ctx, page)
+        metapath = NS.PyWebXML.meta
+        licensepath = metapath + "/" + NS.PyWebXML.license
+        page = document.to_PyWebXML_page()
+        if license_fallback is not None and page.find(licensepath) is None:
+            page.find(metapath).append(license_fallback.to_node())
+        self.site.transform_references(ctx, page)
 
-        newDoc = self.transform(page, templateArgs)
-        newDoc.title = newDoc.title or document.title
-        body = newDoc.body
+        newdoc = self.transform(page, template_args)
+        newdoc.title = newdoc.title or document.title
+        body = newdoc.body
 
         if body is None:
             raise ValueError("Transform did not return a valid body.")
@@ -64,29 +64,29 @@ class Template(Resource.Resource):
         html = ET.Element(NS.XHTML.html)
         head = ET.SubElement(html, NS.XHTML.head)
         ET.SubElement(head, NS.XHTML.title).text = \
-                newDoc.title or document.title
-        for link in newDoc.links:
-            ieLimit = link.get("ie-only")
-            if ieLimit is not None:
+                newdoc.title or document.title
+        for link in newdoc.links:
+            ielimit = link.get("ie-only")
+            if ielimit is not None:
                 link = copy.copy(link)
-                self.site.transformHref(ctx, link)
+                self.site.transform_href(ctx, link)
                 link.tag = "link"
                 del link.attrib["ie-only"]
                 s = ET.tostring(link, method="html", xml_declaration="no", encoding="utf-8").decode("utf-8")
-                s = "[{0}]>{1}<![endif]".format(ieLimit, s)
+                s = "[{0}]>{1}<![endif]".format(ielimit, s)
                 link = ET.Comment()
                 link.text = s
                 link.tail = "\n"
             head.append(link)
-        if len(newDoc.keywords) > 0:
+        if len(newdoc.keywords) > 0:
             ET.SubElement(head, NS.XHTML.meta, attrib={
                 "name": "keywords",
-                "content": ",".join(newDoc.keywords)
+                "content": ",".join(newdoc.keywords)
             })
-        for hmeta in newDoc.hmeta:
+        for hmeta in newdoc.hmeta:
             head.append(hmeta)
         html.append(body)
-        self.site.transformPyNamespace(ctx, html)
+        self.site.transform_py_namespace(ctx, html)
 
         return ET.ElementTree(html)
 
@@ -95,25 +95,25 @@ class XSLTTemplate(Template):
     """
     A specific templating implementation which uses XSLT as backend.
     """
-    def __init__(self, site, fileName):
-        super(XSLTTemplate, self).__init__(site, fileName)
-        self._parseTemplate()
+    def __init__(self, site, filename):
+        super(XSLTTemplate, self).__init__(site, filename)
+        self._parse_template()
 
     def update(self):
-        lastModified = utils.fileLastModified(self.fileName)
-        if lastModified > self._lastModified:
-            self._lastModified = lastModified
-            self._parseTemplate()
+        last_modified = utils.file_last_modified(self.filename)
+        if last_modified > self._last_modified:
+            self._last_modified = last_modified
+            self._parse_template()
 
-    def _parseTemplate(self):
-        self.xsltTransform = ET.XSLT(ET.parse(self.fileName))
+    def _parse_template(self):
+        self.xslt_transform = ET.XSLT(ET.parse(self.filename))
 
-    def rawTransform(self, body, templateArgs):
-        return self.xsltTransform(body, **templateArgs)
+    def raw_transform(self, body, template_args):
+        return self.xslt_transform(body, **template_args)
 
-    def transform(self, body, templateArgs={}, customBody=NS.XHTML.body):
-        newDoc = self.rawTransform(body, templateArgs)
-        return self.site.parserRegistry[ContentTypes.PyWebXML].parseTree(newDoc.getroot(), headerOffset=0)
+    def transform(self, body, template_args={}, custom_body=NS.XHTML.body):
+        newdoc = self.raw_transform(body, template_args)
+        return self.site.parser_registry[ContentTypes.PyWebXML].parse_tree(newdoc.getroot(), header_offset=0)
 
 
 class XSLTTemplateCache(Cache.FileSourcedCache):

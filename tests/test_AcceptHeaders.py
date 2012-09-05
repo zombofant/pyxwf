@@ -13,11 +13,11 @@ class Preference(unittest.TestCase):
         p3 = P("text/html", 1.0, parameters={"level": "1"})
         p4 = P("*/*", 1.0)
 
-        correctOrdering = [p3, p2, p1, p4]
-        inputOrdering = [p1, p2, p3, p4]
-        inputOrdering.sort(reverse=True)
+        correct_ordering = [p3, p2, p1, p4]
+        input_ordering = [p1, p2, p3, p4]
+        input_ordering.sort(reverse=True)
 
-        self.assertSequenceEqual(correctOrdering, inputOrdering)
+        self.assertSequenceEqual(correct_ordering, input_ordering)
 
     def test_ordering2(self):
         P = AcceptHeaders.Preference
@@ -27,17 +27,17 @@ class Preference(unittest.TestCase):
         p1 = P("audio/*", 0.2)
         p2 = P("audio/basic", 1.0)
 
-        correctOrdering = [p2, p1]
-        inputOrdering = [p1, p2]
-        inputOrdering.sort(reverse=True)
+        correct_ordering = [p2, p1]
+        input_ordering = [p1, p2]
+        input_ordering.sort(reverse=True)
 
-        self.assertSequenceEqual(correctOrdering, inputOrdering)
+        self.assertSequenceEqual(correct_ordering, input_ordering)
 
 
 class ListTest(unittest.TestCase):
-    def _testList(self, prefList, expectedQualities):
-        for pref, q in expectedQualities:
-            calculatedq = prefList.getQuality(pref)
+    def _test_list(self, preflist, expected_qualities):
+        for pref, q in expected_qualities:
+            calculatedq = preflist.get_quality(pref)
             self.assertEqual(q,
                 calculatedq,
                 msg="{0} did not get the correct q-value: {1} expected, {2} calculated".format(
@@ -53,7 +53,7 @@ class AcceptPreferenceList(ListTest):
         header = """text/plain; q=0.5, text/html,
                     text/x-dvi; q=0.8, text/x-c"""
         l = AcceptHeaders.AcceptPreferenceList()
-        l.appendHeader(header)
+        l.append_header(header)
         self.assertSequenceEqual(list(l),
             [
                 P("text/plain", 0.5),
@@ -63,29 +63,29 @@ class AcceptPreferenceList(ListTest):
             ]
         )
 
-    def test_rfcCompliance(self):
+    def test_rfc_compliance(self):
         l = AcceptHeaders.AcceptPreferenceList()
-        l.appendHeader("""text/*;q=0.3, text/html;q=0.7, text/html;level=1,
+        l.append_header("""text/*;q=0.3, text/html;q=0.7, text/html;level=1,
                text/html;level=2;q=0.4, */*;q=0.5""")
 
         P = AcceptHeaders.AcceptPreference
-        expectedQualities = [
-            (P.fromHeaderSection("text/html;level=1"),      1.0),
-            (P.fromHeaderSection("text/html"),              0.7),
-            (P.fromHeaderSection("text/plain"),             0.3),
-            (P.fromHeaderSection("image/jpeg"),             0.5),
-            (P.fromHeaderSection("text/html;level=2"),      0.4),
-            (P.fromHeaderSection("text/html;level=3"),      0.7),
+        expected_qualities = [
+            (P.from_header_section("text/html;level=1"),      1.0),
+            (P.from_header_section("text/html"),              0.7),
+            (P.from_header_section("text/plain"),             0.3),
+            (P.from_header_section("image/jpeg"),             0.5),
+            (P.from_header_section("text/html;level=2"),      0.4),
+            (P.from_header_section("text/html;level=3"),      0.7),
         ]
-        self._testList(l, expectedQualities)
+        self._test_list(l, expected_qualities)
 
 class CharsetPreferenceList(ListTest):
     def test_parsing(self):
         P = AcceptHeaders.CharsetPreference
         header = """iso-8859-5, unicode-1-1;q=0.8"""
         l = AcceptHeaders.CharsetPreferenceList()
-        l.appendHeader(header)
-        l.injectRFCValues()
+        l.append_header(header)
+        l.inject_rfc_values()
         self.assertSequenceEqual(list(l),
             [
                 P("iso-8859-5", 1.0),
@@ -98,8 +98,8 @@ class CharsetPreferenceList(ListTest):
         P = AcceptHeaders.CharsetPreference
         l = AcceptHeaders.CharsetPreferenceList()
         # identical to No Header Present
-        l.appendHeader("")
-        l.injectRFCValues()
+        l.append_header("")
+        l.inject_rfc_values()
 
         # according to RFC, this is equivalent to all charaters sets are accepted
         self.assertSequenceEqual(list(l),
@@ -113,7 +113,7 @@ class LanguagePreferenceList(ListTest):
         P = AcceptHeaders.LanguagePreference
         header = """da, en-gb;q=0.8, en;q=0.7"""
         l = AcceptHeaders.LanguagePreferenceList()
-        l.appendHeader(header)
+        l.append_header(header)
         self.assertSequenceEqual(list(l),
             [
                 P("da", 1.0),
@@ -122,17 +122,17 @@ class LanguagePreferenceList(ListTest):
             ]
         )
 
-    def test_rfcCompliance(self):
+    def test_rfc_compliance(self):
         P = AcceptHeaders.LanguagePreference
         header = """da, en-gb;q=0.8, en;q=0.7"""
         l = AcceptHeaders.LanguagePreferenceList()
-        l.appendHeader(header)
+        l.append_header(header)
 
-        expectedQualities = [
-            (P.fromHeaderSection("da"),                     1.0),
-            (P.fromHeaderSection("en-gb"),                  0.8),
-            (P.fromHeaderSection("en-us"),                  0.7),
-            (P.fromHeaderSection("da-foo"),                 1.0),
-            (P.fromHeaderSection("de-de"),                  0.0),
+        expected_qualities = [
+            (P.from_header_section("da"),                     1.0),
+            (P.from_header_section("en-gb"),                  0.8),
+            (P.from_header_section("en-us"),                  0.7),
+            (P.from_header_section("da-foo"),                 1.0),
+            (P.from_header_section("de-de"),                  0.0),
         ]
-        self._testList(l, expectedQualities)
+        self._test_list(l, expected_qualities)

@@ -9,7 +9,7 @@ used interchangably. Returns the “right” content type.
 
 xhtml = "application/xhtml+xml"
 html = "text/html"
-plainText = "text/plain"
+plaintext = "text/plain"
 Atom = "application/atom+xml"
 PyWebXML = "application/x-pywebxml"
 Markdown = "text/x-markdown"

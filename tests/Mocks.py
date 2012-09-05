@@ -33,11 +33,11 @@ class MockFSLocation(object):
         self._unclosed()
         return self._root
 
-    def open(self, fileName, mode):
-        return open(self(fileName), mode)
+    def open(self, filename, mode):
+        return open(self(filename), mode)
 
-    def __call__(self, fileName):
-        return os.path.join(self.Root, fileName)
+    def __call__(self, filename):
+        return os.path.join(self.Root, filename)
 
     def close(self):
         if self._closed:
@@ -47,57 +47,57 @@ class MockFSLocation(object):
 
 
 class MockedSite(Site.Site):
-    def __init__(self, fsLocation, sitemapRelFileName="sitemap.xml"):
-        os.chdir(fsLocation.Root)
-        sitemapFile = fsLocation(sitemapRelFileName)
-        super(MockedSite, self).__init__(sitemapFile, defaultURLRoot="/")
+    def __init__(self, fslocation, sitemap_relative_filename="sitemap.xml"):
+        os.chdir(fslocation.Root)
+        sitemap_file = fslocation(sitemap_relative_filename)
+        super(MockedSite, self).__init__(sitemap_file, default_url_root="/")
 
 
 class MockedContext(Context.Context):
     @classmethod
-    def fromSite(cls, site, **kwargs):
-        return cls(site.urlRoot, **kwargs)
+    def from_site(cls, site, **kwargs):
+        return cls(site.urlroot, **kwargs)
 
-    def __init__(self, urlRoot,
+    def __init__(self, urlroot,
             method="GET",
             path="",
-            responseStream=None,
+            response_stream=None,
             scheme="http",
             host="mockingbird.example.com",
-            userAgent="Wget/1.12 (linux-gnu)",
+            useragent="Wget/1.12 (linux-gnu)",
             accept="application/xhtml+xml",
-            acceptCharset="utf-8",
-            ifModifiedSince=None,
-            queryData={}):
+            accept_charset="utf-8",
+            if_modified_since=None,
+            query_data={}):
         super(MockedContext, self).__init__()
         self._method = method
         self._path = path
-        self._outfile = responseStream or StringIO()
-        self._fullURI = urlRoot + path
+        self._outfile = response_stream or StringIO()
+        self._fulluri = urlroot + path
         self._scheme = scheme
-        self._hostName = host
-        self._accept = self.parseAccept(accept)
-        self._acceptCharset = self.parseAcceptCharset(acceptCharset)
-        self._determineHTMLContentType()
-        self._ifModifiedSince = ifModifiedSince
-        self._queryData = {}
+        self._hostname = host
+        self._accept = self.parse_accept(accept)
+        self._accept_charset = self.parse_accept_charset(accept_charset)
+        self._determine_html_content_type()
+        self._if_modified_since = if_modified_since
+        self._query_data = {}
 
     @property
     def Out(self):
         return self._outfile
 
-    def _requireQuery(self):
+    def _require_query(self):
         pass
 
-    def sendResponse(self, message):
+    def send_response(self, message):
         out = self.Out
-        body = self.getEncodedBody(message)
+        body = self.get_encoded_body(message)
         out.write(b"{0:d} {1}\n".format(message.Status.code, message.Status.title))
-        self.setResponseContentType(message.MIMEType, message.Encoding)
-        self._setCacheStatus()
-        self._setPropertyHeaders()
+        self.set_response_content_type(message.MIMEType, message.Encoding)
+        self._set_cache_status()
+        self._set_property_headers()
         # sorting is important to create reproducible and easy to test responses
-        for header, value in sorted(self._responseHeaders.items()):
+        for header, value in sorted(self._response_headers.items()):
             out.write("{0}: {1}\n".format(header, value).encode("ascii"))
         out.write(b"\n")
         self.Out.write(body)
@@ -121,7 +121,7 @@ class FSTest(unittest.TestCase):
 
 
 class DynamicSiteTest(FSTest):
-    sitemapXML = """<?xml version="1.0" encoding="utf-8"?>
+    sitemap_xml = """<?xml version="1.0" encoding="utf-8"?>
 <site   xmlns="http://pyxwf.zombofant.net/xmlns/site"
         xmlns:py="http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
         xmlns:dir="http://pyxwf.zombofant.net/xmlns/nodes/directory"
@@ -129,7 +129,7 @@ class DynamicSiteTest(FSTest):
         xmlns:redirect="http://pyxwf.zombofant.net/xmlns/nodes/redirect">
     <meta>
         <title>mocked site</title>
-        <urlRoot>/</urlRoot>
+        <urlroot>/</urlroot>
     </meta>
     <plugins>
         <p>PyXWF.Nodes.Redirect</p>
@@ -142,8 +142,8 @@ class DynamicSiteTest(FSTest):
     <crumbs />
 </site>""".encode("utf-8")
 
-    def getBasicSitemap(self):
-        sitemap = ET.XML(self.sitemapXML)
+    def get_basic_sitemap(self):
+        sitemap = ET.XML(self.sitemap_xml)
         meta = sitemap.find(NS.Site.meta)
         plugins = sitemap.find(NS.Site.plugins)
         tweaks = sitemap.find(NS.Site.tweaks)
@@ -151,7 +151,7 @@ class DynamicSiteTest(FSTest):
             tag = child.tag
             if not isinstance(tag, basestring):
                 continue
-            ns, name = utils.splitTag(tag)
+            ns, name = utils.split_tag(tag)
             if name == "tree":
                 tree = child
                 break
@@ -171,13 +171,13 @@ class DynamicSiteTest(FSTest):
             "name": "bar"
         })
 
-    def getSitemap(self, setupFunc, **kwargs):
-        sitemapData = self.getBasicSitemap()
-        sitemap = sitemapData[0]
-        setupFunc(*sitemapData, **kwargs)
+    def get_sitemap(self, setup_func, **kwargs):
+        sitemap_data = self.get_basic_sitemap()
+        sitemap = sitemap_data[0]
+        setup_func(*sitemap_data, **kwargs)
         return sitemap
 
-    def setupSite(self, sitemap):
+    def setup_site(self, sitemap):
         f = self.fs.open("sitemap.xml", "w")
         try:
             f.write(ET.tostring(sitemap))
@@ -191,14 +191,14 @@ class DynamicSiteTest(FSTest):
         super(DynamicSiteTest, self).tearDown()
 
 class SiteTest(DynamicSiteTest):
-    def setUpFS(self):
+    def setup_fs(self):
         pass
 
     def setUp(self):
         super(SiteTest, self).setUp()
-        self.setUpFS()
-        sitemap = self.getSitemap(self.setUpSitemap)
-        self.setupSite(sitemap)
+        self.setup_fs()
+        sitemap = self.get_sitemap(self.setUpSitemap)
+        self.setup_site(sitemap)
 
     def tearDown(self):
         del self.site
@@ -207,11 +207,11 @@ class SiteTest(DynamicSiteTest):
 class FakeResource(Resource.Resource):
     @property
     def LastModified(self):
-        return self._lastModified
+        return self._last_modified
 
     @LastModified.setter
     def LastModified(self, value):
-        self._lastModified = value
+        self._last_modified = value
 
     def update(self):
         pass

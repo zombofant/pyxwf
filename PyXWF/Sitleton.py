@@ -19,7 +19,7 @@ class Sitleton(object):
         self.site = site
 
     @classmethod
-    def atSite(cls, site):
+    def at_site(cls, site):
         """
         Return the sitleton instance of the class at which this method is called
         which has been instanciated at the :class:`~PyXWF.Site.Site` *site*.

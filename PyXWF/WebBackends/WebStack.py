@@ -19,106 +19,106 @@ class WebStackContext(Context.Context):
         super(WebStackContext, self).__init__()
         self._method = transaction.get_request_method()
         self._path = transaction.get_path_info(encoding="utf-8")
-        self._fullURI = transaction.get_path(encoding="utf-8")
+        self._fulluri = transaction.get_path(encoding="utf-8")
         self._transaction = transaction
-        self._parseIfModifiedSince()
-        self._parseHostHeader()
-        self._parseEnvironment()
-        self._parsePreferences()
-        self._parseUserAgent()
-        self._determineHTMLContentType()
+        self._parse_if_modified_since()
+        self._parse_host_header()
+        self._parse_environment()
+        self._parse_preferences()
+        self._parse_user_agent()
+        self._determine_html_content_type()
 
     @property
     def Out(self):
         return self._transaction.get_response_stream()
 
-    def _parseIfModifiedSince(self):
+    def _parse_if_modified_since(self):
         values = self._transaction.get_header_values("If-Modified-Since")
         if len(values) > 1:
             return
         if len(values) == 0:
-            self._ifModifiedSince = None
+            self._if_modified_since = None
             return
         try:
-            self._ifModifiedSince = HTTPUtils.parseHTTPDate(values[0])
+            self._if_modified_since = HTTPUtils.parse_http_date(values[0])
         except Exception as err:
             warnings.warn(err)
 
-    def _parseHostHeader(self):
+    def _parse_host_header(self):
         values = self._transaction.get_header_values("Host")
         if len(values) > 1:
             raise Errors.BadRequest(message="Too many host header fields.")
         if len(values) == 0:
             raise Errors.BadRequest(message="Sorry -- I need the Host header.")
-        self._hostName = values[0]
+        self._hostname = values[0]
 
-    def _parseEnvironment(self):
+    def _parse_environment(self):
         self._scheme = self._transaction.env["wsgi.url_scheme"]
 
-    def _parsePreferences(self):
+    def _parse_preferences(self):
         tx = self._transaction
 
-        self._accept = self.parseAccept(
+        self._accept = self.parse_accept(
             ",".join(tx.get_header_values("Accept"))
         )
-        self._acceptCharset = self.parseAcceptCharset(
+        self._accept_charset = self.parse_accept_charset(
             ",".join(tx.get_header_values("Accept-Charset"))
         )
 
-    def _parseUserAgent(self):
+    def _parse_user_agent(self):
         tx = self._transaction
         values = self._transaction.get_header_values("User-Agent")
         if len(values) > 1:
             raise Errors.BadRequest(message="Too many User-Agent header fields.")
         if len(values) == 0:
-            self._html5Support = False
+            self._html5_support = False
             return
 
         header = values[0]
-        userAgent, version = utils.guessUserAgent(header)
-        self._userAgentName, self._userAgentVersion = userAgent, version
-        self._html5Support = self.userAgentSupportsHTML5(userAgent, version)
-        self._isMobileClient = utils.isMobileUserAgent(header)
+        useragent, version = utils.guess_useragent(header)
+        self._useragent_name, self._useragent_version = useragent, version
+        self._html5_support = self.useragent_supports_html5(useragent, version)
+        self._is_mobile_client = utils.is_mobile_useragent(header)
 
-    def _requireQuery(self):
-        self._queryData = self._transaction.get_fields_from_path()
+    def _require_query(self):
+        self._query_data = self._transaction.get_fields_from_path()
 
-    def _requirePost(self):
+    def _require_post(self):
         raise NotImplemented()
 
-    def _headersToTX(self):
+    def _headers_to_tx(self):
         tx = self._transaction
-        for key, value in self._responseHeaders.viewitems():
+        for key, value in self._response_headers.viewitems():
             tx.set_header_value(key, value)
 
-    def setResponseContentType(self, mimeType, charset):
+    def set_response_content_type(self, mimetype, charset):
         tx = self._transaction
         if charset:
-            tx.set_content_type(ContentType(mimeType, charset))
+            tx.set_content_type(ContentType(mimetype, charset))
         else:
-            tx.set_content_type(ContentType(mimeType))
+            tx.set_content_type(ContentType(mimetype))
 
-    def sendResponse(self, message):
+    def send_response(self, message):
         tx = self._transaction
         # this must be done before setting the content type, as the method also
         # determines the charset to use
         try:
-            body = self.getEncodedBody(message)
+            body = self.get_encoded_body(message)
         except Errors.NotAcceptable as err:
             tx.rollback()
             tx.set_response_code(message.StatusCode)
             return
         tx.rollback()
         tx.set_response_code(message.StatusCode)
-        self.setResponseContentType(message.MIMEType, message.Encoding)
-        self._setCacheStatus()
-        self._setPropertyHeaders()
-        self._headersToTX()
+        self.set_response_content_type(message.MIMEType, message.Encoding)
+        self._set_cache_status()
+        self._set_property_headers()
+        self._headers_to_tx()
         self.Out.write(body)
 
 class WebStackSite(Site.Site):
-    def __init__(self, sitemapFile, **kwargs):
-        super(WebStackSite, self).__init__(sitemapFile, **kwargs)
+    def __init__(self, sitemap_file, **kwargs):
+        super(WebStackSite, self).__init__(sitemap_file, **kwargs)
 
     def respond(self, transaction):
         try:
@@ -130,14 +130,14 @@ class WebStackSite(Site.Site):
         except (Errors.HTTPClientError, Errors.HTTPServerError) as status:
             transaction.set_response_code(status.code)
             ctx.Cachable = False
-            ctx._setCacheStatus()
-            ctx._setPropertyHeaders()
-            ctx._headersToTX()
+            ctx._set_cache_status()
+            ctx._set_property_headers()
+            ctx._headers_to_tx()
         except Errors.NotModified as status:
             transaction.set_response_code(status.code)
-            ctx._setCacheStatus()
-            ctx._setPropertyHeaders()
-            ctx._headersToTX()
+            ctx._set_cache_status()
+            ctx._set_property_headers()
+            ctx._headers_to_tx()
         except Errors.HTTPRedirection as status:
             loc = status.location
             if status.local:
@@ -145,19 +145,19 @@ class WebStackSite(Site.Site):
                     loc = loc.decode("utf-8")
                 if len(loc) > 0 and loc[0] == "/":
                     loc = loc[1:]
-                loc = urllib.quote(os.path.join(self.urlRoot, loc).encode("utf-8"))
+                loc = urllib.quote(os.path.join(self.urlroot, loc).encode("utf-8"))
                 loc = b"{0}://{1}{2}".format(
                     ctx.URLScheme,
                     ctx.HostName,
                     loc
                 )
-            ctx._setCacheStatus()
-            ctx._setPropertyHeaders()
-            ctx._headersToTX()
+            ctx._set_cache_status()
+            ctx._set_property_headers()
+            ctx._headers_to_tx()
             transaction.redirect(loc, status.code)
         except (Errors.HTTPSuccessful, EndOfResponse) as status:
             transaction.set_response_code(status.code)
         else:
-            ctx.sendResponse(message)
+            ctx.send_response(message)
         transaction.commit()
         gc.collect()

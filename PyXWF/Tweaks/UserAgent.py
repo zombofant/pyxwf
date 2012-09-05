@@ -13,14 +13,14 @@ class ForceMobile(object):
     __metaclass__ = Registry.SitletonMeta
 
     namespace = str(UserAgentNS)
-    tweakNames = ["force-mobile"]
+    tweak_names = ["force-mobile"]
 
     def __init__(self, site):
         super(ForceMobile, self).__init__()
-        site.hooks.register("handle.pre-lookup", self.forceMobile)
+        site.hooks.register("handle.pre-lookup", self.force_mobile)
         self.Site = site
-        self.forceMobile = Types.Typecasts.bool(self._tweaks["force-mobile"][-1].get("mobile"))
+        self.force_mobile = Types.Typecasts.bool(self._tweaks["force-mobile"][-1].get("mobile"))
 
-    def forceMobile(self, ctx):
-        ctx.IsMobileClient = self.forceMobile
-        logging.debug("enforced mobileness to {0}".format(self.forceMobile))
+    def force_mobile(self, ctx):
+        ctx.IsMobileClient = self.force_mobile
+        logging.debug("enforced mobileness to {0}".format(self.force_mobile))

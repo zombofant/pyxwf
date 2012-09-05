@@ -18,27 +18,27 @@ class MirrorNS(object):
 class Mirror(object):
     def __init__(self, node):
         self.host = Types.NotNone(node.get("host"))
-        self.noSSL = Types.Typecasts.bool(node.get("no-ssl", False))
+        self.no_ssl = Types.Typecasts.bool(node.get("no-ssl", False))
         self.path = Types.NotNone(node.get("path"))
         self.port = Types.NumericRange(int, 1, 65535)(node.get("port", 80))
-        self.sslPort = Types.NumericRange(int, 1, 65535)(node.get("ssl-port", 443))
+        self.ssl_port = Types.NumericRange(int, 1, 65535)(node.get("ssl-port", 443))
 
-    def test(self, fileName):
-        path = self.path + fileName
-        if self.noSSL:
+    def test(self, filename):
+        path = self.path + filename
+        if self.no_ssl:
             conn = httplib.HTTPConnection(self.host, self.port)
         else:
-            conn = httplib.HTTPSConnection(self.host, self.sslPort)
+            conn = httplib.HTTPSConnection(self.host, self.ssl_port)
         try:
-            urlEncoded = urllib.quote(path.encode("utf-8"))
-            conn.request("HEAD", urlEncoded)
+            urlencoded = urllib.quote(path.encode("utf-8"))
+            conn.request("HEAD", urlencoded)
             response = conn.getresponse()
             status = response.status
         finally:
             conn.close()
 
         if status == 200:
-            return "{0}{1}".format(self.host, urlEncoded)
+            return "{0}{1}".format(self.host, urlencoded)
         else:
             return None
 
@@ -53,36 +53,36 @@ class MirrorSwitch(Nodes.Node, Navigation.Info):
 
     def __init__(self, site, parent, node):
         super(MirrorSwitch, self).__init__(site, parent, node)
-        self._navDisplay = Types.DefaultForNone(-1, Navigation.DisplayMode)\
+        self._navdisplay = Types.DefaultForNone(-1, Navigation.DisplayMode)\
                                                 (node.get("nav-display"))
-        self._navTitle = node.get("nav-title", "mirror switch (should remove me from nav probably)")
+        self._navtitle = node.get("nav-title", "mirror switch (should remove me from nav probably)")
 
         self.mirrors = [Mirror(mnode) for mnode in node.findall(MirrorNS.host)]
 
-    def resolvePath(self, ctx, relPath):
-        toTry = list(self.mirrors)
-        random.shuffle(toTry)
-        for mirror in toTry:
-            postSchemeURL = mirror.test(relPath)
-            if postSchemeURL is not None:
+    def resolve_path(self, ctx, relpath):
+        totry = list(self.mirrors)
+        random.shuffle(totry)
+        for mirror in totry:
+            schemeless_url = mirror.test(relpath)
+            if schemeless_url is not None:
                 scheme = ctx.URLScheme
-                if mirror.noSSL:
+                if mirror.no_ssl:
                     scheme = "http"
                 ctx.Cachable = False
                 raise Errors.Found(
-                    location="{0}://{1}".format(scheme, postSchemeURL),
+                    location="{0}://{1}".format(scheme, schemeless_url),
                     local=False
                 )
         raise Errors.NotFound()
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self
 
-    def getTitle(self):
-        return self._navTitle
+    def get_title(self):
+        return self._navtitle
 
-    def getDisplay(self):
-        return self._navDisplay
+    def get_display(self):
+        return self._navdisplay
 
-    def getRepresentative(self):
+    def get_representative(self):
         return self

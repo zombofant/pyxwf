@@ -18,7 +18,7 @@ class Resource(Cache.Cachable):
 
     def __init__(self, **kwargs):
         super(Resource, self).__init__(**kwargs)
-        self._updateLock = threading.Lock()
+        self._updatelock = threading.Lock()
 
     @abc.abstractproperty
     def LastModified(self):
@@ -41,45 +41,45 @@ class Resource(Cache.Cachable):
         by LastModified.
         """
 
-    def threadSafeUpdate(self):
+    def threadsafe_update(self):
         """
         The :class:`Resource` class provides basic means to make your update
         thread safe: The :meth:`update` method will only be called with the
-        :attr:`_updateLock` held, if you don't overwrite this method.
+        :attr:`_updatelock` held, if you don't overwrite this method.
 
         Note that this method will only be called by the framework itself; If
         you call :meth:`update` on your own, you will not be safeguarded.
         """
-        with self._updateLock:
+        with self._updatelock:
             self.update()
 
 
 class XMLTree(Resource):
     """
-    Represent a file-backed XML tree resource. Load the XML tree from *fileName*
+    Represent a file-backed XML tree resource. Load the XML tree from *filename*
     and watch out for modifications.
     """
 
-    def __init__(self, fileName, **kwargs):
+    def __init__(self, filename, **kwargs):
         super(XMLTree, self).__init__(**kwargs)
         self._tree = None
-        self._fileName = fileName
-        self._lastModified = utils.fileLastModified(fileName)
+        self._filename = filename
+        self._last_modified = utils.file_last_modified(filename)
         self._parse()
 
     def _parse(self):
-        self._tree = ET.parse(self._fileName)
+        self._tree = ET.parse(self._filename)
 
     def LastModified(self):
-        return self._lastModified
+        return self._last_modified
 
     def update(self):
-        fileModified = utils.fileLastModified(self._fileName)
-        if fileModified is None:
-            raise Errors.ResourceLost(self._fileName)
-        if fileModified > self._lastModified:
+        file_modified = utils.file_last_modified(self._filename)
+        if file_modified is None:
+            raise Errors.ResourceLost(self._filename)
+        if file_modified > self._last_modified:
             self._parse()
-            self._lastModified = fileModified
+            self._last_modified = file_modified
 
     @property
     def Tree(self):

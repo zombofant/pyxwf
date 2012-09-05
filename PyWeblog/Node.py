@@ -30,13 +30,13 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     namespace = str(NS.PyBlog)
     names = ["node"]
 
-    _childOrderType = Types.DefaultForNone(True,
+    _child_order_type = Types.DefaultForNone(True,
         Types.EnumMap({
             "posts+static": True,
             "static+posts": False
         })
     )
-    _structureType = Types.EnumMap({
+    _structure_type = Types.EnumMap({
         # "year/month": True,
         "year+month": False
     })
@@ -44,69 +44,69 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     class Info(Navigation.Info):
         def __init__(self, blog, ctx):
             self.blog = blog
-            self.landingPage = self.blog._landingPage
-            self.superInfo = self.landingPage.getNavigationInfo(ctx)
+            self.landing_page = self.blog._landing_page
+            self.super_info = self.landing_page.get_navigation_info(ctx)
 
-        def getTitle(self):
-            return self.superInfo.getTitle()
+        def get_title(self):
+            return self.super_info.get_title()
 
-        def getRepresentative(self):
-            return self.superInfo.getRepresentative()
+        def get_representative(self):
+            return self.super_info.get_representative()
 
-        def getDisplay(self):
-            self.blog._navDisplay
+        def get_display(self):
+            self.blog._navdisplay
 
         def __iter__(self):
-            if self.blog._postsFirst:
+            if self.blog._posts_first:
                 return itertools.chain(
-                    self.blog._postContainers,
-                    self.blog._childNodeList
+                    self.blog._post_containers,
+                    self.blog._childnode_list
                 )
             else:
                 return itertools.chain(
-                    self.blog._childNodeList,
-                    self.blog._postContainers
+                    self.blog._childnode_list,
+                    self.blog._post_containers
                 )
 
         def __len__(self):
-            return len(self.blog._childNodeList) + len(self.blog._postContainers)
+            return len(self.blog._childnode_list) + len(self.blog._post_containers)
 
     def __init__(self, site, parent, node):
         super(Blog, self).__init__(site, parent, node)
-        self._childNodes = {}
-        self._childNodeList = []
-        self._postContainers = blist.sortedlist(key=lambda x: -x.year)
+        self._childnodes = {}
+        self._childnode_list = []
+        self._post_containers = blist.sortedlist(key=lambda x: -x.year)
         self._tweaks = []
-        self._yearNodes = {}
+        self._year_nodes = {}
 
         # some plugin hook points. These are accessible via their respective
         # properties, see their documentation for more details
-        self._tagDir = None
+        self._tag_dir = None
         self._feeds = None
 
-        self._navDisplay = Navigation.DisplayMode(node.get("nav-display", "show"))
-        self._postsFirst = self._childOrderType(node.get("child-order"))
-        self._nestMonths = self._structureType(node.get("structure"))
+        self._navdisplay = Navigation.DisplayMode(node.get("nav-display", "show"))
+        self._posts_first = self._child_order_type(node.get("child-order"))
+        self._nest_months = self._structure_type(node.get("structure"))
 
-        self.monthTemplate = Types.NotNone(node.get("month-template"))
-        self.postTemplate = Types.NotNone(node.get("post-template"))
-        self.showPostsInNav = Types.Typecasts.bool(node.get("show-posts-in-nav", True))
+        self.month_template = Types.NotNone(node.get("month-template"))
+        self.post_template = Types.NotNone(node.get("post-template"))
+        self.show_posts_in_nav = Types.Typecasts.bool(node.get("show-posts-in-nav", True))
 
-        entryDir = Types.NotNone(node.get("entry-dir"))
-        self.index = Index.Index(self, site.fileDocumentCache, entryDir,
+        entry_dir = Types.NotNone(node.get("entry-dir"))
+        self.index = Index.Index(self, site.file_document_cache, entry_dir,
             self.Path + "{year}/{month}/{basename}",
-            self.Site.longDateFormat,
-            postsChangedCallback=self._postsChanged)
+            self.Site.long_date_format,
+            posts_changed_callback=self._posts_changed)
         self.index._reload()
 
-        self._loadChildren(node)
+        self._load_children(node)
         try:
-            self._landingPage = self._childNodes[""]
+            self._landing_page = self._childnodes[""]
         except KeyError:
             raise Errors.NodeConfigurationError(\
                 "Blog requires landing page (child node with empty name)", self)
 
-    def _addChild(self, plugin):
+    def _add_child(self, plugin):
         name = plugin.Name
         try:
             int(name)
@@ -120,70 +120,70 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
             raise Errors.NodeConfigurationError(\
                 "Conflict: Blog children cannot have names which are parsable \
                 as an integer: {0}.".format(plugin.Name), self)
-        if name in self._childNodes:
+        if name in self._childnodes:
             raise Errors.NodeNameConflict(self, plugin, name,
-                    self._childNodes[name])
-        self._childNodes[name] = plugin
-        self._childNodeList.append(plugin)
+                    self._childnodes[name])
+        self._childnodes[name] = plugin
+        self._childnode_list.append(plugin)
 
-    def _autocreateYearNode(self, year):
+    def _autocreate_year_node(self, year):
         year = int(year)
         try:
-            return self._yearNodes[year]
+            return self._year_nodes[year]
         except KeyError:
             node = Directories.YearDir(self, year)
-            self._yearNodes[year] = node
-            self._postContainers.add(node)
+            self._year_nodes[year] = node
+            self._post_containers.add(node)
             return node
 
-    def resolvePath(self, ctx, relPath):
-        ctx.useResource(self.index)
-        return super(Blog, self).resolvePath(ctx, relPath)
+    def resolve_path(self, ctx, relpath):
+        ctx.use_resource(self.index)
+        return super(Blog, self).resolve_path(ctx, relpath)
 
-    def _getChildNode(self, key):
+    def _get_child(self, key):
         try:
             year = int(key)
         except ValueError:
             try:
-                return self._childNodes[key]
+                return self._childnodes[key]
             except KeyError:
                 return None
         else:
-            return self._yearNodes[year]
+            return self._year_nodes[year]
 
-    def _loadChildren(self, node):
+    def _load_children(self, node):
         # this must only run on a fresh blog node
         assert not self._tweaks
-        assert not self._childNodes
+        assert not self._childnodes
 
         site = self.Site
         for child in node:
             if child.tag is ET.Comment:
                 continue
-            plugin = Registry.NodePlugins.getPluginInstance(child, site, self)
+            plugin = Registry.NodePlugins.get(child, site, self)
             if isinstance(plugin, Tweak):
                 self._tweaks.append(plugin)
             else:
-                self._addChild(plugin)
+                self._add_child(plugin)
 
-    def _postsChanged(self):
+    def _posts_changed(self):
         logging.debug("Posts changed callback")
-        knownYears = set(map(operator.attrgetter("year"), self._yearNodes.viewvalues()))
-        currYears = set()
-        for year, monthIter in self.index.iterDeep():
-            yearNode = self._autocreateYearNode(year)
-            for month in monthIter:
-                monthNode = yearNode.autocreateMonthNode(month)
-            yearNode.purgeEmpty()
-            currYears.add(year)
+        known_years = set(map(operator.attrgetter("year"), self._year_nodes.viewvalues()))
+        curr_years = set()
+        for year, monthiter in self.index.iter_deep():
+            yearnode = self._autocreate_year_node(year)
+            for month in monthiter:
+                monthnode = yearnode.autocreate_month_node(month)
+            yearnode.purge_empty()
+            curr_years.add(year)
 
-        deleted = knownYears - currYears
-        for deletedYear in deleted:
-            node = self._yearNodes.pop(deletedYear)
-            self._postContainers.remove(node)
+        deleted = known_years - curr_years
+        for deleted_year in deleted:
+            node = self._year_nodes.pop(deleted_year)
+            self._post_containers.remove(node)
 
         try:
-            callable = self._tagDir.updateChildren
+            callable = self._tag_dir.update_children
         except AttributeError:
             pass
         else:
@@ -197,16 +197,16 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         :class:`~PyWeblog.TagDir.TagDirBase` instance upon initialization and
         will be used by the blog to create links to tag pages.
         """
-        return self._tagDir
+        return self._tag_dir
 
     @TagDirectory.setter
     def TagDirectory(self, value):
         if not isinstance(value, Protocols.TagDir):
             raise TypeError("TagDirectory must implement TagDir protocol.")
         logging.debug(_F("Blog was assigned a new tag dir: {0}", value))
-        self._tagDir = value
-        if self._tagDir is not None:
-            self._tagDir.updateChildren()
+        self._tag_dir = value
+        if self._tag_dir is not None:
+            self._tag_dir.update_children()
 
     @property
     def Feeds(self):
@@ -225,13 +225,13 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         logging.debug(_F("Blog was assigned a new feed provider: {0}", value))
         self._feeds = value
 
-    def getTransformArgs(self):
+    def get_transform_args(self):
         args = {}
         try:
-            args[b"tag-root"] = utils.unicodeToXPathStr(self._tagDir.Path + "/")
+            args[b"tag-root"] = utils.unicode2xpathstr(self._tag_dir.Path + "/")
         except AttributeError:
             args[b"tag-root"] = "0"
         return args
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self.Info(self, ctx)

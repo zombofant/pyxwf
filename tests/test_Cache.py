@@ -10,34 +10,34 @@ class Dummy(MCache.Cachable):
 class Cache(unittest.TestCase):
     def setUp(self):
         self.cache = MCache.Cache(None)
-        self.subCache = self.cache["foo"]
+        self.subcache = self.cache["foo"]
         self.dummies = [Dummy() for i in range(10)]
         for i, dummy in enumerate(self.dummies):
-            self.subCache["d{0}".format(i)] = dummy
+            self.subcache["d{0}".format(i)] = dummy
 
     def test_uncache(self):
         self.dummies[0].uncache()
-        self.assertEqual(len(self.subCache), 9)
+        self.assertEqual(len(self.subcache), 9)
 
-    def test_cacheLimit(self):
+    def test_cache_limit(self):
         self.cache.Limit = 1
-        self.cache.enforceLimit()
-        self.assertEqual(len(self.subCache), 1)
-        self.assertIn("d9", self.subCache)
+        self.cache.enforce_limit()
+        self.assertEqual(len(self.subcache), 1)
+        self.assertIn("d9", self.subcache)
 
-    def test_proposeUncache(self):
-        self.dummies[9].proposeUncache()
+    def test_propose_uncache(self):
+        self.dummies[9].propose_uncache()
         self.cache.Limit = 1
-        self.cache.enforceLimit()
-        self.assertEqual(len(self.subCache), 1)
-        self.assertIn("d8", self.subCache)
+        self.cache.enforce_limit()
+        self.assertEqual(len(self.subcache), 1)
+        self.assertIn("d8", self.subcache)
 
     def test_touch(self):
         self.dummies[0].touch()
         self.cache.Limit = 1
-        self.cache.enforceLimit()
-        self.assertEqual(len(self.subCache), 1)
-        self.assertIn("d0", self.subCache)
+        self.cache.enforce_limit()
+        self.assertEqual(len(self.subcache), 1)
+        self.assertIn("d0", self.subcache)
 
     def tearDown(self):
         del self.cache

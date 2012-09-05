@@ -15,68 +15,68 @@ class Breadcrumbs(Crumbs.CrumbBase):
 
     def __init__(self, site, node):
         super(Breadcrumbs, self).__init__(site, node)
-        rootID = node.get("root")
-        if rootID is not None:
-            self.root = site.getNode(rootID)
+        rootid = node.get("root")
+        if rootid is not None:
+            self.root = site.get_node(rootid)
         else:
             self.root = None
-        self.forceShowCurrent = Types.Typecasts.bool(
+        self.force_show_current = Types.Typecasts.bool(
             node.get("force-show-current", False))
-        self.minDisplay = Types.Typecasts.int(node.get("min-display", 1))
-        self.rich = self._richMap(node.get("rich"))
-        self.rdfaPrefix = node.get("rdfa-prefix", "v:")
+        self.mindisplay = Types.Typecasts.int(node.get("min-display", 1))
+        self.rich = self._richmap(node.get("rich"))
+        self.rdfa_prefix = node.get("rdfa-prefix", "v:")
 
-    def render(self, ctx, intoNode, atIndex):
+    def render(self, ctx, into_node, at_index):
         if not ctx.PageNode:
             return None
         ul = ET.Element(NS.XHTML.ul)
-        hadNodes = set()
-        pageNode = ctx.PageNode
-        for node in pageNode.iterUpwards():
+        had_nodes = set()
+        pagenode = ctx.PageNode
+        for node in pagenode.iter_upwards():
             if node is self.root:
                 break
-            navInfo = node.getNavigationInfo(ctx)
-            display = navInfo.getDisplay()
+            nav_info = node.get_navigation_info(ctx)
+            display = nav_info.get_display()
             if ((display is Navigation.ReplaceWithChildren
-                    or display < self.minDisplay)
-                and (node is not pageNode or not self.forceShowCurrent)):
+                    or display < self.mindisplay)
+                and (node is not pagenode or not self.force_show_current)):
                 continue
 
-            representative = navInfo.getRepresentative()
-            if representative in hadNodes:
+            representative = nav_info.get_representative()
+            if representative in had_nodes:
                 continue
 
-            hadNodes.add(representative)
+            had_nodes.add(representative)
             li = ET.Element(NS.XHTML.li)
             relevant = li
-            if node is not pageNode:
+            if node is not pagenode:
                 a = ET.SubElement(li, NS.PyWebXML.a, href=representative.Path)
-                a.text = navInfo.getTitle()
+                a.text = nav_info.get_title()
                 relevant = a
                 tail = False
             else:
-                li.text = navInfo.getTitle()
+                li.text = nav_info.get_title()
                 tail = True
-            self.rich(self, ctx, relevant, isTail=tail)
+            self.rich(self, ctx, relevant, is_tail=tail)
             ul.insert(0, li)
-        intoNode.insert(atIndex, ul)
+        into_node.insert(at_index, ul)
 
-    def rdfa(self, ctx, relevantNode, isTail=False):
-        prefix = self.rdfaPrefix
-        if not isTail:
-            relevantNode.set("typeof", "v:Breadcrumb")
+    def rdfa(self, ctx, relevant_node, is_tail=False):
+        prefix = self.rdfa_prefix
+        if not is_tail:
+            relevant_node.set("typeof", "v:Breadcrumb")
         else:
-            relevantNode.set("typeof", "v:Breadcrumb")
+            relevant_node.set("typeof", "v:Breadcrumb")
 
-    def schema(self, ctx, relevantNode, isTail=False):
-        relevantNode.set("property", "breadcrumb")
-        if isTail:
-            relevantNode.set(NS.PyWebXML.content, ctx.PageNode.Path)
+    def schema(self, ctx, relevant_node, is_tail=False):
+        relevant_node.set("property", "breadcrumb")
+        if is_tail:
+            relevant_node.set(NS.PyWebXML.content, ctx.PageNode.Path)
 
     def norich(self, *args, **kwargs):
         pass
 
-    _richMap = Types.EnumMap({
+    _richmap = Types.EnumMap({
         "rdfa": rdfa,
         "schema.org": schema,
         None: norich

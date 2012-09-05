@@ -30,16 +30,16 @@ class ParserBase(Sitleton.Sitleton):
     """
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, site, parserMimeTypes=[], **kwargs):
+    def __init__(self, site, parser_mimetypes=[], **kwargs):
         super(ParserBase, self).__init__(site, **kwargs)
-        site.parserRegistry.register(self, parserMimeTypes)
+        site.parser_registry.register(self, parser_mimetypes)
 
     @classmethod
-    def transformHeaders(cls, body, headerOffset):
+    def transform_headers(cls, body, header_offset):
         """
-        *headerOffset* must be a non-negative integer. That amount of header
+        *header_offset* must be a non-negative integer. That amount of header
         levels will be added to any ``<h:hN />`` elements encountered in the
-        *body* element tree. A *headerOffset* of 1 will thus convert
+        *body* element tree. A *header_offset* of 1 will thus convert
         all ``<h:h1 />`` to ``<h:h2 />``, all ``<h:h2 />`` to ``<h:h2 />`` and
         so on.
 
@@ -54,7 +54,7 @@ class ParserBase(Sitleton.Sitleton):
         iterator = itertools.chain(*itertools.imap(body.iter, matches))
         for hX in iterator:
             i = int(hX.tag[-1:])
-            i += headerOffset
+            i += header_offset
             if i > 6:
                 tag = "p"
             else:
@@ -62,7 +62,7 @@ class ParserBase(Sitleton.Sitleton):
             hX.tag = getattr(NS.XHTML, tag)
 
     @abc.abstractmethod
-    def parse(self, fileref, headerOffset=1):
+    def parse(self, fileref, header_offset=1):
         """
         Take a file name or filelike in *fileref* and parse the hell out of it.
         Return a :class:`~PyXWF.Document.Document` instance with all relevant

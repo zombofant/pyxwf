@@ -16,65 +16,65 @@ map = itertools.imap
 class PyWebXML(Parsers.ParserBase):
     """
     This class parses PyWebXML documents. Usually, you don't create instances of
-    this, you just access it using via the :attr:`~PyXWF.Site.parserRegistry`
+    this, you just access it using via the :attr:`~PyXWF.Site.parser_registry`
     attribute of your :class:`~PyXWF.Site` instance.
     """
     __metaclass__ = Registry.SitletonMeta
 
-    mimeTypes = ["application/x-pywebxml"]
+    mimetypes = ["application/x-pywebxml"]
 
     def __init__(self, site):
         super(PyWebXML, self).__init__(site,
-            parserMimeTypes=self.mimeTypes
+            parser_mimetypes=self.mimetypes
         )
 
     @staticmethod
-    def _linkFromNode(node):
+    def _link_from_node(node):
         return Link.create(
             node.get("rel"), node.get("type"), node.get("href"), node.get("media")
         )
 
     @classmethod
-    def getLinks(cls, meta):
+    def get_links(cls, meta):
         return list(meta.findall(NS.PyWebXML.link))
 
     @classmethod
-    def getKeywords(cls, meta):
+    def get_keywords(cls, meta):
         return list(map(
             lambda node: unicode(node.text), meta.findall(NS.PyWebXML.kw)))
 
     @classmethod
-    def getKeywordsAndLinks(cls, meta):
+    def get_keywords_and_links(cls, meta):
         """
         Deprecated – do not use.
         """
-        return cls.getKeywords(meta), cls.getLinks(meta)
+        return cls.get_keywords(meta), cls.get_links(meta)
 
     @classmethod
-    def getAuthors(cls, meta):
-        return list(map(Document.Author.fromNode, meta.findall(NS.PyWebXML.author)))
+    def get_authors(cls, meta):
+        return list(map(Document.Author.from_node, meta.findall(NS.PyWebXML.author)))
 
     @classmethod
-    def getDate(cls, meta):
+    def get_date(cls, meta):
         datetext = meta.findtext(NS.PyWebXML.date)
-        return utils.parseISODate(datetext)
+        return utils.parse_iso_date(datetext)
 
     @classmethod
-    def getMeta(cls, meta):
+    def get_meta(cls, meta):
         return meta.findall(NS.XHTML.meta)
 
     @classmethod
-    def getDescription(cls, meta):
+    def get_description(cls, meta):
         return meta.findtext(NS.PyWebXML.description)
 
-    def parseTree(self, root, headerOffset=1):
+    def parse_tree(self, root, header_offset=1):
         """
         Take the root element of an ElementTree and interpret it as PyWebXML
         document. Return the resulting :class:`~PyXWF.Document.Document`
         instance on success and raise on error.
 
-        *headerOffset* works as documented in the base class'
-        :meth:`~PyXWF.Parsers.ParserBase.transformHeaders` method.
+        *header_offset* works as documented in the base class'
+        :meth:`~PyXWF.Parsers.ParserBase.transform_headers` method.
         """
         if root.tag != NS.PyWebXML.page:
             raise ValueError("This is not a pyxwf-xml document.")
@@ -87,17 +87,17 @@ class PyWebXML(Parsers.ParserBase):
         if title is None:
             raise ValueError("Title is missing.")
 
-        keywords, links = self.getKeywordsAndLinks(meta)
+        keywords, links = self.get_keywords_and_links(meta)
 
         body = root.find(NS.XHTML.body)
         if body is None:
             raise ValueError("No body tag found")
-        self.transformHeaders(body, headerOffset)
+        self.transform_headers(body, header_offset)
 
-        date = self.getDate(meta)
-        authors = self.getAuthors(meta)
-        hmeta = self.getMeta(meta)
-        description = self.getDescription(meta)
+        date = self.get_date(meta)
+        authors = self.get_authors(meta)
+        hmeta = self.get_meta(meta)
+        description = self.get_description(meta)
 
         ext = meta
 
@@ -112,4 +112,4 @@ class PyWebXML(Parsers.ParserBase):
         """
         tree = ET.parse(fileref)
         root = tree.getroot()
-        return self.parseTree(root, **kwargs)
+        return self.parse_tree(root, **kwargs)

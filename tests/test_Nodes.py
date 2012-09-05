@@ -8,8 +8,8 @@ import PyXWF.Errors as Errors
 import tests.Mocks as Mocks
 
 class Dummy(Nodes.DirectoryResolutionBehaviour):
-    def _getChildNode(self, key):
-        self._requestedKey = key
+    def _get_child(self, key):
+        self._requested_key = key
         if key == "non-existing":
             return None
         return key
@@ -18,7 +18,7 @@ class DirectoryResolutionBehaviour(unittest.TestCase):
     def setUp(self):
         self.dummy = Dummy()
 
-    def test_resolvePath(self):
+    def test_resolve_path(self):
         ctx = Mocks.MockedContext("/")
         paths = [
             ("", ""),
@@ -26,28 +26,28 @@ class DirectoryResolutionBehaviour(unittest.TestCase):
             ("bar", "bar"),
             ("bar/baz", "bar")
         ]
-        for relPath, expectedKey in paths:
+        for relpath, expected_key in paths:
             # this raises cause we cannot mock child nodes properly. but that
             # is fine for now
-            self.assertRaises(AttributeError, self.dummy.resolvePath, ctx, relPath)
+            self.assertRaises(AttributeError, self.dummy.resolve_path, ctx, relpath)
             # we can still check the key here
-            self.assertEqual(self.dummy._requestedKey, expectedKey)
+            self.assertEqual(self.dummy._requested_key, expected_key)
 
-    def test_notFound(self):
+    def test_not_found(self):
         ctx = Mocks.MockedContext("/")
-        self.assertRaises(Errors.HTTP.NotFound, self.dummy.resolvePath, ctx, "non-existing")
+        self.assertRaises(Errors.HTTP.NotFound, self.dummy.resolve_path, ctx, "non-existing")
 
     def tearDown(self):
         del self.dummy
 
 
 class Metaclass(unittest.TestCase):
-    def test_callableCheck(self):
+    def test_callable_check(self):
         self.assertRaises(TypeError, Nodes.NodeMeta,
             b"test",
             (object, ),
             {
-                "requestHandlers": {
+                "request_handlers": {
                     "GET": None
                 }
             }
@@ -56,11 +56,11 @@ class Metaclass(unittest.TestCase):
             b"test",
             (object, ),
             {
-                "requestHandlers": "foo"
+                "request_handlers": "foo"
             }
         )
 
-    def test_dictCheck(self):
+    def test_dict_check(self):
         self.assertRaises(TypeError, Nodes.NodeMeta,
             b"test",
             (object, ),
@@ -69,12 +69,12 @@ class Metaclass(unittest.TestCase):
             }
         )
 
-    def someCallable(self):
+    def some_callable(self):
         pass
 
-    def test_dictMock(self):
+    def test_dict_mock(self):
         cls = Nodes.NodeMeta(b"test", (object, ), {
-            "requestHandlers": self.someCallable
+            "request_handlers": self.some_callable
         })
         # XXX: assertIn doesn't work here ... why?
-        self.assertEqual(cls.requestHandlers["GET"], self.someCallable)
+        self.assertEqual(cls.request_handlers["GET"], self.some_callable)

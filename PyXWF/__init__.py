@@ -5,7 +5,7 @@ import logging
 if __version__ == "devel":
     import subprocess, os
 
-    def figureOutVersion():
+    def figure_out_version():
         head = "unknown"
         try:
             head = subprocess.check_output(["git", "rev-parse", "HEAD"])\
@@ -32,10 +32,10 @@ if __version__ == "devel":
 
         return version
 
-    prevCWD = os.getcwd()
+    prevcwd = os.getcwd()
     try:
         path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         os.chdir(path)
-        __version__ = figureOutVersion()
+        __version__ = figure_out_version()
     finally:
-        os.chdir(prevCWD)
+        os.chdir(prevcwd)

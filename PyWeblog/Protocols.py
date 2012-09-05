@@ -6,7 +6,7 @@ class PostDirectory(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def getPosts(self):
+    def get_posts(self):
         """
         Return an iterable containing the posts displayed in this directory.
         This is used for example by the :class:`Feeds` protocol.
@@ -31,7 +31,7 @@ class TagDir(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def getTagPagePath(self, tag):
+    def get_tag_page_path(self, tag):
         """
         Return the node path of the TagPage belonging to *tag*.
         """
@@ -40,7 +40,7 @@ class Feeds(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def getFeedsNode(self, forDirectory):
+    def get_feeds_node(self, for_directory):
         """
         Return a ``<blog:feeds />`` node with the following attributes:
 
@@ -56,9 +56,9 @@ class Feeds(object):
         """
 
     @abc.abstractmethod
-    def resolveFeedNode(self, node, ctx, superResolve, relPath):
+    def resolve_feed_node(self, node, ctx, super_resolve, relpath):
         """
-        Return either the normal result of *superResolve* or this object,
+        Return either the normal result of *super_resolve* or this object,
         depending on the query parameters of the request. See the respective
         implementation for details on how the result is determined.
 
@@ -84,16 +84,16 @@ class Feed(object):
         """
 
     @abc.abstractmethod
-    def getFeedNode(self):
+    def get_feed_node(self):
         """
         Return the ``<blog:feed />`` node as described in
-        :meth:`Feeds.getFeedsNode`.
+        :meth:`Feeds.get_feeds_node`.
         """
 
 class FeedableDirectoryMixin(object):
-    def resolvePath(self, ctx, relPath):
-        superResolve = super(FeedableDirectoryMixin, self).resolvePath
+    def resolve_path(self, ctx, relpath):
+        super_resolve = super(FeedableDirectoryMixin, self).resolve_path
         if self.Blog.Feeds:
-            return self.Blog.Feeds.resolveFeedNode(self, ctx, superResolve, relPath)
+            return self.Blog.Feeds.resolve_feed_node(self, ctx, super_resolve, relpath)
         else:
-            return superResolve(ctx, relPath)
+            return super_resolve(ctx, relpath)

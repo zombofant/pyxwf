@@ -15,14 +15,14 @@ class Info(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def getTitle(self):
+    def get_title(self):
         """
         Return the title to be used in the navigation.
         """
         return "Unknown title"
 
     @abc.abstractmethod
-    def getDisplay(self):
+    def get_display(self):
         """
         Return one of :data:`Hidden`, :class:`ReplaceWithChildren` or
         :data:`Show` to designate how the entry shall be represented in the
@@ -31,7 +31,7 @@ class Info(object):
         return Show
 
     @abc.abstractmethod
-    def getRepresentative(self):
+    def get_representative(self):
         """
         Return the :class:`~PyXWF.Nodes.Node` which represents this
         navigation entry. This is not neccessarily the same as the

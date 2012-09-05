@@ -23,20 +23,20 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
     __metaclass__ = Registry.SitletonMeta
 
     namespace = str(MarkdownNS)
-    mimeTypes = ["text/x-markdown"]
+    mimetypes = ["text/x-markdown"]
 
-    _allowHtmlType = Types.DefaultForNone(False, Types.Typecasts.bool)
-    _prefixType = Types.Typecasts.unicode
-    _xmlnsType = Types.Typecasts.unicode
+    _allow_html_type = Types.DefaultForNone(False, Types.Typecasts.bool)
+    _prefix_type = Types.Typecasts.unicode
+    _xmlns_type = Types.Typecasts.unicode
 
     _template = """<?xml version="1.0" ?>
 <body xmlns="{0}">{{0}}</body>""".format(NS.XHTML)
 
     def __init__(self, site):
         super(Markdown, self).__init__(site,
-            tweakNS=self.namespace,
-            tweakHooks=[("tweaks", self.tweak), ("nsdecl", self.nsdecl)],
-            parserMimeTypes=self.mimeTypes
+            tweak_ns=self.namespace,
+            tweak_hooks=[("tweaks", self.tweak), ("nsdecl", self.nsdecl)],
+            parser_mimetypes=self.mimetypes
         )
         self.md = markdown2.Markdown(
             extras=["metadata"],
@@ -46,7 +46,7 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
 
     def tweak(self, tweak):
         kwargs = {}
-        if not self._allowHtmlType(tweak.get("allow-html")):
+        if not self._allow_html_type(tweak.get("allow-html")):
             kwargs["safe_mode"] = "escape"
 
         self.md = markdown2.Markdown(
@@ -55,11 +55,11 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
         )
 
     def nsdecl(self, nsdecl):
-        prefix = self._prefixType(nsdecl.get("prefix"))
-        xmlns = self._xmlnsType(nsdecl.get("uri"))
+        prefix = self._prefix_type(nsdecl.get("prefix"))
+        xmlns = self._xmlns_type(nsdecl.get("uri"))
         self._namespaces[prefix] = xmlns
 
-    def transformUrls(self, body):
+    def transform_urls(self, body):
         for a in body.iter(NS.XHTML.a):
             a.tag = NS.PyWebXML.a
 
@@ -68,29 +68,29 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
             img.set("href", img.get("src"))
             del img.attrib["src"]
 
-    def transformImages(self, body):
-        pTag, imgTag, aTag = NS.XHTML.p, NS.XHTML.img, NS.XHTML.a
-        for p in body.iter(pTag):
+    def transform_images(self, body):
+        ptag, imgtag, atag = NS.XHTML.p, NS.XHTML.img, NS.XHTML.a
+        for p in body.iter(ptag):
             if len(p) != 1:
                 continue
-            aOrImg = p[0]
-            if aOrImg.tag == imgTag:
+            a_or_img = p[0]
+            if a_or_img.tag == imgtag:
                 p.set("class", "imgbox")
                 continue
-            if aOrImg.tag != aTag:
+            if a_or_img.tag != atag:
                 continue
-            a = aOrImg
+            a = a_or_img
             if len(a) != 1:
                 continue
             img = a[0]
-            if img.tag == imgTag:
+            if img.tag == imgtag:
                 p.set("class", "imgbox")
                 p.tag = NS.XHTML.div
 
-    def _authorFromId(self, id):
+    def _author_from_id(self, id):
         return Document.Author(None, None, None, id=id)
 
-    def _smartSplit(self, s):
+    def _smart_split(self, s):
         if "," in s:
             items = filter(lambda x: bool(x),
                     (item.strip() for item in s.split(",")))
@@ -99,7 +99,7 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
                     (item.strip() for item in s.split()))
         return items
 
-    def parse(self, fileref, headerOffset=1):
+    def parse(self, fileref, header_offset=1):
         if isinstance(fileref, basestring):
             f = open(fileref, "r")
         else:
@@ -112,17 +112,17 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
 
         html = self._template.format(converted)
         body = ET.XML(html)
-        self.transformHeaders(body, headerOffset)
-        self.transformImages(body)
-        self.transformUrls(body)
+        self.transform_headers(body, header_offset)
+        self.transform_images(body)
+        self.transform_urls(body)
 
         title = metadata.get("Title", None)
-        date = utils.parseISODate(metadata.get("Date", None))
+        date = utils.parse_iso_date(metadata.get("Date", None))
         authors = metadata.get("Authors", None)
         description = metadata.get("Description", None)
         if authors is not None:
-            authors = map(self._authorFromId, self._smartSplit(authors))
-        keywords = self._smartSplit(metadata.get("Keywords", ""))
+            authors = map(self._author_from_id, self._smart_split(authors))
+        keywords = self._smart_split(metadata.get("Keywords", ""))
 
         ext = ET.Element(MarkdownNS.ext)
         for key, value in metadata.viewitems():

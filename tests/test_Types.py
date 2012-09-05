@@ -25,7 +25,7 @@ class Typecasts(unittest.TestCase):
         self.assertRaises(ValueError, bool, None)
 
     def test_empty(self):
-        empty = Types.Typecasts.emptyString
+        empty = Types.Typecasts.empty_string
 
         self.assertEqual("", empty(""))
         self.assertRaises(ValueError, empty, "something")
@@ -33,13 +33,13 @@ class Typecasts(unittest.TestCase):
 
 class EnumMap(unittest.TestCase):
     def test_mapping(self):
-        mappingDict = {
+        mapping_dict = {
             "foo": 0,
             "bar": 1,
             "baz": 2
         }
-        mapping = Types.EnumMap(mappingDict)
-        for key, value in mappingDict.items():
+        mapping = Types.EnumMap(mapping_dict)
+        for key, value in mapping_dict.items():
             self.assertEqual(mapping(key), value)
 
         self.assertRaises(ValueError, mapping, None)
@@ -48,94 +48,94 @@ class EnumMap(unittest.TestCase):
 
 class NotNone(unittest.TestCase):
     def test_cast(self):
-        notNone = Types.NotNone
+        not_none = Types.NotNone
 
-        someValues = ["anything", 23, list(), object()]
+        some_values = ["anything", 23, list(), object()]
 
-        for value in someValues:
-            self.assertIs(value, notNone(value))
+        for value in some_values:
+            self.assertIs(value, not_none(value))
 
-        self.assertRaises(ValueError, notNone, None)
+        self.assertRaises(ValueError, not_none, None)
 
 
 class DefaultForNone(unittest.TestCase):
     def test_defaulting(self):
         default = object()
-        defaultForNone = Types.DefaultForNone(default, Types.NotNone)
+        default_for_none = Types.DefaultForNone(default, Types.NotNone)
 
-        someValues = ["anything", 23, list(), object()]
+        some_values = ["anything", 23, list(), object()]
 
-        for value in someValues:
-            self.assertIs(value, defaultForNone(value))
+        for value in some_values:
+            self.assertIs(value, default_for_none(value))
 
-        self.assertIs(defaultForNone(None), default)
+        self.assertIs(default_for_none(None), default)
 
 
 class AllowBoth(unittest.TestCase):
-    def test_twoMappings(self):
-        mappingDict1 = {
+    def test_two_mappings(self):
+        mapping_dict1 = {
             "foo": 0,
             "bar": 0,
             "baz": 2,
         }
-        mappingDict2 = {
+        mapping_dict2 = {
             "bar": 1
         }
 
-        finalDict = dict(mappingDict2)
-        finalDict.update(mappingDict1)
+        final_dict = dict(mapping_dict2)
+        final_dict.update(mapping_dict1)
 
-        allowBoth = Types.AllowBoth(
-            Types.EnumMap(mappingDict1),
-            Types.EnumMap(mappingDict2)
+        allow_both = Types.AllowBoth(
+            Types.EnumMap(mapping_dict1),
+            Types.EnumMap(mapping_dict2)
         )
 
-        for key, value in finalDict.items():
-            self.assertIs(allowBoth(key), value)
+        for key, value in final_dict.items():
+            self.assertIs(allow_both(key), value)
 
-        self.assertRaises(ValueError, allowBoth, "meow")
+        self.assertRaises(ValueError, allow_both, "meow")
 
 
 class NumericRange(unittest.TestCase):
     def test_min(self):
-        numericRange = Types.NumericRange(int, 10, None)
-        self.assertEqual(numericRange(11), 11)
-        self.assertEqual(numericRange(10), 10)
-        self.assertRaises(ValueError, numericRange, 9)
+        numeric_range = Types.NumericRange(int, 10, None)
+        self.assertEqual(numeric_range(11), 11)
+        self.assertEqual(numeric_range(10), 10)
+        self.assertRaises(ValueError, numeric_range, 9)
 
     def test_max(self):
-        numericRange = Types.NumericRange(int, None, 10)
-        self.assertRaises(ValueError, numericRange, 11)
-        self.assertEqual(numericRange(10), 10)
-        self.assertEqual(numericRange(9), 9)
+        numeric_range = Types.NumericRange(int, None, 10)
+        self.assertRaises(ValueError, numeric_range, 11)
+        self.assertEqual(numeric_range(10), 10)
+        self.assertEqual(numeric_range(9), 9)
 
     def test_range(self):
-        numericRange = Types.NumericRange(int, 9, 11)
-        self.assertRaises(ValueError, numericRange, 12)
-        self.assertEqual(numericRange(11), 11)
-        self.assertEqual(numericRange(10), 10)
-        self.assertEqual(numericRange(9), 9)
-        self.assertRaises(ValueError, numericRange, 8)
+        numeric_range = Types.NumericRange(int, 9, 11)
+        self.assertRaises(ValueError, numeric_range, 12)
+        self.assertEqual(numeric_range(11), 11)
+        self.assertEqual(numeric_range(10), 10)
+        self.assertEqual(numeric_range(9), 9)
+        self.assertRaises(ValueError, numeric_range, 8)
 
 
 class NotEmpty(unittest.TestCase):
     def test_empty(self):
-        notEmpty = Types.NotEmpty
-        self.assertRaises(ValueError, notEmpty, "")
-        self.assertRaises(ValueError, notEmpty, [])
-        self.assertRaises(ValueError, notEmpty, ())
-        self.assertRaises(ValueError, notEmpty, set())
-        self.assertRaises(ValueError, notEmpty, {})
+        not_empty = Types.NotEmpty
+        self.assertRaises(ValueError, not_empty, "")
+        self.assertRaises(ValueError, not_empty, [])
+        self.assertRaises(ValueError, not_empty, ())
+        self.assertRaises(ValueError, not_empty, set())
+        self.assertRaises(ValueError, not_empty, {})
 
-    def test_nonEmpty(self):
-        notEmpty = Types.NotEmpty
+    def test_non_empty(self):
+        not_empty = Types.NotEmpty
         s = "foo"
         l = ["bar"]
         d = {"baz": "foo"}
-        self.assertIs(notEmpty(s), s)
-        self.assertIs(notEmpty(l), l)
-        self.assertIs(notEmpty(d), d)
+        self.assertIs(not_empty(s), s)
+        self.assertIs(not_empty(l), l)
+        self.assertIs(not_empty(d), d)
 
-    def test_None(self):
-        notEmpty = Types.NotEmpty
-        self.assertRaises(TypeError, notEmpty, None)
+    def test_none(self):
+        not_empty = Types.NotEmpty
+        self.assertRaises(TypeError, not_empty, None)

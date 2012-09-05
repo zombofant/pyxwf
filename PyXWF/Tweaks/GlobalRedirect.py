@@ -13,18 +13,18 @@ class GlobalRedirect(object):
     __metaclass__ = Registry.SitletonMeta
 
     namespace = str(_NS)
-    tweakNames = ["redirect"]
+    tweak_names = ["redirect"]
 
     def __init__(self, site):
         super(GlobalRedirect, self).__init__()
         self.site.hooks.register("handle.pre-lookup", self.redirect)
         redirects = self._tweaks["redirect"].findall(self.NS.redirect)
 
-        self.redirects = [self._redirectFromET(node) for node in redirects]
+        self.redirects = [self._redirect_from_ET(node) for node in redirects]
 
-    def _redirectFromET(self, node):
-        sourcePatt = Typecasts.Types.unicode(Typecasts.NotNone(node.get("src")))
-        destPatt = Typecasts.Types.unicode(Typecasts.NotNone(node.get("dest")))
+    def _redirect_from_ET(self, node):
+        source_patt = Typecasts.Types.unicode(Typecasts.NotNone(node.get("src")))
+        dest_patt = Typecasts.Types.unicode(Typecasts.NotNone(node.get("dest")))
         kind = Typecasts.DefaultForNone(Errors.Found, Typecasts.EnumMap({
             "301": Errors.MovedPermanently,
             "302": Errors.Found,
@@ -32,7 +32,7 @@ class GlobalRedirect(object):
             "307": Errors.TemporaryRedirect
         }))(node.get("method"))
 
-        return (re.compile(sourcePatt), destPatt, kind)
+        return (re.compile(source_patt), dest_patt, kind)
 
     def redirect(self, ctx):
         path = ctx.Path

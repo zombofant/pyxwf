@@ -18,11 +18,11 @@ class Preference(object):
 
     .. note::
         It is recommended that you create instances of the above classes using
-        the respective implementation of :meth:`~.fromHeaderSection`. Do not
+        the respective implementation of :meth:`~.from_header_section`. Do not
         create instances of *this* class—they're not particularily useful.
 
     They only differ in the way they implement the parsing method
-    :meth:`~.fromHeaderSection`.
+    :meth:`~.from_header_section`.
 
     :class:`.Preference` instances order according to an internal key which is
     gives a stable ordering and is hashable.
@@ -44,8 +44,8 @@ class Preference(object):
         self.precedence = -value.count("*")
         self.q = q
         self.parameters = parameters
-        self.rfcKey = (self.precedence, self.q, len(self.parameters))
-        self.fullKey = (self.precedence, self.q, self.value, tuple(self.parameters.items()))
+        self.rfc_key = (self.precedence, self.q, len(self.parameters))
+        self.full_key = (self.precedence, self.q, self.value, tuple(self.parameters.items()))
 
     def __unicode__(self):
         return ";".join(itertools.chain(
@@ -58,83 +58,83 @@ class Preference(object):
 
     def __eq__(self, other):
         try:
-            return self.fullKey == other.fullKey
+            return self.full_key == other.full_key
         except AttributeError:
             return NotImplemented
 
     def __ne__(self, other):
         try:
-            return self.fullKey != other.fullKey
+            return self.full_key != other.full_key
         except AttributeError:
             return NotImplemented
 
     def __lt__(self, other):
         try:
-            return self.fullKey < other.fullKey
+            return self.full_key < other.full_key
         except AttributeError:
             return NotImplemented
 
     def __le__(self, other):
         try:
-            return self.fullKey <= other.fullKey
+            return self.full_key <= other.full_key
         except AttributeError:
             return NotImplemented
 
     def __hash__(self):
-        return hash(self.fullKey)
+        return hash(self.full_key)
 
-    def match(self, otherPref, allowWildcard=True):
+    def match(self, other_pref, allow_wildcard=True):
         """
-        Try to match *otherPref* against this match and return a tuple
-        reflecting the quality of the match: ``(wildcardPenalty, keysUsed, q)``.
+        Try to match *other_pref* against this match and return a tuple
+        reflecting the quality of the match: ``(wildcard_penalty, keys_used, q)``.
 
-        *wildcardPenalty* is a non-positive integer, which is equal to
+        *wildcard_penalty* is a non-positive integer, which is equal to
         :attr:`~.precedence` if a wildcard match was successfully done, zero
         otherwise (i.e. also zero if no wildcard match was neccessary).
 
-        *keysUsed* is the number of keys from :attr:`parameters` which compared
+        *keys_used* is the number of keys from :attr:`parameters` which compared
         equal. This is always less or equal to ``len(parameters)``.
 
         *q* is the value of :attr:`~.q` of *this* instance or zero if the
         match failed.
         """
-        if isinstance(otherPref, Preference):
-            wildcardPenalty, _, q = self.match(otherPref.value)
-            keysUsed = 0
+        if isinstance(other_pref, Preference):
+            wildcard_penalty, _, q = self.match(other_pref.value)
+            keys_used = 0
             if q <= 0:
-                return (wildcardPenalty, 0, q)
+                return (wildcard_penalty, 0, q)
             try:
-                remainingKeys = set(otherPref.parameters.keys())
+                remaining_keys = set(other_pref.parameters.keys())
                 for key, value in self.parameters.items():
-                    if otherPref.parameters[key] != value:
+                    if other_pref.parameters[key] != value:
                         return (0, 0, 0)
-                    keysUsed += 1
-                    remainingKeys.discard(key)
-                if len(remainingKeys) > 0 and not allowWildcard:
+                    keys_used += 1
+                    remaining_keys.discard(key)
+                if len(remaining_keys) > 0 and not allow_wildcard:
                     return (0, 0, 0)
             except KeyError:
                 return (0, 0, 0)
-            return (wildcardPenalty, keysUsed, q)
+            return (wildcard_penalty, keys_used, q)
         else:
-            wildcardPenalty = self.precedence
-            if allowWildcard:
-                if fnmatch(otherPref, self.value):
-                    return (wildcardPenalty, 0, self.q)
+            wildcard_penalty = self.precedence
+            if allow_wildcard:
+                if fnmatch(other_pref, self.value):
+                    return (wildcard_penalty, 0, self.q)
                 else:
                     return (0, 0, 0)
             else:
-                if otherPref == self.value:
+                if other_pref == self.value:
                     return (0, 0, self.q)
                 else:
                     return (0, 0, 0)
 
     @classmethod
-    def fromHeaderSection(cls, value, dropParameters=False):
+    def from_header_section(cls, value, drop_parameters=False):
         """
         This method is overriden in the subclasses with custom behaviour to
         correctly interpret the *value* string.
 
-        *dropParameters* indicates whether additional parameters will be
+        *drop_parameters* indicates whether additional parameters will be
         dropped. These are normally passed to the *parameters* keyword argument
         of the constructor. The meaning of “parameters” is specific to the
         subclass.
@@ -144,22 +144,22 @@ class Preference(object):
         *   :class:`LanguagePreference`: in ``en-gb``, “gb” is a parameter value
         """
 
-    rfcCompliantKey = operator.attrgetter("rfcKey")
+    rfc_compliant_key = operator.attrgetter("rfc_key")
 
 class AcceptPreference(Preference):
     """
     Subclass of :class:`Preference` for dealing with ``Accept`` header values.
     """
     @classmethod
-    def fromHeaderSection(cls, value,
-            dropParameters=False):
+    def from_header_section(cls, value,
+            drop_parameters=False):
         parts = value.lower().split(";")
         header = parts[0].strip()
-        parameterList = parts[1:]
+        paramlist = parts[1:]
 
         q = 1.
         parameters = {}
-        for parameter in parameterList:
+        for parameter in paramlist:
             parameter = parameter.strip()
             name, _, arg = parameter.partition("=")
             name = name.strip()
@@ -169,7 +169,7 @@ class AcceptPreference(Preference):
                 except ValueError:
                     q = 0.
                 break
-            elif dropParameters:
+            elif drop_parameters:
                 continue
             if not _:
                 parameters[name] = None
@@ -185,8 +185,8 @@ class CharsetPreference(Preference):
     """
 
     @classmethod
-    def fromHeaderSection(cls, value,
-            dropParameters=False):
+    def from_header_section(cls, value,
+            drop_parameters=False):
         header, _, param = value.lower().partition(";")
         header = header.strip()
         if param:
@@ -212,8 +212,8 @@ class LanguagePreference(Preference):
     """
 
     @classmethod
-    def fromHeaderSection(cls, value,
-            dropParameters=False):
+    def from_header_section(cls, value,
+            drop_parameters=False):
         header, _, param = value.lower().partition(";")
         header = header.strip()
         if param:
@@ -249,36 +249,36 @@ class LanguagePreference(Preference):
 class PreferenceList(object):
     """
     Hold a list of :class:`Preference` subclass instances, where the exact
-    subclass is specified by *preferenceClass*.
+    subclass is specified by *preference_class*.
 
     Objects of this class are iterable and respond to :func:`len`, but cannot
     be accessed element-wise, as that would not make any sense.
 
     .. warning::
         If you're dealing with ``Accept-Charset`` headers, please do not
-        overlook the method :meth:`~PyXWF.AcceptHeaders.CharsetPreferenceList.injectRFCValues`.
+        overlook the method :meth:`~PyXWF.AcceptHeaders.CharsetPreferenceList.inject_rfc_values`.
     """
 
-    def __init__(self, preferenceClass, **kwargs):
+    def __init__(self, preference_class, **kwargs):
         super(PreferenceList, self).__init__(**kwargs)
-        self.preferenceClass = preferenceClass
+        self.preference_class = preference_class
         self._prefs = []
 
-    def appendHeader(self, header, dropParameters=False):
+    def append_header(self, header, drop_parameters=False):
         """
         Create :class:`Preference` objects from the elements in the full HTTP
-        header value *header* and add them to the list. *dropParameters* is
+        header value *header* and add them to the list. *drop_parameters* is
         passed to the respective parser method.
         """
         if not header:
             return
         # parse preferences
-        prefGen = (
-            self.preferenceClass.fromHeaderSection(section, dropParameters=dropParameters)
+        pref_generator = (
+            self.preference_class.from_header_section(section, drop_parameters=drop_parameters)
             for section in header.split(",")
         )
 
-        self._prefs.extend(prefGen)
+        self._prefs.extend(pref_generator)
 
     def __iter__(self):
         return iter(self._prefs)
@@ -286,16 +286,16 @@ class PreferenceList(object):
     def __len__(self):
         return len(self._prefs)
 
-    def getCandidates(self, ownPreferences,
-            matchWildcard=True,
-            includeNonMatching=False,
-            takeEverythingOnEmpty=True):
+    def get_candidates(self, own_preferences,
+            match_wildcard=True,
+            include_non_matching=False,
+            take_everything_on_empty=True):
         """
         Return a ordered list of tuples ``(q, pref)``, with *q* being the
         original quality value of the match and *pref* :class:`~Preference`
         object.
 
-        Takes an iterable of :class:`Preference` instances *ownPreferences*
+        Takes an iterable of :class:`Preference` instances *own_preferences*
         which indicate which preferences the application has (i.e. what to watch
         out for).
 
@@ -303,49 +303,49 @@ class PreferenceList(object):
         tested to work. The process can be tweaked a little off-spec for certain
         special cases:
 
-        *   If *matchWildcard* is set to false, no wildcard matches are allowed.
-        *   If *includeNonMatching* is set to true, all elements from this list
-            which did not match the *ownPreferences* are returned too, but
+        *   If *match_wildcard* is set to false, no wildcard matches are allowed.
+        *   If *include_non_matching* is set to true, all elements from this list
+            which did not match the *own_preferences* are returned too, but
             ordered in front of others (i.e. with lower relative preference).
-        *   If *takeEverythingOnEmpty* is set to False, an empty list is
+        *   If *take_everything_on_empty* is set to False, an empty list is
             returned if no elements are in this list instead of returning the
-            whole list of *ownPreferences* converted into the return format
+            whole list of *own_preferences* converted into the return format
             specified above.
 
         .. note::
             The returned list is sorted for ascending match accuracies
             according to the RFC, **not** for *q* values. This implies that
             the last element of the list is the one you should pick if you
-            can only serve the preferences given in *ownPreferences* to
-            comply with RFC 2616, see :meth:`bestMatch`.
+            can only serve the preferences given in *own_preferences* to
+            comply with RFC 2616, see :meth:`best_match`.
         """
         if len(self) == 0:
-            if takeEverythingOnEmpty:
+            if take_everything_on_empty:
                 # everything is acceptable
-                return list(map(lambda x: (x.q, x.value), ownPreferences))
+                return list(map(lambda x: (x.q, x.value), own_preferences))
             else:
                 return []
 
         candidates = dict()
-        for i, remPref in enumerate(self):
-            for ownPref in ownPreferences:
-                sortKey = remPref.match(ownPref, allowWildcard=matchWildcard)
-                penalty, keys, q = sortKey
+        for i, rempref in enumerate(self):
+            for ownpref in own_preferences:
+                sortkey = rempref.match(ownpref, allow_wildcard=match_wildcard)
+                penalty, keys, q = sortkey
                 if q > 0.:
-                    value = unicode(ownPref)
-                    sortKey = penalty, keys, q, ownPref.q, -i
-                elif includeNonMatching and remPref.precedence == 0:
+                    value = unicode(ownpref)
+                    sortkey = penalty, keys, q, ownpref.q, -i
+                elif include_non_matching and rempref.precedence == 0:
                     # we must not add values with precedence != 0
-                    value = unicode(remPref)
-                    sortKey = remPref.precedence, 0, remPref.q, 0, -i
+                    value = unicode(rempref)
+                    sortkey = rempref.precedence, 0, rempref.q, 0, -i
                 else:
                     continue
                 try:
-                    oldKey = candidates[value]
-                    if oldKey < sortKey:
-                        candidates[value] = sortKey
+                    oldkey = candidates[value]
+                    if oldkey < sortkey:
+                        candidates[value] = sortkey
                 except KeyError:
-                    candidates[value] = sortKey
+                    candidates[value] = sortkey
 
         candidates = sorted(
             ((q, pref) for pref, q in candidates.iteritems()),
@@ -353,32 +353,32 @@ class PreferenceList(object):
         candidates = [(q, pref) for (prec, keys, q, q2, index), pref in candidates]
         return candidates
 
-    def getQuality(self, preference, matchWildcard=True):
+    def get_quality(self, preference, match_wildcard=True):
         """
         Return the relative quality value for a given :class:`Preference`
         *preference* if you were about to return it.
 
         This goes through the whole matching process described in
-        :meth:`getCandidates`, with *ownPreferences* set to ``[preference]``
+        :meth:`get_candidates`, with *own_preferences* set to ``[preference]``
         and returns the ``q`` value of the best match.
         """
-        candidates = self.getCandidates([preference],
-            matchWildcard=matchWildcard,
-            includeNonMatching=False)
+        candidates = self.get_candidates([preference],
+            match_wildcard=match_wildcard,
+            include_non_matching=False)
         try:
             return candidates.pop()[0]
         except IndexError:
             # no candidates
             return 0
 
-    def bestMatch(self, ownPreferences, matchWildcard=True):
+    def best_match(self, own_preferences, match_wildcard=True):
         """
         Return the preference to use if you can deliver all preferences in
-        *ownPreferences* to give the user agent the best possible quality
+        *own_preferences* to give the user agent the best possible quality
         """
-        candidates = self.getCandidates(ownPreferences,
-            matchWildcard=matchWildcard,
-            includeNonMatching=False)
+        candidates = self.get_candidates(own_preferences,
+            match_wildcard=match_wildcard,
+            include_non_matching=False)
         try:
             # return the candidate with highest rating. return the preference
             # object from our list, as that's guaranteed to have a fully
@@ -402,10 +402,10 @@ class CharsetPreferenceList(PreferenceList):
     def __init__(self, **kwargs):
         super(CharsetPreferenceList, self).__init__(CharsetPreference, **kwargs)
 
-    def injectRFCValues(self):
+    def inject_rfc_values(self):
         """
         This method **must** be called after all header values have been parsed
-        with :meth:`appendHeader` to achieve full compliance with the RFC.
+        with :meth:`append_header` to achieve full compliance with the RFC.
 
         This inserts a ``*`` preference if no values are present and a
         ``iso-8859-1;q=1.0`` preference if no ``*`` preference and no
@@ -414,8 +414,8 @@ class CharsetPreferenceList(PreferenceList):
         if len(self) == 0:
             self._prefs.append(CharsetPreference("*", 1.0))
         else:
-            starCount = sum(map(lambda x: 1 if x.value == "*" else 0, self))
-            if starCount == 0:
+            starcount = sum(map(lambda x: 1 if x.value == "*" else 0, self))
+            if starcount == 0:
                 # according to HTTP/1.1 spec, we _have_ to add iso-8859-1 if no "*"
                 # is in the list
                 self._prefs.append(CharsetPreference("iso-8859-1", 1.0))

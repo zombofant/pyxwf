@@ -19,7 +19,7 @@ class RecentPosts(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info)
     namespace = str(NS.PyBlog)
     names = ["recent"]
 
-    _postCountType = Types.NumericRange(int, 1, None)
+    _post_count_type = Types.NumericRange(int, 1, None)
 
     SelectionCriterion = ""
     SelectionValue = ""
@@ -30,52 +30,52 @@ class RecentPosts(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info)
         super(RecentPosts, self).__init__(site, parent, node)
         self.Blog = parent
 
-        self._navTitle = Types.NotNone(node.get("nav-title"))
-        self._navDisplay = Navigation.DisplayMode(node.get("nav-display", "show"))
-        self._listTemplate = Types.NotNone(node.get("list-template"))
-        self._postCount = self._postCountType(node.get("post-count"))
+        self._navtitle = Types.NotNone(node.get("nav-title"))
+        self._navdisplay = Navigation.DisplayMode(node.get("nav-display", "show"))
+        self._list_template = Types.NotNone(node.get("list-template"))
+        self._post_count = self._post_count_type(node.get("post-count"))
 
-    def resolvePath(self, ctx, relPath):
-        result = super(RecentPosts, self).resolvePath(ctx, relPath)
+    def resolve_path(self, ctx, relpath):
+        result = super(RecentPosts, self).resolve_path(ctx, relpath)
         if result is self:
-            ctx.useResource(self.Blog.index)
-            ctx.useResource(self.Site.templateCache[self._listTemplate])
+            ctx.use_resource(self.Blog.index)
+            ctx.use_resource(self.Site.template_cache[self._list_template])
         return result
 
-    def doGet(self, ctx):
+    def do_GET(self, ctx):
         abstracts = NS.PyBlog("abstract-list")
         if self.Blog.Feeds:
-            feeds = self.Blog.Feeds.getFeedsNode(self)
+            feeds = self.Blog.Feeds.get_feeds_node(self)
             feeds.set("base", self.Path)
             abstracts.append(feeds)
-        postIter = itertools.islice(
-            reversed(self.Blog.index.getAllPosts()),
+        postiter = itertools.islice(
+            reversed(self.Blog.index.get_all_posts()),
             0,
-            self._postCount
+            self._post_count
         )
-        for post in postIter:
+        for post in postiter:
             abstracts.append(copy.deepcopy(post.abstract))
-        return self.Site.templateCache[self._listTemplate].transform(
+        return self.Site.template_cache[self._list_template].transform(
             abstracts,
-            self.Blog.getTransformArgs()
+            self.Blog.get_transform_args()
         )
 
-    def getPosts(self):
-        return reversed(self.Blog.index.getAllPosts())
+    def get_posts(self):
+        return reversed(self.Blog.index.get_all_posts())
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self
 
-    def getTitle(self):
-        return self._navTitle
+    def get_title(self):
+        return self._navtitle
 
-    def getDisplay(self):
-        return self._navDisplay
+    def get_display(self):
+        return self._navdisplay
 
-    def getRepresentative(self):
+    def get_representative(self):
         return self
 
-    requestHandlers = {
-        "GET": doGet
+    request_handlers = {
+        "GET": do_GET
     }
 

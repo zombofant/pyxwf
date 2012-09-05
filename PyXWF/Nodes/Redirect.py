@@ -22,21 +22,21 @@ class RedirectBase(Nodes.Node):
         "temporary-redirect": Errors.TemporaryRedirect,
         "internal": Errors.InternalRedirect
     }
-    defaultMethod = "found"
+    default_method = "found"
 
     def __init__(self, site, parent, node):
         super(RedirectBase, self).__init__(site, parent, node)
-        self.method = self.methods[node.get("method", self.defaultMethod)]
+        self.method = self.methods[node.get("method", self.default_method)]
         self.cachable = Types.Typecasts.bool(node.get("cachable", True))
 
     def redirect(self, ctx):
         if self.Cachable:
-            ctx.addCacheControl("private")
+            ctx.add_cache_control("private")
         raise self.method(self.Target)
 
-    def resolvePath(self, ctx, relPath):
-        if relPath != "":
-            raise Errors.NotFound(resource=fullPath)
+    def resolve_path(self, ctx, relpath):
+        if relpath != "":
+            raise Errors.NotFound(resource=fullpath)
         if self.method is Errors.InternalRedirect:
             raise self.method(self.Target)
         else:
@@ -46,7 +46,7 @@ class RedirectBase(Nodes.Node):
     def Cachable(self):
         return self.cachable
 
-    requestHandlers = redirect
+    request_handlers = redirect
 
 class RedirectInternal(RedirectBase):
     __metaclass__ = Registry.NodeMeta
@@ -57,37 +57,37 @@ class RedirectInternal(RedirectBase):
     class Info(Navigation.Info):
         def __init__(self, ctx, redirect):
             self.redirect = redirect
-            self.superInfo = redirect.TargetNode.getNavigationInfo(ctx)
-            self.display = redirect.navDisplay
-            self.title = redirect.navTitle or self.superInfo.getTitle()
+            self.super_info = redirect.TargetNode.get_navigation_info(ctx)
+            self.display = redirect._navdisplay
+            self.title = redirect._navtitle or self.super_info.get_title()
 
-        def getTitle(self):
+        def get_title(self):
             return self.title
 
-        def getDisplay(self):
+        def get_display(self):
             return self.display
 
-        def getRepresentative(self):
+        def get_representative(self):
             return self.redirect
 
 
     def __init__(self, site, parent, node):
         super(RedirectInternal, self).__init__(site, parent, node)
         self.to = node.get("to")
-        self.navTitle = node.get("nav-title")
-        self.navDisplay = Navigation.DisplayMode(node.get("nav-display", Navigation.Show))
+        self._navtitle = node.get("nav-title")
+        self._navdisplay = Navigation.DisplayMode(node.get("nav-display", Navigation.Show))
 
     @property
     def TargetNode(self):
-        if hasattr(self, "targetNode"):
-            return self.targetNode
+        if hasattr(self, "target_node"):
+            return self.target_node
         else:
-            self.targetNode = self.Site.getNode(self.to)
-            return self.targetNode
+            self.target_node = self.Site.get_node(self.to)
+            return self.target_node
 
     @property
     def Target(self):
         return self.TargetNode.Path.encode("utf-8")
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self.Info(ctx, self)

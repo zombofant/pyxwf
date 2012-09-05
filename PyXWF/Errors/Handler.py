@@ -8,35 +8,35 @@ import HTTP
 
 class InternalServerError(HTTP.InternalServerError):
     def __init__(self, ctx, exc_type, exc, tb):
-        body = self.handleException(ctx, exc_type, exc, tb)
+        body = self.handle_exception(ctx, exc_type, exc, tb)
         html = ET.Element(NS.XHTML.html)
         head = ET.SubElement(html, NS.XHTML.head)
         ET.SubElement(head, NS.XHTML.title).text = "Internal Server Error"
         html.append(body)
         super(InternalServerError, self).__init__(xhtml=html)
 
-    def fancyRepr(self, obj, indent=u""):
-        newIndent = indent+u"    "
-        newIndent2 = indent+u"        "
+    def fancy_repr(self, obj, indent=u""):
+        new_indent = indent+u"    "
+        new_indent2 = indent+u"        "
         if type(obj) == dict:
             items = obj.items()
             if len(items) == 0:
                 return u"{}"
-            return u"{\n"+newIndent+((u"\n"+newIndent).join(
-                u"{0}: {1}".format(self.fancyRepr(key, newIndent2), self.fancyRepr(value, indent+u"        ")) for key, value in obj.items()
+            return u"{\n"+new_indent+((u"\n"+new_indent).join(
+                u"{0}: {1}".format(self.fancy_repr(key, new_indent2), self.fancy_repr(value, indent+u"        ")) for key, value in obj.items()
             ))+u"\n"+indent+u"}"
         elif type(obj) == list:
             if len(obj) == 0:
                 return u"[]"
-            return u"[\n"+newIndent+((u"\n"+newIndent).join(self.fancyRepr(item, newIndent2) for item in obj))+u"\n"+indent+u"]"
+            return u"[\n"+new_indent+((u"\n"+new_indent).join(self.fancy_repr(item, new_indent2) for item in obj))+u"\n"+indent+u"]"
         elif type(obj) == tuple:
             if len(obj) == 0:
                 return u"()"
-            return u"(\n"+newIndent+((u"\n"+newIndent).join(self.fancyRepr(item, newIndent2) for item in obj))+u"\n"+indent+u")"
+            return u"(\n"+new_indent+((u"\n"+new_indent).join(self.fancy_repr(item, new_indent2) for item in obj))+u"\n"+indent+u")"
         #elif hasattr(obj, "__class__") and obj.__class__ == Cookie:
-        #    return self.fancyRepr(obj.value)
+        #    return self.fancy_repr(obj.value)
         #elif hasattr(obj, "__class__") and obj.__class__ == HeaderDict:
-        #    return self.fancyRepr(obj.headers)
+        #    return self.fancy_repr(obj.headers)
         elif hasattr(obj, "__unicode__") or type(obj) == unicode:
             return u"""[{1}] u"{0}\"""".format(unicode(obj), type(obj))
         elif hasattr(obj, "__str__") or type(obj) == str:
@@ -46,37 +46,37 @@ class InternalServerError(HTTP.InternalServerError):
         else:
             return u"[{1}] {0}".format(repr(obj), type(obj))
 
-    def generatePlainTextMessage(self, ctx, exceptionType, exception, tb):
-        result = u"".join(traceback.format_exception(exceptionType, exception, tb))
+    def generate_plain_text_message(self, ctx, exception_type, exception, tb):
+        result = u"".join(traceback.format_exception(exception_type, exception, tb))
         result += u"""
 
 Query parameters:
 GET:
 {0}""".format(
-            self.fancyRepr(ctx.QueryData) if not False else u"Hidden intentionally",
+            self.fancy_repr(ctx.QueryData) if not False else u"Hidden intentionally",
         )
         return result
 
-    def handleException(self, ctx, exceptionType, exception, tb):
-        plainTextMessage = u"""On request: {0} {1}
+    def handle_exception(self, ctx, exception_type, exception, tb):
+        plain_text_message = u"""On request: {0} {1}
 the following exception occured at {2}:
 
-""".format(ctx.Method, ctx.FullURI, TimeUtils.nowDate().isoformat())
-        plainTextMessage += self.generatePlainTextMessage(ctx, exceptionType, exception, tb)
-        print(plainTextMessage.encode("utf-8"))
+""".format(ctx.Method, ctx.FullURI, TimeUtils.now_date().isoformat())
+        plain_text_message += self.generate_plain_text_message(ctx, exception_type, exception, tb)
+        print(plain_text_message.encode("utf-8"))
 
         if False:
             try:
-                subject = mailConfig["subject"].format(exceptionType.__name__, unicode(exception))
-                to = mailConfig["to"]
-                sender = mailConfig["sender"]
-                smtp = mailConfig["smtp"]
+                subject = mail_config["subject"].format(exception_type.__name__, unicode(exception))
+                to = mail_config["to"]
+                sender = mail_config["sender"]
+                smtp = mail_config["smtp"]
 
-                mail = MIMEText(plainTextMessage.encode("utf-8"), _charset="utf-8")
+                mail = MIMEText(plain_text_message.encode("utf-8"), _charset="utf-8")
                 mail["Subject"] = subject
                 mail["To"] = ",".join(to)
                 mail["From"] = sender
-                mail["Date"] = self.model.formatHTTPTimestamp(TimeUtils.now())
+                mail["Date"] = self.model.format_http_timestamp(TimeUtils.now())
 
                 host = smtp["host"]
                 port = int(smtp.get("port", 25))
@@ -109,7 +109,7 @@ the following exception occured at {2}:
 
             dl = ET.SubElement(section, NS.XHTML.dl)
             ET.SubElement(dl, NS.XHTML.dt).text = "Exception class:"
-            ET.SubElement(dl, NS.XHTML.dd).text = unicode(exceptionType)
+            ET.SubElement(dl, NS.XHTML.dd).text = unicode(exception_type)
             ET.SubElement(dl, NS.XHTML.dt).text = "Message:"
             ET.SubElement(dl, NS.XHTML.dd).text = unicode(exception)
 

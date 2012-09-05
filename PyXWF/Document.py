@@ -11,63 +11,63 @@ import PyXWF.Cache as Cache
 
 class Author(object):
     @classmethod
-    def fromNode(cls, node):
-        fullName = unicode(node.text)
-        eMail = node.get("email")
-        pageHref = node.get("href")
-        return cls(fullName, eMail, pageHref, id=node.get("id"))
+    def from_node(cls, node):
+        fullname = unicode(node.text)
+        email = node.get("email")
+        pagehref = node.get("href")
+        return cls(fullname, email, pagehref, id=node.get("id"))
 
-    def __init__(self, fullName, eMail, pageHref, id=None):
+    def __init__(self, fullname, email, pagehref, id=None):
         super(Author, self).__init__()
-        self.fullName = fullName
-        self.eMail = eMail
-        self.pageHref = pageHref
+        self.fullname = fullname
+        self.email = email
+        self.pagehref = pagehref
         self.id = id
 
-    def applyToNode(self, node, carryID=True):
-        if self.id and carryID:
+    def apply_to_node(self, node, carryid=True):
+        if self.id and carryid:
             node.set("id", self.id)
-        if self.pageHref:
-            node.set("href", self.pageHref)
-        if self.eMail:
-            node.set("email", self.eMail)
-        node.text = self.fullName
+        if self.pagehref:
+            node.set("href", self.pagehref)
+        if self.email:
+            node.set("email", self.email)
+        node.text = self.fullname
 
-    def toNode(self):
+    def to_node(self):
         node = ET.Element(NS.PyWebXML.author)
-        self.applyToNode(node)
+        self.apply_to_node(node)
         return node
 
 
 class License(object):
     @classmethod
-    def fromNode(cls, node):
-        infoHref = node.get("href")
-        imgHref = node.get("img-href")
+    def from_node(cls, node):
+        intohref = node.get("href")
+        imghref = node.get("img-href")
         description = node.text
         name = node.get("name")
-        return cls(name, description, infoHref, imgHref)
+        return cls(name, description, intohref, imghref)
 
-    def __init__(self, name, description, infoHref, imgHref):
+    def __init__(self, name, description, intohref, imghref):
         super(License, self).__init__()
         self.name = name
         self.description = description
-        self.infoHref = infoHref
-        self.imgHref = imgHref
+        self.intohref = intohref
+        self.imghref = imghref
 
-    def applyToNode(self, node):
+    def apply_to_node(self, node):
         if self.name:
             node.set("name", self.name)
         if self.description:
             node.text = self.description
-        if self.infoHref:
-            node.set("href", self.infoHref)
-        if self.imgHref:
-            node.set("img-href", self.imgHref)
+        if self.intohref:
+            node.set("href", self.intohref)
+        if self.imghref:
+            node.set("img-href", self.imghref)
 
-    def toNode(self):
+    def to_node(self):
         node = ET.Element(NS.PyWebXML.license)
-        self.applyToNode(node)
+        self.apply_to_node(node)
         return node
 
 
@@ -80,7 +80,7 @@ class Document(Cache.Cachable):
     which resemble nodes to put into the xhtml header. These are used for
     stylesheet and script associations, but can also contain different elements.
 
-    *lastModified* is optionally a :class:`datetime.datetime` object representing
+    *last_modified* is optionally a :class:`datetime.datetime` object representing
     the last modification date of the document. Can be *None* if unknown or not
     well defined and to prevent caching.
 
@@ -113,7 +113,7 @@ class Document(Cache.Cachable):
         self.license = license
         self.ext = ET.Element("blank") if ext is None else ext
 
-    def toPyWebXMLPage(self):
+    def to_PyWebXML_page(self):
         """
         Wrap the documents body in an element tree which represents the document
         as PyWebXML page. Return the pywebxml page root node.
@@ -125,7 +125,7 @@ class Document(Cache.Cachable):
         title.text = self.title
 
         for author in self.authors:
-            meta.append(author.toNode())
+            meta.append(author.to_node())
 
         for keyword in self.keywords:
             kw = ET.SubElement(meta, NS.PyWebXML.kw)
@@ -142,7 +142,7 @@ class Document(Cache.Cachable):
             date.text = self.date.isoformat() + "Z"
 
         if self.license:
-            meta.append(self.license.toNode())
+            meta.append(self.license.to_node())
 
         if self.description:
             ET.SubElement(meta, NS.PyWebXML.description).text = self.description
@@ -151,9 +151,9 @@ class Document(Cache.Cachable):
 
         return page
 
-    def getTemplateArguments(self):
+    def get_template_arguments(self):
         return {
-            b"doc_title": utils.unicodeToXPathStr(self.title)
+            b"doc_title": utils.unicode2xpathstr(self.title)
         }
 
 class DocumentResource(Resource.Resource):
@@ -161,36 +161,36 @@ class DocumentResource(Resource.Resource):
 
 class FileDocument(DocumentResource):
     """
-    Load and hold the document referred to by *fileName* (optionally with a
-    fixed MIME type *overrideMIME*) in a cachable fashion. Provides the document
+    Load and hold the document referred to by *filename* (optionally with a
+    fixed MIME type *override_mime*) in a cachable fashion. Provides the document
     as *doc* attribute.
     """
-    def __init__(self, site, fileName, overrideMIME=None, **kwargs):
+    def __init__(self, site, filename, override_mime=None, **kwargs):
         super(FileDocument, self).__init__()
-        self._lastModified = utils.fileLastModified(fileName)
-        self._fileName = fileName
-        mimeType = overrideMIME
-        if mimeType is None:
-            mimeType, _ = mimetypes.guess_type(fileName, strict=False)
-            if mimeType is None:
-                raise Errors.UnknownMIMEType(fileName)
+        self._last_modified = utils.file_last_modified(filename)
+        self._filename = filename
+        mimetype = override_mime
+        if mimetype is None:
+            mimetype, _ = mimetypes.guess_type(filename, strict=False)
+            if mimetype is None:
+                raise Errors.UnknownMIMEType(filename)
         self._kwargs = kwargs
-        self._parser = site.parserRegistry[mimeType]
+        self._parser = site.parser_registry[mimetype]
         self._reload()
 
     def _reload(self):
-        self.doc = self._parser.parse(self._fileName, **self._kwargs)
+        self.doc = self._parser.parse(self._filename, **self._kwargs)
 
     @property
     def LastModified(self):
-        return self._lastModified
+        return self._last_modified
 
     def update(self):
-        lastModified = utils.fileLastModified(self._fileName)
-        if lastModified is None:
-            raise Errors.ResourceLost(self._fileName)
-        if self._lastModified < lastModified:
-            self._lastModified = lastModified
+        last_modified = utils.file_last_modified(self._filename)
+        if last_modified is None:
+            raise Errors.ResourceLost(self._filename)
+        if self._last_modified < last_modified:
+            self._last_modified = last_modified
             self._reload()
 
 
@@ -200,9 +200,9 @@ class FileDocumentCache(Cache.FileSourcedCache):
     :class:`~FileDocument` instances.
     """
 
-    def _load(self, path, overrideMIME=None, **kwargs):
-        return FileDocument(self.site, path, overrideMIME=overrideMIME, **kwargs)
+    def _load(self, path, override_mime=None, **kwargs):
+        return FileDocument(self.site, path, override_mime=override_mime, **kwargs)
 
-    def get(self, key, overrideMIME=None, **kwargs):
+    def get(self, key, override_mime=None, **kwargs):
         return super(FileDocumentCache, self).__getitem__(key,
-                overrideMIME=overrideMIME, **kwargs)
+                override_mime=override_mime, **kwargs)

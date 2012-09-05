@@ -28,97 +28,97 @@ class TagDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
         self.index = self.Blog.index
 
         self._children = {}
-        self._childList = []
+        self._child_list = []
 
-        self._navTitle = Types.NotNone(node.get("nav-title"))
-        self._navDisplay = Navigation.DisplayMode(node.get("nav-display", "show"))
-        self._showPagesInNav = Types.Typecasts.bool(node.get("show-pages-in-nav", False))
-        self._pageTitleFmt = node.get("page-nav-title-format", "{tag} tag")
-        self._listTemplate = Types.NotNone(node.get("list-template"))
+        self._navtitle = Types.NotNone(node.get("nav-title"))
+        self._navdisplay = Navigation.DisplayMode(node.get("nav-display", "show"))
+        self._show_pages_in_nav = Types.Typecasts.bool(node.get("show-pages-in-nav", False))
+        self._page_title_fmt = node.get("page-nav-title-format", "{tag} tag")
+        self._list_template = Types.NotNone(node.get("list-template"))
 
-        self._fixedChildren = {}
+        self._fixed_children = {}
         for child in node:
             if child.tag == ET.Comment:
                 continue
             if not child.get("name"):
-                self._templateNode = child
+                self._template_node = child
                 continue
-            node = Registry.NodePlugins.getPluginInstance(child, site, self)
+            node = Registry.NodePlugins.get(child, site, self)
             if not isinstance(node, TagPage):
                 raise Errors.BadChild(node, self)
-            self._fixedChildren[node.Name] = node
+            self._fixed_children[node.Name] = node
         try:
-            self._templateNode
+            self._template_node
         except AttributeError:
             raise Errors.NodeConfigurationError("Tag dir requires template node (<blog:tag-page /> without name)", self)
 
         self.Blog.TagDirectory = self
 
-    def _getChildNode(self, key):
+    def _get_child(self, key):
         if key == "":
             return self
         else:
             return self._children.get(key, None)
 
-    def doGet(self, ctx):
-        tagList = NS.PyBlog("tag-list")
-        for posts, page in reversed(self._childList):
+    def do_GET(self, ctx):
+        tag_list = NS.PyBlog("tag-list")
+        for posts, page in reversed(self._child_list):
             tag = page.Name
-            tagEl = ET.SubElement(tagList, NS.PyBlog.tag, attrib={
-                "href": self.getTagPagePath(tag),
+            tagel = ET.SubElement(tag_list, NS.PyBlog.tag, attrib={
+                "href": self.get_tag_page_path(tag),
                 "post-count": unicode(posts)
             })
-            tagEl.text = tag
-        return self.Site.templateCache[self._listTemplate].transform(tagList)
+            tagel.text = tag
+        return self.Site.template_cache[self._list_template].transform(tag_list)
 
-    def getTagPagePath(self, tag):
+    def get_tag_page_path(self, tag):
         return self.Path + tag
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self
 
-    def getTitle(self):
-        return self._navTitle
+    def get_title(self):
+        return self._navtitle
 
-    def getDisplay(self):
-        return self._navDisplay
+    def get_display(self):
+        return self._navdisplay
 
-    def getRepresentative(self):
+    def get_representative(self):
         return self
 
-    def resolvePath(self, ctx, relPath):
-        node = super(TagDir, self).resolvePath(ctx, relPath)
+    def resolve_path(self, ctx, relpath):
+        node = super(TagDir, self).resolve_path(ctx, relpath)
         if node is self:
-            ctx.useResource(self.Site.templateCache[self._listTemplate])
+            ctx.use_resource(self.Site.template_cache[self._list_template])
         return node
 
-    def updateChildren(self):
+    def update_children(self):
         self._children = {}
-        self._childList = []
-        for keyword, posts in self.index.getKeywordPosts():
+        self._child_list = []
+        for keyword, posts in self.index.get_keyword_posts():
             try:
-                page = self._fixedChildren[keyword]
+                page = self._fixed_children[keyword]
             except KeyError:
-                self._templateNode.set("name", keyword)
-                page = TagPage(self.Site, self, self._templateNode)
+                self._template_node.set("name", keyword)
+                page = TagPage(self.Site, self, self._template_node)
             self._children[keyword] = page
-            self._childList.append((len(posts), page))
-            page.updateChildren(posts)
-        self._childList.sort(key=lambda x: (x[0], x[1].Name))
-        logging.debug(_F("Tag dir updated: {0} children", len(self._childList)))
+            self._child_list.append((len(posts), page))
+            page.update_children(posts)
+        self._child_list.sort(key=lambda x: (x[0], x[1].Name))
+        logging.debug(_F("Tag dir updated: {0} children", len(self._child_list)))
         logging.debug(_F("Tags: {0}", ", ".join(self._children.keys())))
 
     def __iter__(self):
-        if self._showPagesInNav:
-            return iter(page for count, page in self._childList)
+        if self._show_pages_in_nav:
+            return iter(page for count, page in self._child_list)
         else:
             return iter([])
 
     def __len__(self):
-        return len(self._childList)
+        return len(self._child_list)
 
-    requestHandlers = {
-        "GET": doGet
+    request_handlers = {
+        "GET": do_GET
     }
 
 class TagPage(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info, Protocols.PostDirectory):
@@ -135,41 +135,41 @@ class TagPage(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info, Pro
         super(TagPage, self).__init__(site, parent, node)
         self.Blog = parent.Blog
         self._posts = []
-        self._title = (node.get("nav-title-fmt") or parent._pageTitleFmt).format(tag=self.Name)
-        self._listTemplate = Types.NotNone(node.get("list-template"))
-        self._feedsNode = None
+        self._title = (node.get("nav-title-fmt") or parent._page_title_fmt).format(tag=self.Name)
+        self._list_template = Types.NotNone(node.get("list-template"))
+        self._feeds_node = None
 
     @property
     def SelectionValue(self):
         return self.Name
 
-    def doGet(self, ctx):
-        if not self._feedsNode and self.Blog.Feeds:
-            feeds = self.Blog.Feeds.getFeedsNode(self)
+    def do_GET(self, ctx):
+        if not self._feeds_node and self.Blog.Feeds:
+            feeds = self.Blog.Feeds.get_feeds_node(self)
             feeds.set("base", self.Path)
             self.abstracts.append(feeds)
-            self._feedsNode = feeds
-        return self.Site.templateCache[self._listTemplate].transform(
+            self._feeds_node = feeds
+        return self.Site.template_cache[self._list_template].transform(
             self.abstracts,
-            self.Blog.getTransformArgs()
+            self.Blog.get_transform_args()
         )
 
-    def getNavigationInfo(self, ctx):
+    def get_navigation_info(self, ctx):
         return self
 
-    def getTitle(self):
+    def get_title(self):
         return self._title
 
-    def getDisplay(self):
+    def get_display(self):
         return Navigation.Show
 
-    def getRepresentative(self):
+    def get_representative(self):
         return self
 
-    def getPosts(self):
+    def get_posts(self):
         return self._posts
 
-    def updateChildren(self, posts):
+    def update_children(self, posts):
         self._posts = list(reversed(posts))
         self.abstracts = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
             "tag": self.Name
@@ -177,7 +177,7 @@ class TagPage(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info, Pro
         for post in self._posts:
             self.abstracts.append(copy.deepcopy(post.abstract))
 
-    requestHandlers = {
-        "GET": doGet
+    request_handlers = {
+        "GET": do_GET
     }
 

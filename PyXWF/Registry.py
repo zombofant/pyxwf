@@ -20,76 +20,77 @@ class RegistryBase(dict):
     a new registry to PyXWF.
     """
 
-    keyDescription = "key"
+    key_description = "key"
 
     def __setitem__(self, key, cls):
         if key in self:
-            raise ValueError("Conflicting {2}: {0} already taken by {1}".format(key, self[key], self.keyDescription))
+            raise ValueError("Conflicting {2}: {0} already taken by {1}".format(key, self[key], self.key_description))
         super(RegistryBase, self).__setitem__(key, cls)
 
-    def registerMultiple(self, keys, cls):
+    def register_multiple(self, keys, cls):
         """
         Iterate over keys and set each key to cls in self.
         """
         try:
-            lastSuccessful = None
+            last_successful = None
             for key in keys:
                 self[key] = cls
-                lastSuccessful = key
+                last_successful = key
         except:
-            if lastSuccessful is not None:
-                for key in itertools.takewhile(lambda x: x is not lastSuccessful, keys):
+            if last_successful is not None:
+                for key in itertools.takewhile(lambda x: x is not last_successful, keys):
                     del self[key]
             raise
 
     def __call__(self, *args, **kwargs):
-        return self.getPluginInstance(*args, **kwargs)
+        return self.get(*args, **kwargs)
 
 class NamespaceRegistry(RegistryBase):
     """
     A more specialized baseclass for registries dealing with namespace/tagname
     pairs for XML nodes.
     """
-    keyDescription = "namespace/name pair"
+    key_description = "namespace/name pair"
 
-    def getPluginInstance(self, node, *args):
-        ns, name = utils.splitTag(node.tag)
-        cls = self.get((ns, name), None)
-        if cls is None:
-            raise self.errorClass(ns, name)
-        return self._getInstance(cls, node, *args)
+    def get(self, node, *args):
+        ns, name = utils.split_tag(node.tag)
+        try:
+            cls = self[(ns, name)]
+        except KeyError:
+            raise self.error_class(ns, name)
+        return self._get_instance(cls, node, *args)
 
     def register(self, ns, names, cls):
         """
         Register the class *cls* for all names in *names* with namespace *ns*.
         """
         keys = list(itertools.izip(itertools.repeat(ns), names))
-        self.registerMultiple(keys, cls)
+        self.register_multiple(keys, cls)
 
 class _NodePlugins(NamespaceRegistry):
-    errorClass = Errors.MissingNodePlugin
+    error_class = Errors.MissingNodePlugin
 
-    def _getInstance(self, cls, node, site, parent):
+    def _get_instance(self, cls, node, site, parent):
         return cls(site, parent, node)
 
 class _CrumbPlugins(NamespaceRegistry):
-    errorClass = Errors.MissingCrumbPlugin
+    error_class = Errors.MissingCrumbPlugin
 
-    def _getInstance(self, cls, node, site):
+    def _get_instance(self, cls, node, site):
         return cls(site, node)
 
 class HookRegistry(object):
     def __init__(self):
         super(HookRegistry, self).__init__()
-        self.hookDict = {}
+        self.hookdict = {}
 
-    def register(self, hookName, handler, priority=0):
-        hookList = self.hookDict.setdefault(hookName, [])
-        hookList.append((priority, handler))
-        # hookList.sort(key=operator.itemgetter(0))
+    def register(self, hookname, handler, priority=0):
+        hooklist = self.hookdict.setdefault(hookname, [])
+        hooklist.append((priority, handler))
+        # hooklist.sort(key=operator.itemgetter(0))
 
-    def call(self, hookName, *args):
-        handlers = self.hookDict.get(hookName, [])
+    def call(self, hookname, *args):
+        handlers = self.hookdict.get(hookname, [])
         collections.deque((handler(*args) for priority, handler in handlers), 0)
 
 
@@ -111,23 +112,23 @@ class SitletonRegistry(object):
 class ParserRegistry(object):
     def __init__(self):
         super(ParserRegistry, self).__init__()
-        self._mimeMap = {}
+        self._mimemap = {}
 
-    def register(self, inst, mimeTypes):
+    def register(self, inst, mimetypes):
         try:
             inst.parse
         except AttributeError:
             raise TypeError("Parsers must have the parse() method.")
-        for mimeType in mimeTypes:
-            if mimeType in self._mimeMap:
-                raise PluginConflict(mimeType, self._mimeMap[mimeType], inst, "parsing of mime type {0}".format(mimeType))
-            self._mimeMap[mimeType] = inst
+        for mimetype in mimetypes:
+            if mimetype in self._mimemap:
+                raise PluginConflict(mimetype, self._mimemap[mimetype], inst, "parsing of mime type {0}".format(mimetype))
+            self._mimemap[mimetype] = inst
 
-    def __getitem__(self, mimeType):
+    def __getitem__(self, mimetype):
         try:
-            return self._mimeMap[mimeType]
+            return self._mimemap[mimetype]
         except KeyError:
-            raise Errors.MissingParserPlugin(mimeType)
+            raise Errors.MissingParserPlugin(mimetype)
 
 
 class TweakRegistry(object):
@@ -142,14 +143,14 @@ class TweakRegistry(object):
                 raise PluginConflict(tag, self._tweaks[tag], inst, "tweak node {0}".format(tag))
             self._tweaks[tag] = hook
 
-    def submitTweak(self, node):
+    def submit_tweak(self, node):
         try:
             hook = self._tweaks[node.tag]
         except KeyError:
             raise Errors.MissingTweakPlugin(node.tag)
         hook(node)
 
-    _getInstance = None
+    _get_instance = None
 
 NodePlugins = _NodePlugins()
 CrumbPlugins = _CrumbPlugins()
@@ -166,12 +167,12 @@ class NamespaceMetaMixin(type):
 
     The class will be registered for all names in the given namespace.
     """
-    defaultNames = []
+    default_names = []
 
     def __new__(mcls, name, bases, dct):
         ns = dct.get("namespace", None)
         try:
-            names = list(dct.get("names", mcls.defaultNames))
+            names = list(dct.get("names", mcls.default_names))
         except TypeError:
             raise TypeError("Plugin needs names attribute which must be convertible to a sequence.")
         if not isinstance(ns, basestring):

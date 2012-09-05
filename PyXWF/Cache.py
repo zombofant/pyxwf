@@ -23,7 +23,7 @@ class Cachable(object):
     interface neccessary for a cache entry to work properly. The following
     attributes are used (and reserved by) the caching framework on Cachables:
 
-    * `_cache_lastAccess` -- timestamp of last access of the object via the
+    * `_cache_lastaccess` -- timestamp of last access of the object via the
       cache. This is used as a metric of when an entry can be uncached if limits
       are reached.
     * `_cache_master` -- The :class:`Cache` instance holding the object.
@@ -33,7 +33,7 @@ class Cachable(object):
 
     def __init__(self):
         super(Cachable, self).__init__()
-        self._cache_lastAccess = time.time()
+        self._cache_lastaccess = time.time()
         self._cache_master = None
 
     def touch(self):
@@ -42,7 +42,7 @@ class Cachable(object):
         will also inform the master (if known) of the changed value for uncache
         metrics.
         """
-        self._cache_lastAccess = time.time()
+        self._cache_lastaccess = time.time()
         if self._cache_master is not None:
             self._cache_master._changed(self)
 
@@ -53,7 +53,7 @@ class Cachable(object):
         if self._cache_master is not None:
             self._cache_master._remove(self)
 
-    def proposeUncache(self):
+    def propose_uncache(self):
         """
         Set the timestamp of last use in the past so that uncaching of this
         object in case of reached limits is more likely than for other objects.
@@ -61,11 +61,11 @@ class Cachable(object):
         # it must be something which is definetly in the past (a date which is
         # easier to find than a date which is definetly in the future. Greetings
         # to MTA folks).
-        self._cache_lastAccess = 0
+        self._cache_lastaccess = 0
 
     @staticmethod
     def _cache_key(self):
-        return self._cache_lastAccess
+        return self._cache_lastaccess
 
 class SubCache(object):
     """
@@ -88,8 +88,8 @@ class SubCache(object):
         self.site = cache.site
         self.master = cache
         self.entries = {}
-        self.reverseMap = {}
-        self._lookupLock = threading.RLock()
+        self.reversemap = {}
+        self._lookuplock = threading.RLock()
 
     def _kill(self, cachable):
         """
@@ -97,15 +97,15 @@ class SubCache(object):
         entries using :meth:`remove()`, :meth:`Cachable.uncache()` or
         :meth:`Cache.remove()`.
         """
-        del self.entries[self.reverseMap[cachable]]
-        del self.reverseMap[cachable]
+        del self.entries[self.reversemap[cachable]]
+        del self.reversemap[cachable]
 
-    def getDefault(self, key, default=None):
+    def get(self, key, default=None):
         """
         Try to get an object from the cache and return *default* (defaults to
         ``None``) if no object is associated with *key*.
         """
-        with self._lookupLock:
+        with self._lookuplock:
             try:
                 return self[key]
             except KeyError:
@@ -123,29 +123,29 @@ class SubCache(object):
         return cachable
 
     def __setitem__(self, key, cachable):
-        with self._lookupLock:
+        with self._lookuplock:
             if key in self:
                 raise KeyError("Cache key already in use: {0}".format(key))
             self.entries[key] = cachable
-            self.reverseMap[cachable] = key
+            self.reversemap[cachable] = key
 
             self.master._add(cachable)
             cachable._cache_master = self.master
             cachable._cache_subcache = self
 
     def __delitem__(self, key):
-        with self._lookupLock:
+        with self._lookuplock:
             cachable = self.entries[key]
             cachable.uncache()
 
     def __contains__(self, key):
-        with self._lookupLock:
+        with self._lookuplock:
             return key in self.entries
 
     def __len__(self):
         return len(self.entries)
 
-    def getLastModified(self, key):
+    def get_last_modified(self, key):
         """
         Return the datetime representing the last modification of the cached
         content. The default implementation requests the cached element from
@@ -154,7 +154,7 @@ class SubCache(object):
         Derived classes may (and should!) provide mechanisms which can query
         the LastModified timestamp without completely loading an object.
         """
-        with self._lookupLock:
+        with self._lookuplock:
             return self[key].LastModified
 
     def update(self, key):
@@ -164,12 +164,12 @@ class SubCache(object):
         used to ensure that cached entries are reloaded if they wouldn't be
         reloaded anyways on the next access.
         """
-        with self._lookupLock:
+        with self._lookuplock:
             try:
                 entry = self.entries[key]
             except KeyError:
                 return
-        entry.threadSafeUpdate()
+        entry.threadsafe_update()
 
 
 class Cache(object):
@@ -180,13 +180,13 @@ class Cache(object):
     cache is associated with a certain key, a new raw :class:`SubCache` is created
     for that key.
 
-    Specialized sub caches can be created using :meth:`specializedSubcache`.
+    Specialized sub caches can be created using :meth:`specialized_cache`.
     """
     def __init__(self, site, limit=0):
-        self._lookupLock = threading.RLock()
-        self._limitLock = threading.RLock()
+        self._lookuplock = threading.RLock()
+        self._limitlock = threading.RLock()
         self.site = site
-        self.subCaches = {}
+        self.subcaches = {}
         self._limit = 0
         self.Limit = limit
 
@@ -194,7 +194,7 @@ class Cache(object):
         """
         Add a cachable. Do not call this directly. Only used for bookkeeping.
         """
-        with self._limitLock:
+        with self._limitlock:
             if self._limit:
                 self.entries.append(cachable)
 
@@ -203,7 +203,7 @@ class Cache(object):
         Resort the container keeping track of all entries to enforce cache
         limits.
         """
-        with self._limitLock:
+        with self._limitlock:
             if not self._limit:
                 return
             self.entries.sort()
@@ -220,22 +220,22 @@ class Cache(object):
         del cachable._cache_subcache
 
     def __getitem__(self, key):
-        with self._lookupLock:
+        with self._lookuplock:
             try:
-                return self.subCaches[key]
+                return self.subcaches[key]
             except KeyError:
-                subCache = SubCache(self)
-                self.subCaches[key] = subCache
-                return subCache
+                subcache = SubCache(self)
+                self.subcaches[key] = subcache
+                return subcache
 
     def __delitem__(self, key):
-        with self._lookupLock:
-            cache = self.subCaches[key]
+        with self._lookuplock:
+            cache = self.subcaches[key]
             for entry in cache.entries.values():
                 entry.uncache()
-            del self.subCaches[key]
+            del self.subcaches[key]
 
-    def specializedCache(self, key, cls, *args, **kwargs):
+    def specialized_cache(self, key, cls, *args, **kwargs):
         """
         Create a specialized subcache using the given class *cls* at the given
         *key*. Further arguments and keyword arguments are passed to the
@@ -244,10 +244,10 @@ class Cache(object):
         Return the new *cls* instance.
         """
         cache = cls(self, *args, **kwargs)
-        with self._lookupLock:
-            if key in self.subCaches:
+        with self._lookuplock:
+            if key in self.subcaches:
                 raise Errors.CacheConflict(key)
-            self.subCaches[key] = cache
+            self.subcaches[key] = cache
         return cache
 
     def remove(self, cachable):
@@ -255,20 +255,20 @@ class Cache(object):
         Remove one entry from the cache. You can either use this or
         :meth:`CacheEntry.delete`, which does the same thing.
         """
-        with self._limitLock:
+        with self._limitlock:
             self._remove(cachable)
 
-    def enforceLimit(self):
+    def enforce_limit(self):
         """
         Remove those entries with the oldest lastAccess from the cache.
         """
-        with self._limitLock:
+        with self._limitlock:
             if not self._limit:
                 return
-            tooMany = len(self.entries) - self._limit
-            if tooMany > 0:
-                overflow = self.entries[:tooMany]
-                self.entries = self.entries[tooMany:]
+            toomany = len(self.entries) - self._limit
+            if toomany > 0:
+                overflow = self.entries[:toomany]
+                self.entries = self.entries[toomany:]
                 for entry in overflow:
                     logging.debug(_F("PURGE: {0}", entry))
                     entry._cache_subcache._kill(entry)
@@ -282,12 +282,12 @@ class Cache(object):
 
         Setting this limit to 0 will disable limiting.
         """
-        with self._limitLock:
+        with self._limitlock:
             return self.limit
 
     @Limit.setter
     def Limit(self, value):
-        with self._limitLock:
+        with self._limitlock:
             if value is None:
                 value = 0
             value = int(value)
@@ -300,10 +300,10 @@ class Cache(object):
                 del self.heap
             else:
                 self.entries = []
-                for cache in self.subCaches.viewvalues():
+                for cache in self.subcaches.viewvalues():
                     self.entries.extend(cache.entries.viewvalues())
-                self.entries.sort(key=operator.attrgetter("_cache_lastAccess"))
-                self.enforceLimit()
+                self.entries.sort(key=operator.attrgetter("_cache_lastaccess"))
+                self.enforce_limit()
             self._limit = value
             logging.debug(_F("CONF: Limit now at {0}", value))
 
@@ -312,7 +312,7 @@ class FileSourcedCache(SubCache):
     """
     This is an abstract baseclass for caches which are backed by files on the
     file system. The file names are used as keys relative to a given root
-    directory *rootPath*.
+    directory *rootpath*.
 
     A deriving class has to implement the *_load* method which is called if a
     file accessed through this cache is not available in the cache.
@@ -320,9 +320,9 @@ class FileSourcedCache(SubCache):
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, master, rootPath):
+    def __init__(self, master, rootpath):
         super(FileSourcedCache, self).__init__(master)
-        self.rootPath = rootPath
+        self.rootpath = rootpath
 
     @abc.abstractmethod
     def _load(self, path):
@@ -331,12 +331,12 @@ class FileSourcedCache(SubCache):
         object behind *path* or raise.
         """
 
-    def _transformKey(self, key):
-        return os.path.join(self.rootPath, key)
+    def _transform_key(self, key):
+        return os.path.join(self.rootpath, key)
 
     def __getitem__(self, key, **kwargs):
-        with self._lookupLock:
-            path = self._transformKey(key)
+        with self._lookuplock:
+            path = self._transform_key(key)
             try:
                 return super(FileSourcedCache, self).__getitem__(path)
             except KeyError:
@@ -345,7 +345,7 @@ class FileSourcedCache(SubCache):
                 super(FileSourcedCache, self).__setitem__(path, obj)
                 return obj
 
-    def getLastModified(self, key):
+    def get_last_modified(self, key):
         """
         In contrast to the implementation given in :class:`SubCache`, this
         implementation uses the timestamp of last modification of the file
@@ -353,15 +353,15 @@ class FileSourcedCache(SubCache):
         loaded (or even loadable!) even if a LastModified can be retrieved
         successfully.
         """
-        timestamp = utils.fileLastModified(self._transformKey(key))
+        timestamp = utils.file_last_modified(self._transform_key(key))
         if timestamp is None:
-            raise Errors.ResourceLost(self._transformKey(key))
+            raise Errors.ResourceLost(self._transform_key(key))
         return timestamp
 
     def update(self, key):
-        super(FileSourcedCache, self).update(self._transformKey(key))
+        super(FileSourcedCache, self).update(self._transform_key(key))
 
     def __repr__(self):
-        return "<FSCache {0}>".format(self.rootPath)
+        return "<FSCache {0}>".format(self.rootpath)
 
     __setitem__ = None

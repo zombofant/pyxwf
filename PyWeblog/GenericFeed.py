@@ -23,17 +23,17 @@ class GenericFeed(Protocols.Feed):
         def Template(self):
             return self.node.Template
 
-        def doGet(self, ctx):
-            return self.feed.doGet(ctx, self.node)
+        def do_GET(self, ctx):
+            return self.feed.do_GET(ctx, self.node)
 
-        def getContentType(self, ctx):
+        def get_content_type(self, ctx):
             return self.feed.ContentType
 
-        def getNavigationInfo(self, ctx):
+        def get_navigation_info(self, ctx):
             assert False
 
-        requestHandlers = {
-            "GET": doGet
+        request_handlers = {
+            "GET": do_GET
         }
 
     def __init__(self, site, parent, node):
@@ -43,11 +43,11 @@ class GenericFeed(Protocols.Feed):
         self.Site = site
         self.Blog = parent.Blog
         self._limit = Types.NumericRange(int, 1, None)(node.get("limit", 10))
-        self._linkPrefix = Types.NotNone(node.get("link-prefix"))
-        self._idPrefix = node.get("id-prefix", self._linkPrefix)
-        self._iconHref = node.get("icon-href")
-        self._rootID = node.get("root-id")
-        self._mapUpdatedToLastModified = Types.Typecasts.bool(node.get("map-updated-to-last-modified", True))
+        self._link_prefix = Types.NotNone(node.get("link-prefix"))
+        self._idprefix = node.get("id-prefix", self._link_prefix)
+        self._iconhref = node.get("icon-href")
+        self._rootid = node.get("root-id")
+        self._map_updated_to_last_modified = Types.Typecasts.bool(node.get("map-updated-to-last-modified", True))
 
     @abc.abstractproperty
     def ContentType(self):
@@ -57,51 +57,51 @@ class GenericFeed(Protocols.Feed):
 
     @property
     def QueryValue(self):
-        return self._queryValue
+        return self._query_value
 
-    def doGet(self, ctx, node):
+    def do_GET(self, ctx, node):
         root = ET.Element(NS.PyBlog.syndication, attrib={
             "kind": node.SelectionCriterion,
             "title": node.SelectionValue
         })
-        rootID = ET.SubElement(root, NS.PyBlog.id).text = \
-            self._rootID or (self._idPrefix + node.Path)
-        if self._mapUpdatedToLastModified:
-            updatedKey = operator.attrgetter("LastModified")
+        rootid = ET.SubElement(root, NS.PyBlog.id).text = \
+            self._rootid or (self._idprefix + node.Path)
+        if self._map_updated_to_last_modified:
+            updated_key = operator.attrgetter("LastModified")
         else:
-            updatedKey = operator.attrgetter("creationDate")
+            updated_key = operator.attrgetter("creation_date")
 
-        posts = list(itertools.islice(node.getPosts(), 0, self._limit))
+        posts = list(itertools.islice(node.get_posts(), 0, self._limit))
         if len(posts) > 0:
             ET.SubElement(root, getattr(NS.PyBlog, "updated")).text = \
-                max(map(updatedKey, posts)).isoformat() + "Z"
+                max(map(updated_key, posts)).isoformat() + "Z"
         ET.SubElement(root, getattr(NS.PyBlog, "feed-path")).text = ctx.FullURI
         ET.SubElement(root, getattr(NS.PyBlog, "node-path")).text = node.Path
         ET.SubElement(root, getattr(NS.PyBlog, "blog-path")).text = self.Blog.Path
         for post in posts:
-            postNode = ET.SubElement(root, NS.PyBlog.post)
-            ET.SubElement(postNode, NS.PyBlog.id).text = self._idPrefix + post.path
-            ET.SubElement(postNode, NS.PyBlog.updated).text = updatedKey(post).isoformat() + "Z"
-            postNode.append(post.getPyWebXML())
+            postnode = ET.SubElement(root, NS.PyBlog.post)
+            ET.SubElement(postnode, NS.PyBlog.id).text = self._idprefix + post.path
+            ET.SubElement(postnode, NS.PyBlog.updated).text = updated_key(post).isoformat() + "Z"
+            postnode.append(post.get_PyWebXML())
 
         return self.transform(ctx, root)
 
-    def getFeedNode(self):
+    def get_feed_node(self):
         el = ET.Element(NS.PyBlog.feed, attrib={
             "query-value": self.QueryValue,
             "name": "Atom",
             "type": self.ContentType
         })
-        if self._iconHref:
-            el.set("img-href", self._iconHref)
+        if self._iconhref:
+            el.set("img-href", self._iconhref)
         return el
 
     def proxy(self, ctx, node):
-        ctx.useResource(self.Site.templateCache[self._template])
+        ctx.use_resource(self.Site.template_cache[self._template])
         return self.Proxy(self, node)
 
     def transform(self, ctx, root):
-        self.Site.transformReferences(ctx, root)
-        feed = self.Site.templateCache[self._template].rawTransform(root, {})
-        self.Site.transformPyNamespace(ctx, feed, crumbs=False, link=False)
+        self.Site.transform_references(ctx, root)
+        feed = self.Site.template_cache[self._template].raw_transform(root, {})
+        self.Site.transform_py_namespace(ctx, feed, crumbs=False, link=False)
         return feed

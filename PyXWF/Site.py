@@ -26,10 +26,10 @@ import PyXWF.Resource as Resource
 class Site(Resource.Resource):
     """
     Represent and maintain a complete PyXWF framework instance. The sitemap is
-    loaded from *sitemapFile*. Optionally, one can specify a *defaultURLRoot*
+    loaded from *sitemap_file*. Optionally, one can specify a *default_url_root*
     which is used if no URL root is specified in the sitemap XML.
 
-    .. attribute:: parserRegistry
+    .. attribute:: parser_registry
 
         An instance of :class:`~PyXWF.Registry.ParserRegistry` local to the
         current site. This is the preferred method to access parsers.
@@ -40,9 +40,9 @@ class Site(Resource.Resource):
         See :ref:`site-hooks` for a reference of existing hooks.
     """
 
-    urnScheme = re.compile("^\w+:")
+    urn_scheme = re.compile("^\w+:")
 
-    def __init__(self, sitemapFile, defaultURLRoot=None, **kwargs):
+    def __init__(self, sitemap_file, default_url_root=None, **kwargs):
         logging.info(_F(
 "Initializing PyXWF/{pyxwf_version} at {pid} with lxml.etree/{etree_version}, {threading}, blist/{blist_version}",
             pyxwf_version=PyXWF.__version__,
@@ -52,18 +52,18 @@ class Site(Resource.Resource):
             pid=os.getpid()
         ))
         super(Site, self).__init__(**kwargs)
-        self.startCWD = os.getcwd()
-        self.defaultURLRoot = defaultURLRoot
+        self.startcwd = os.getcwd()
+        self.default_url_root = default_url_root
         self.cache = Cache.Cache(self)
         # self.savepoint = ImportSavepoints.RollbackImporter()
         try:
-            self.loadSitemap(sitemapFile)
+            self.load_sitemap(sitemap_file)
         except:
             raise
 
     @property
     def LastModified(self):
-        return self.sitemapTimestamp
+        return self.sitemap_timestamp
 
     def _require(self, value, name):
         """
@@ -73,7 +73,7 @@ class Site(Resource.Resource):
         if value is None:
             raise ValueError("Sitemap requires a valid {0} tag.".format(name))
 
-    def _loadMeta(self, root):
+    def _load_meta(self, root):
         """
         Process the meta element from a sitemap XML tree.
         """
@@ -85,33 +85,33 @@ class Site(Resource.Resource):
         self.title = unicode(meta.findtext(NS.Site.title))
 
         # file system root when looking for site content files
-        self.root = meta.findtext(NS.Site.root) or self.startCWD
+        self.root = meta.findtext(NS.Site.root) or self.startcwd
 
         # URL root in the web server setup for absolute links inside the
         # framework (e.g. CSS files)
-        self.urlRoot = meta.findtext(NS.Site.urlRoot) or self.defaultURLRoot
+        self.urlroot = meta.findtext(NS.Site.urlroot) or self.default_url_root
 
         # validate
         self._require(self.title, "title")
         self._require(self.root, "root")
-        self._require(self.urlRoot, "urlRoot")
+        self._require(self.urlroot, "urlroot")
 
         # set of authors which can be referred by their IDs in documents
         self._authors = {}
         for author in meta.findall(NS.PyWebXML.author):
-            authorObj = Document.Author.fromNode(author)
-            if authorObj.id is None:
+            authorobj = Document.Author.from_node(author)
+            if authorobj.id is None:
                 raise ValueError("Authors must be referrable by an id")
-            self._authors[authorObj.id] = authorObj
+            self._authors[authorobj.id] = authorobj
 
         # (default) license of content
         license = meta.find(NS.PyWebXML.license)
         if license is not None:
-            self._license = Document.License.fromNode(license)
+            self._license = Document.License.from_node(license)
         else:
             self._license = None
 
-    def _loadPlugins(self, root):
+    def _load_plugins(self, root):
         """
         Load the python modules for plugins
         """
@@ -124,7 +124,7 @@ class Site(Resource.Resource):
                 continue
             module = importlib.import_module(plugin.text)
 
-    def _loadTree(self, root):
+    def _load_tree(self, root):
         """
         Load the whole sitemap tree recursively. Nodes which accept children
         have to load them themselves.
@@ -138,7 +138,7 @@ class Site(Resource.Resource):
         else:
             raise ValueError("No tree node.")
 
-    def _loadCrumbs(self, root):
+    def _load_crumbs(self, root):
         """
         Load crumbs and associate them to their ID.
         """
@@ -149,124 +149,124 @@ class Site(Resource.Resource):
         for crumb in crumbs:
             if not isinstance(crumb.tag, basestring):
                 continue
-            self.addCrumb(Registry.CrumbPlugins(crumb, self))
+            self.add_crumb(Registry.CrumbPlugins(crumb, self))
 
-    def _loadMimeMap(self, mimeMap):
+    def _load_mimemap(self, mimemap):
         """
         Load overrides for MIME types.
         """
-        for child in mimeMap.findall(NS.Site.mm):
+        for child in mimemap.findall(NS.Site.mm):
             ext = Types.Typecasts.unicode(child.get("ext"))
             mime = Types.Typecasts.unicode(child.get("type"))
             mimetypes.add_type(mime, ext)
 
-    def _loadTweaks(self, tweaks):
+    def _load_tweaks(self, tweaks):
         """
         Load extended configuration (called tweaks).
         """
-        workingCopy = copy.copy(tweaks)
+        working_copy = copy.copy(tweaks)
 
         # performance tweaks
-        perf = workingCopy.find(NS.Site.performance)
+        perf = working_copy.find(NS.Site.performance)
         if perf is not None:
-            workingCopy.remove(perf)
+            working_copy.remove(perf)
         else:
             perf = ET.Element(NS.Site.performance)
 
         # cache limit
         try:
-            maxCache = Types.NumericRange(Types.Typecasts.int, 0, None)\
+            maxcache = Types.NumericRange(Types.Typecasts.int, 0, None)\
                     (perf.attrib.pop("cache-limit"))
         except KeyError:
-            maxCache = 0
+            maxcache = 0
         # xml pretty printing
-        self.cache.Limit = maxCache
+        self.cache.Limit = maxcache
         try:
-            self.prettyPrint = Types.Typecasts.bool(perf.attrib.pop("pretty-print"))
+            self.pretty_print = Types.Typecasts.bool(perf.attrib.pop("pretty-print"))
         except KeyError:
-            self.prettyPrint = False
+            self.pretty_print = False
         if len(perf.attrib):
             logging.debug(_F("Unused attributes on <performance />: {0}", perf.attrib))
 
         # mime overrides
-        mimeMap = workingCopy.find(getattr(NS.Site, "mime-map"))
+        mimemap = working_copy.find(getattr(NS.Site, "mime-map"))
         mimetypes.init()
-        if mimeMap is not None:
-            workingCopy.remove(mimeMap)
-            self._loadMimeMap(mimeMap)
+        if mimemap is not None:
+            working_copy.remove(mimemap)
+            self._load_mimemap(mimemap)
 
         # date formatting; defaults to locale specific
-        longDate = "%c"
-        shortDate = "%c"
-        formatting = workingCopy.find(NS.Site.formatting)
+        long_date = "%c"
+        short_date = "%c"
+        formatting = working_copy.find(NS.Site.formatting)
         if formatting is not None:
-            workingCopy.remove(formatting)
-            longDate = formatting.get("date-format") or longDate
-            shortDate = formatting.get("date-format") or shortDate
-            longDate = formatting.get("long-date-format") or longDate
-            shortDate = formatting.get("short-date-format") or shortDate
-        self.longDateFormat = longDate
-        self.shortDateFormat = shortDate
+            working_copy.remove(formatting)
+            long_date = formatting.get("date-format") or long_date
+            short_date = formatting.get("date-format") or short_date
+            long_date = formatting.get("long-date-format") or long_date
+            short_date = formatting.get("short-date-format") or short_date
+        self.long_date_format = long_date
+        self.short_date_format = short_date
 
         # error templates
-        self.notFoundTemplate = "templates/errors/not-found.xsl"
-        self.defaultTemplate = None
-        templates = workingCopy.find(NS.Site.templates)
+        self.not_found_template = "templates/errors/not-found.xsl"
+        self.default_template = None
+        templates = working_copy.find(NS.Site.templates)
         if templates is not None:
-            workingCopy.remove(templates)
-            self.notFoundTemplate = templates.get("not-found",
-                    self.notFoundTemplate)
-            self.defaultTemplate = templates.get("default",
-                    self.defaultTemplate)
+            working_copy.remove(templates)
+            self.not_found_template = templates.get("not-found",
+                    self.not_found_template)
+            self.default_template = templates.get("default",
+                    self.default_template)
 
-        self.htmlTransforms = []
-        for transform in list(workingCopy.findall(getattr(NS.Site, "html-transform"))):
-            workingCopy.remove(transform)
-            self.htmlTransforms.append(Types.NotNone(transform.get("transform")))
+        self.html_transforms = []
+        for transform in list(working_copy.findall(getattr(NS.Site, "html-transform"))):
+            working_copy.remove(transform)
+            self.html_transforms.append(Types.NotNone(transform.get("transform")))
 
-        compatibility = workingCopy.find(NS.Site.compatibility)
+        compatibility = working_copy.find(NS.Site.compatibility)
         if compatibility is None:
             compatibility = ET.Element(NS.Site.compatibility)
         else:
-            workingCopy.remove(compatibility)
-        self.html4Transform = compatibility.get("html4-transform")
+            working_copy.remove(compatibility)
+        self.html4_transform = compatibility.get("html4-transform")
 
-        self._namespaceMap = {}
-        self._forceNamespaces = set()
-        xmlNamespaces = workingCopy.find(getattr(NS.Site, "xml-namespaces"))
-        if xmlNamespaces is None:
-            xmlNamespaces = ET.Element(getattr(NS.Site, "xml-namespaces"))
+        self._namespacemap = {}
+        self._force_namespaces = set()
+        xml_namespaces = working_copy.find(getattr(NS.Site, "xml-namespaces"))
+        if xml_namespaces is None:
+            xml_namespaces = ET.Element(getattr(NS.Site, "xml-namespaces"))
         else:
-            workingCopy.remove(xmlNamespaces)
-        for ns in xmlNamespaces.findall(NS.Site.ns):
+            working_copy.remove(xml_namespaces)
+        for ns in xml_namespaces.findall(NS.Site.ns):
             prefix = ns.get("prefix")
             uri = Types.NotNone(ns.get("uri"))
             force = Types.Typecasts.bool(ns.get("force", False))
-            self._namespaceMap[prefix] = uri
+            self._namespacemap[prefix] = uri
             if force:
-                self._forceNamespaces.add((prefix, uri))
+                self._force_namespaces.add((prefix, uri))
 
         # further information, warn about unknown tags in our namespace
-        for child in workingCopy:
+        for child in working_copy:
             if child.tag is ET.Comment:
                 continue
-            ns, name = utils.splitTag(child.tag)
+            ns, name = utils.split_tag(child.tag)
             if ns == NS.Site.xmlns:
                 logging.warning("Unknown tweak parameter: {0}".format(name))
             else:
                 try:
-                    self.tweakRegistry.submitTweak(child)
+                    self.tweak_registry.submit_tweak(child)
                 except Errors.MissingTweakPlugin as err:
                     logging.warning(unicode(err))
 
-    def _replaceChild(self, parent, oldNode, newNode):
-        oldIdx = parent.index(oldNode)
-        if newNode is None:
-            del parent[oldIdx]
+    def _replace_child(self, parent, old_node, new_node):
+        old_idx = parent.index(old_node)
+        if new_node is None:
+            del parent[old_idx]
         else:
-            parent[oldIdx] = newNode
+            parent[old_idx] = new_node
 
-    def transformReferences(self, ctx, tree):
+    def transform_references(self, ctx, tree):
         """
         Transform all ``<py:author />`` elements in *tree* which have an ``@id``
         attribute by copying all relevant attributes of the
@@ -281,21 +281,21 @@ class Site(Resource.Resource):
             id = author.get("id")
             if id:
                 try:
-                    authorObj = self._authors[id]
+                    authorobj = self._authors[id]
                 except KeyError:
                     author.tag = NS.XHTML.span
                     author.text = "AUTHOR NOT FOUND {0}".format(id)
                     continue
-                authorObj.applyToNode(author)
+                authorobj.apply_to_node(author)
 
-    def _placeCrumb(self, ctx, crumbNode, crumb):
-        parent = crumbNode.getparent()
-        idx = parent.index(crumbNode)
+    def _place_crumb(self, ctx, crumb_node, crumb):
+        parent = crumb_node.getparent()
+        idx = parent.index(crumb_node)
         del parent[idx]
         crumb.render(ctx, parent, idx)
 
-    def transformPyNamespace(self, ctx, body, crumbs=True, a=True, link=True,
-            img=True, mobileSwitch=True, contentAttr=True):
+    def transform_py_namespace(self, ctx, body, crumbs=True, a=True, link=True,
+            img=True, mobile_switch=True, content_attr=True):
         """
         Do PyXWF specific transformations on the XHTML tree *body*. This
         includes transforming local a tags, local img tags and placing crumbs.
@@ -308,94 +308,94 @@ class Site(Resource.Resource):
         See :ref:`<py-namespace>` for documentation on what can be done with
         in that XML namespace.
         """
-        if not hasattr(ctx, "crumbCache"):
-            ctx.crumbCache = {}
+        if not hasattr(ctx, "crumb_cache"):
+            ctx.crumb_cache = {}
         while crumbs:
             crumbs = False
-            for crumbNode in body.iter(NS.PyWebXML.crumb):
+            for crumb_node in body.iter(NS.PyWebXML.crumb):
                 crumbs = True
-                crumbID = crumbNode.get("id")
+                crumb_id = crumb_node.get("id")
                 try:
-                    crumb = self.crumbs[crumbID]
+                    crumb = self.crumbs[crumb_id]
                 except KeyError:
                     raise ValueError("Invalid crumb id: {0!r}."\
-                            .format(crumbID))
-                self._placeCrumb(ctx, crumbNode, crumb)
+                            .format(crumb_id))
+                self._place_crumb(ctx, crumb_node, crumb)
 
         if a:
-            for localLink in body.iter(NS.PyWebXML.a):
-                localLink.tag = NS.XHTML.a
-                self.transformHref(ctx, localLink)
+            for locallink in body.iter(NS.PyWebXML.a):
+                locallink.tag = NS.XHTML.a
+                self.transform_href(ctx, locallink)
         if img:
-            for localImg in body.iter(NS.PyWebXML.img):
-                localImg.tag = NS.XHTML.img
-                self.transformHref(ctx, localImg)
-                localImg.set("src", localImg.get("href"))
-                del localImg.attrib["href"]
+            for localimg in body.iter(NS.PyWebXML.img):
+                localimg.tag = NS.XHTML.img
+                self.transform_href(ctx, localimg)
+                localimg.set("src", localimg.get("href"))
+                del localimg.attrib["href"]
         if link:
-            for localLink in body.iter(NS.PyWebXML.link):
-                localLink.tag = NS.XHTML.link
-                if localLink.get("href"):
-                    self.transformHref(ctx, localLink)
-        if mobileSwitch:
-            toDelete = set()
-            for mobileSwitch in body.iter(getattr(NS.PyWebXML, "if-mobile")):
-                if Types.Typecasts.bool(mobileSwitch.get("mobile", True)) != ctx.IsMobileClient:
-                    toDelete.add(mobileSwitch)
+            for locallink in body.iter(NS.PyWebXML.link):
+                locallink.tag = NS.XHTML.link
+                if locallink.get("href"):
+                    self.transform_href(ctx, locallink)
+        if mobile_switch:
+            todelete = set()
+            for mobile_switch in body.iter(getattr(NS.PyWebXML, "if-mobile")):
+                if Types.Typecasts.bool(mobile_switch.get("mobile", True)) != ctx.IsMobileClient:
+                    todelete.add(mobile_switch)
                     continue
                 try:
-                    xhtmlElement = mobileSwitch.attrib.pop("xhtml-element")
+                    xhtmlel = mobile_switch.attrib.pop("xhtml-element")
                 except KeyError:
-                    xhtmlElement = "span"
-                mobileSwitch.tag = getattr(NS.XHTML, xhtmlElement)
+                    xhtmlel = "span"
+                mobile_switch.tag = getattr(NS.XHTML, xhtmlel)
                 try:
-                    del mobileSwitch.attrib["mobile"]
+                    del mobile_switch.attrib["mobile"]
                 except KeyError:
                     pass
-            for mobileSwitch in toDelete:
-                mobileSwitch.getparent().remove(mobileSwitch)
-        if contentAttr:
-            contentAttrName = NS.PyWebXML.content
-            contentMakeURIAttrName = getattr(NS.PyWebXML, "content-make-uri")
-            for el in body.iterfind(".//*[@{0}]".format(contentAttrName)):
-                makeURI = el.get(contentMakeURIAttrName)
-                if makeURI is not None:
-                    del el.attrib[contentMakeURIAttrName]
-                    makeGlobal = Types.Typecasts.bool(makeURI)
+            for mobile_switch in todelete:
+                mobile_switch.getparent().remove(mobile_switch)
+        if content_attr:
+            content_attrname = NS.PyWebXML.content
+            content_make_uri_attrname = getattr(NS.PyWebXML, "content-make-uri")
+            for el in body.iterfind(".//*[@{0}]".format(content_attrname)):
+                make_uri = el.get(content_make_uri_attrname)
+                if make_uri is not None:
+                    del el.attrib[content_make_uri_attrname]
+                    make_global = Types.Typecasts.bool(make_uri)
                 else:
-                    makeGlobal = False
-                el.set("content", el.get(contentAttrName))
-                del el.attrib[contentAttrName]
-                self.transformHref(ctx, el, "content", makeGlobal=makeGlobal)
+                    make_global = False
+                el.set("content", el.get(content_attrname))
+                del el.attrib[content_attrname]
+                self.transform_href(ctx, el, "content", make_global=make_global)
 
 
-    def getTemplateArguments(self, ctx):
+    def get_template_arguments(self, ctx):
         # XXX: This will possibly explode one day ...
         return {
-            b"site_title": utils.unicodeToXPathStr(self.title),
+            b"site_title": utils.unicode2xpathstr(self.title),
             b"mobile_client": "1" if ctx.IsMobileClient else "0"
         }
 
-    def transformRelativeURI(self, ctx, uri, makeGlobal=False):
-        if uri is None or uri.startswith("/") or self.urnScheme.search(uri):  # non local href
+    def transform_relative_uri(self, ctx, uri, make_global=False):
+        if uri is None or uri.startswith("/") or self.urn_scheme.search(uri):  # non local href
             return uri
-        uri = os.path.join(self.urlRoot, uri)
-        if makeGlobal:
+        uri = os.path.join(self.urlroot, uri)
+        if make_global:
             uri = "{0}://{1}{2}".format(ctx.URLScheme, ctx.HostName, uri)
         return uri
 
-    def transformHref(self, ctx, node, attrName="href", makeGlobal=False):
+    def transform_href(self, ctx, node, attrname="href", make_global=False):
         """
-        Transform the attribute *attrName* on the ETree node *node* as if it
+        Transform the attribute *attrname* on the ETree node *node* as if it
         was a possibly local url. If it is local and relative, it gets
         transformed so that it points to the same location independent of the
         current URL.
         """
-        v = node.get(attrName)
-        node.set(attrName, self.transformRelativeURI(ctx, v, makeGlobal=makeGlobal))
+        v = node.get(attrname)
+        node.set(attrname, self.transform_relative_uri(ctx, v, make_global=make_global))
 
 
-    def _getNode(self, ctx):
+    def _get_node(self, ctx):
         """
         Find the node pointed to by the *Path* stored in the Context *ctx*.
         """
@@ -403,13 +403,13 @@ class Site(Resource.Resource):
         if len(path) > 0 and path[0] == "/":
             path = path[1:]
         try:
-            node = self.tree.resolvePath(ctx, path)
+            node = self.tree.resolve_path(ctx, path)
         except Errors.InternalRedirect as redirect:
-            ctx.Path = redirect.newLocation
-            return self._getNode(ctx)
+            ctx.Path = redirect.new_location
+            return self._get_node(ctx)
         return node
 
-    def addCrumb(self, crumb):
+    def add_crumb(self, crumb):
         """
         Add the given *crumb* to the Sites crumb registry. May throw a
         ValueError if the ID is invalied or duplicated with an already existing
@@ -421,7 +421,7 @@ class Site(Resource.Resource):
             raise ValueError("Duplicate crumb id: {0}".format(crumb.ID))
         self.crumbs[crumb.ID] = crumb
 
-    def registerNodeID(self, ID, node):
+    def register_node_id(self, ID, node):
         """
         Nodes may have IDs under which they can be referred using the Site. This
         method is used to register the *node* under a given *ID*. This will
@@ -429,16 +429,16 @@ class Site(Resource.Resource):
         """
         self.nodes[ID] = node
 
-    def unregisterNodeID(self, ID):
+    def unregister_node_id(self, ID):
         del self.nodes[ID]
 
-    def getNode(self, ID):
+    def get_node(self, ID):
         """
         Retrieve the node which has the ID *ID*.
         """
         return self.nodes[ID]
 
-    def _setupCache(self, key, cls, *args):
+    def _setup_cache(self, key, cls, *args):
         """
         Setup a cache with *key* and class *cls* passing *args* to its
         constructor as a specialized Cache in our *cache* attribute.
@@ -447,35 +447,35 @@ class Site(Resource.Resource):
             del self.cache[key]
         except KeyError:
             pass
-        return self.cache.specializedCache(key, cls, *args)
+        return self.cache.specialized_cache(key, cls, *args)
 
-    def loadSitemap(self, sitemapFile):
+    def load_sitemap(self, sitemap_file):
         """
-        Load the whole sitemap XML from *sitemapFile*.
+        Load the whole sitemap XML from *sitemap_file*.
         """
         # set this up for later auto-reload
-        self.sitemapFile = sitemapFile
-        self.sitemapTimestamp = utils.fileLastModified(sitemapFile)
+        self.sitemap_file = sitemap_file
+        self.sitemap_timestamp = utils.file_last_modified(sitemap_file)
 
         # parse the sitemap
-        root = ET.parse(sitemapFile).getroot()
+        root = ET.parse(sitemap_file).getroot()
 
         # load metadata
-        self._loadMeta(root)
+        self._load_meta(root)
 
         # setup specialized caches
-        self.templateCache = self._setupCache((self, "templates"),
+        self.template_cache = self._setup_cache((self, "templates"),
             Templates.XSLTTemplateCache, self.root)
-        self.fileDocumentCache = self._setupCache((self, "file-doc-cache"),
+        self.file_document_cache = self._setup_cache((self, "file-doc-cache"),
             Document.FileDocumentCache, self.root)
-        self.xmlDataCache = self._setupCache((self, "xml-data-cache"),
+        self.xml_data_cache = self._setup_cache((self, "xml-data-cache"),
             Resource.XMLFileCache, self.root)
-        self.parserRegistry = Registry.ParserRegistry()
-        self.tweakRegistry = Registry.TweakRegistry()
+        self.parser_registry = Registry.ParserRegistry()
+        self.tweak_registry = Registry.TweakRegistry()
         self.hooks = Registry.HookRegistry()
 
         # load plugins
-        self._loadPlugins(root)
+        self._load_plugins(root)
 
         # instanciate sitletons, so they're ready when the tweaks come in
         self.sitletons = Registry.Sitletons.instanciate(self)
@@ -484,21 +484,21 @@ class Site(Resource.Resource):
         tweaks = root.find(NS.Site.tweaks)
         if tweaks is None:
             tweaks = ET.Element(NS.Site.tweaks)
-        self._loadTweaks(tweaks)
+        self._load_tweaks(tweaks)
 
         self.hooks.call("tweaks-loaded")
 
         # load site tree
-        self._loadTree(root)
+        self._load_tree(root)
 
         self.hooks.call("tree-loaded")
 
         # setup the default template
-        if self.defaultTemplate is None:
-            self.defaultTemplate = self.tree.Template or "templates/default.xsl"
+        if self.default_template is None:
+            self.default_template = self.tree.Template or "templates/default.xsl"
 
         # load crumbs
-        self._loadCrumbs(root)
+        self._load_crumbs(root)
 
         self.hooks.call("crumbs-loaded")
         self.hooks.call("loading-finished")
@@ -509,21 +509,21 @@ class Site(Resource.Resource):
         If neccessary, reload the whole sitemap. Print a warning to the log, as
         this is still fragile.
         """
-        sitemapTimestamp = utils.fileLastModified(self.sitemapFile)
-        if sitemapTimestamp > self.sitemapTimestamp:
+        sitemap_timestamp = utils.file_last_modified(self.sitemap_file)
+        if sitemap_timestamp > self.sitemap_timestamp:
             logging.info("sitemap xml changed -- reloading COMPLETE site.")
             self.hooks.call("global-reload")
-            # Registry.clearAll()
+            # Registry.clear_all()
             # self.savepoint.rollback()
-            self.loadSitemap(self.sitemapFile)
+            self.load_sitemap(self.sitemap_file)
 
-    def handleNotFound(self, ctx, resourceName):
+    def handle_not_found(self, ctx, resource_name):
         """
         Handle a NotFound exception if it occurs while traversing the sitetree
         in the search for a node to handle the current request.
         """
         try:
-            tpl = self.templateCache[self.notFoundTemplate]
+            tpl = self.template_cache[self.not_found_template]
         except Exception as err:
             warnings.warn(str(err))
             body = ET.Element(NS.XHTML.body)
@@ -532,128 +532,128 @@ class Site(Resource.Resource):
             h2 = ET.SubElement(header, NS.XHTML.h2)
             h2.text = "Resource not found"
             p = ET.SubElement(section, NS.XHTML.p)
-            p.text = "The resource {0} could not be found.".format(resourceName)
+            p.text = "The resource {0} could not be found.".format(resource_name)
             p = ET.SubElement(section, NS.XHTML.p)
             p.text = "Additionally, the specified (or fallback) error template\
- at {0} could not be loaded: {1}.".format(self.notFoundTemplate,
+ at {0} could not be loaded: {1}.".format(self.not_found_template,
                 type(err).__name__)
             return Document.Document("Not found", [], [], body)
         else:
             err = ET.Element(NS.PyWebXML.error, attrib={
                 "type": "not-found"
             })
-            ET.SubElement(err, NS.PyWebXML.resource).text = resourceName
+            ET.SubElement(err, NS.PyWebXML.resource).text = resource_name
             return tpl.transform(err, {})
 
-    def getMessage(self, ctx):
+    def get_message(self, ctx):
         """
         Handle a request in the given Context *ctx*.
         """
         # mark ourselves as a used resource
-        ctx.useResource(self)
+        ctx.use_resource(self)
 
         # call a hook used by some tweaks
         self.hooks.call("handle.pre-lookup", ctx)
 
         # prepare iterable with loaded html transformations
-        htmlTransforms = itertools.imap(self.templateCache.__getitem__, \
-            self.htmlTransforms)
+        html_transforms = itertools.imap(self.template_cache.__getitem__, \
+            self.html_transforms)
 
         # default status code
         status = Errors.OK
         try:
             # attempt lookup
-            node = self._getNode(ctx)
+            node = self._get_node(ctx)
         except Errors.NotFound as status:
             if status.document is not None:
                 data = status.document
                 template = status.template
             else:
-                data = self.handleNotFound(ctx,
-                        status.resourceName or ctx.Path)
+                data = self.handle_not_found(ctx,
+                        status.resource_name or ctx.Path)
                 template = None
             if template is None:
-                template = self.templateCache[self.defaultTemplate]
+                template = self.template_cache[self.default_template]
         else:
             # setup the context
-            ctx._pageNode = node
+            ctx._pagenode = node
             # load the template and mark it for use
-            template = self.templateCache[node.Template]
-            ctx.useResource(template)
+            template = self.template_cache[node.Template]
+            ctx.use_resource(template)
 
             # evaluate the iterable as we need the list multiple times in this
             # code path
-            htmlTransforms = list(htmlTransforms)
-            ctx.useResources(htmlTransforms)
+            html_transforms = list(html_transforms)
+            ctx.use_resources(html_transforms)
 
-            contentType = node.getContentType(ctx)
-            if contentType == ContentTypes.xhtml:
-                if not ctx.HTML5Support and self.html4Transform:
-                    ctx.useResource(self.templateCache[self.html4Transform])
+            content_type = node.get_content_type(ctx)
+            if content_type == ContentTypes.xhtml:
+                if not ctx.HTML5Support and self.html4_transform:
+                    ctx.use_resource(self.template_cache[self.html4_transform])
             if not ctx.CanUseXHTML:
                 # we'll do conversion later
-                contentType = ContentTypes.html
-            ctx.checkAcceptable(contentType)
+                content_type = ContentTypes.html
+            ctx.check_acceptable(content_type)
 
             # raise NotModified if the result will be available on the client
             # side
-            ctx.checkNotModified()
+            ctx.check_not_modified()
 
             # otherwise, create the document and return it
             data = node.handle(ctx)
 
         if isinstance(data, Document.Document):
             # do the final transformation on the content fetched from the node
-            resultTree = template.final(ctx, data,
-                    licenseFallback=self._license)
+            result_tree = template.final(ctx, data,
+                    license_fallback=self._license)
 
-            for xslt in htmlTransforms:
-                resultTree = xslt.rawTransform(resultTree, {})
+            for xslt in html_transforms:
+                result_tree = xslt.raw_transform(result_tree, {})
 
-            if not ctx.HTML5Support and self.html4Transform:
-                transform = self.templateCache[self.html4Transform]
-                resultTree = transform.rawTransform(resultTree, {})
+            if not ctx.HTML5Support and self.html4_transform:
+                transform = self.template_cache[self.html4_transform]
+                result_tree = transform.raw_transform(result_tree, {})
 
             if not ctx.CanUseXHTML:
-                message = Message.HTMLMessage.fromXHTMLTree(resultTree,
+                message = Message.HTMLMessage.from_xhtml_tree(result_tree,
                     status=status, encoding="utf-8",
-                    prettyPrint=self.prettyPrint
+                    pretty_print=self.pretty_print
                 )
             else:
-                message = Message.XHTMLMessage(resultTree,
+                message = Message.XHTMLMessage(result_tree,
                     status=status, encoding="utf-8",
-                    prettyPrint=self.prettyPrint,
-                    forceNamespaces=dict(self._forceNamespaces)
+                    pretty_print=self.pretty_print,
+                    force_namespaces=dict(self._force_namespaces)
                 )
         elif isinstance(data, (ET._Element, ET._ElementTree)):
-            message = Message.XMLMessage(data, contentType,
+            message = Message.XMLMessage(data, content_type,
                 status=status, encoding="utf-8",
-                cleanupNamespaces=True, prettyPrint=self.prettyPrint
+                cleanup_namespaces=True, pretty_print=self.pretty_print
             )
         elif isinstance(data, basestring):
-            message = Message.TextMessage(data, contentType,
+            message = Message.TextMessage(data, content_type,
                 status=status, encoding="utf-8"
             )
         else:
             raise TypeError("Cannot process node result: {0}".format(type(data)))
         # only enforce at the end of a request, otherwise things may become
         # horribly slow if more resources are needed than the cache allows
-        self.cache.enforceLimit()
+        self.cache.enforce_limit()
         return message
 
     def handle(self, ctx):
         try:
-            return self.getMessage(ctx)
+            return self.get_message(ctx)
         except Errors.Handler.InternalServerError as err:
-            return Message.HTMLMessage.fromXHTMLTree(err.xhtml, status=Errors.HTTP500,
+            return Message.HTMLMessage.from_xhtml_tree(err.xhtml, status=Errors.HTTP500,
                 encoding="utf-8")
         except Errors.MethodNotAllowed as status:
             ctx.Cachable = False
-            ctx.setResponseHeader("allow", ",".join(status.allow))
+            ctx.set_response_header("allow", ",".join(status.allow))
             raise
         except Errors.HTTPStatusBase:
             raise
         except Exception as err:
             xhtml = Errors.Handler.InternalServerError(ctx, *sys.exc_info()).xhtml
-            return Message.HTMLMessage.fromXHTMLTree(xhtml, status=Errors.HTTP500,
+            return Message.HTMLMessage.from_xhtml_tree(xhtml, status=Errors.HTTP500,
                 encoding="utf-8")

@@ -43,16 +43,16 @@ class MissingCrumbPlugin(MissingNamespacePlugin):
 
 class MissingTweakPlugin(MissingNamespacePlugin):
     def __init__(self, tag):
-        ns, name = utils.splitTag(tag)
+        ns, name = utils.split_tag(tag)
         super(MissingTweakPlugin, self).__init__(ns, name,
             "No plugin for tweak {{{0}}}{1}"
         )
 
 class PluginConflict(Exception):
-    def __init__(self, key, plugin1, plugin2, objStr=None):
+    def __init__(self, key, plugin1, plugin2, objstr=None):
         super(PluginConflict, self).__init__(
             "Conflict: {0} is shared by both {1} and {2}".format(
-                objStr or key, plugin1, plugin2
+                objstr or key, plugin1, plugin2
             )
         )
         self.key = key
@@ -69,20 +69,20 @@ class CacheConflict(Exception):
         )
 
 class ResourceLost(Exception):
-    def __init__(self, fileName):
-        basename = os.path.basename(fileName)
+    def __init__(self, filename):
+        basename = os.path.basename(filename)
         super(ResourceLost, self).__init__(
             "Resource at {0} cannot be found anymore.".format(basename)
         )
-        self.path = fileName
+        self.path = filename
 
 class UnknownMIMEType(Exception):
-    def __init__(self, fileName):
-        basename = os.path.basename(fileName)
+    def __init__(self, filename):
+        basename = os.path.basename(filename)
         super(UnknownMIMEType, self).__init__(
             "No idea what type that file is: {0}".format(basename)
         )
-        self.path = fileName
+        self.path = filename
 
 class ConfigurationError(Exception):
     def __init__(self, message):
@@ -137,7 +137,7 @@ class BadChild(NodeConfigurationError):
 
 class SitletonNotAvailable(Exception):
     def __init__(self, cls, site):
-        self.sitletonClass = cls
+        self.sitleton_class = cls
         self.site = site
         super(SitletonNotAvailable, self).__init__(
             "Sitleton {0} is not available at site {1}".format(cls, site)

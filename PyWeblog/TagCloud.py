@@ -14,47 +14,47 @@ class TagCloud(Crumbs.CrumbBase):
     namespace = "http://pyxwf.zombofant.net/xmlns/weblog"
     names = ["tagcloud"]
 
-    _levelsType = Types.DefaultForNone(2,
+    _levels_type = Types.DefaultForNone(2,
         Types.NumericRange(Types.Typecasts.int, 4, None)
     )
-    _maxTagsType = Types.DefaultForNone(23,
+    _maxtags_type = Types.DefaultForNone(23,
         Types.NumericRange(Types.Typecasts.int, 1, None)
     )
-    _classPrefixType = Types.DefaultForNone("tagcloud-level-",
+    _class_prefix_type = Types.DefaultForNone("tagcloud-level-",
         Types.Typecasts.unicode
     )
 
     def __init__(self, site, node):
         super(TagCloud, self).__init__(site, node)
-        self.Blog = site.getNode(node.get("blog-id"))
-        self.maxLevel = self._levelsType(node.get("level-count")) - 1
-        self.maxTags = self._maxTagsType(node.get("max-tags"))
-        self.classPrefix = self._classPrefixType(node.get("css-class-prefix"))
+        self.Blog = site.get_node(node.get("blog-id"))
+        self.maxlevel = self._levels_type(node.get("level-count")) - 1
+        self.maxtags = self._maxtags_type(node.get("max-tags"))
+        self.class_prefix = self._class_prefix_type(node.get("css-class-prefix"))
 
-    def render(self, ctx, intoNode, atIndex):
+    def render(self, ctx, into_node, at_index):
         ul = ET.Element(NS.XHTML.ul)
         index = self.Blog.index
-        tagDir = self.Blog.TagDirectory
-        ctx.useResource(index)
+        tag_dir = self.Blog.TagDirectory
+        ctx.use_resource(index)
         tags = ((tag, len(posts)) for tag, posts in
-                            index.getKeywordPosts())
+                            index.get_keyword_posts())
 
         # sort by count and remove those with lower counts
         tags = sorted(tags, key=operator.itemgetter(1), reverse=True)
-        tags = tags[:self.maxTags]
+        tags = tags[:self.maxtags]
         if len(tags) > 0:
-            maxCount = tags[0][1]
+            maxcount = tags[0][1]
 
         # sort by name now
         tags.sort(key=lambda x: x[0].lower())
-        maxLevel = self.maxLevel
+        maxlevel = self.maxlevel
         for tag, count in tags:
-            level = int(round(maxLevel * count / maxCount))
+            level = int(round(maxlevel * count / maxcount))
             li = ET.SubElement(ul, NS.XHTML.li, attrib={
-                "class": self.classPrefix + str(level)
+                "class": self.class_prefix + str(level)
             })
             a = ET.SubElement(li, NS.PyWebXML.a, attrib={
-                "href": tagDir.getTagPagePath(tag)
+                "href": tag_dir.get_tag_page_path(tag)
             })
             a.text = tag
-        intoNode.insert(atIndex, ul)
+        into_node.insert(at_index, ul)

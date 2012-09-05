@@ -12,86 +12,86 @@ import PyXWF.TimeUtils as TimeUtils
 
 import Mocks
 
-class splitTag(unittest.TestCase):
+class split_tag(unittest.TestCase):
     def test_split(self):
         tag = NS.XHTML.head
-        ns, name = utils.splitTag(tag)
+        ns, name = utils.split_tag(tag)
         self.assertEqual(ns, str(NS.XHTML))
         self.assertEqual(name, "head")
 
-    def test_splitNoNS(self):
+    def test_split_no_namespace(self):
         tag = "head"
-        ns, name = utils.splitTag(tag)
+        ns, name = utils.split_tag(tag)
         self.assertIsNone(ns)
         self.assertEqual(name, "head")
 
     def test_empty(self):
         tag = ""
-        ns, name = utils.splitTag(tag)
+        ns, name = utils.split_tag(tag)
         self.assertIsNone(ns)
         self.assertEqual(name, "")
 
 
-class addClass(unittest.TestCase):
+class add_class(unittest.TestCase):
     def setUp(self):
         self.el = ET.Element(NS.XHTML.a)
 
     def test_first(self):
         el = self.el
-        utils.addClass(el, "foo")
+        utils.add_class(el, "foo")
         self.assertEqual(el.get("class"), "foo")
 
     def test_second(self):
         el = self.el
         el.set("class", "bar")
-        utils.addClass(el, "foo")
+        utils.add_class(el, "foo")
         self.assertEqual(set(el.get("class").split()), frozenset(("foo", "bar")))
 
     def test_two(self):
         el = self.el
-        utils.addClass(el, "foo")
-        utils.addClass(el, "bar")
+        utils.add_class(el, "foo")
+        utils.add_class(el, "bar")
         self.assertEqual(set(el.get("class").split()), frozenset(("foo", "bar")))
 
     def test_cleans(self):
         el = self.el
         el.set("class", "foo    ")
-        utils.addClass(el, "bar")
+        utils.add_class(el, "bar")
         self.assertEqual(set(el.get("class").split()), frozenset(("foo", "bar")))
 
     def test_setish(self):
         el = self.el
         s = " ".join(frozenset(("foo", "bar")))
         el.set("class", s)
-        utils.addClass(el, "bar")
+        utils.add_class(el, "bar")
         self.assertEqual(el.get("class"), s)
 
     def tearDown(self):
         del self.el
 
 
-class unicodeToXPathStr(unittest.TestCase):
+class unicode2xpathstr(unittest.TestCase):
     def test_convert(self):
-        self.assertEqual('"foobar"', utils.unicodeToXPathStr("foobar"))
+        self.assertEqual('"foobar"', utils.unicode2xpathstr("foobar"))
 
     def test_escape(self):
-        self.assertEqual(r'"\"foo\""', utils.unicodeToXPathStr('"foo"'))
+        self.assertEqual(r'"\"foo\""', utils.unicode2xpathstr('"foo"'))
 
 
-class parseISODate(unittest.TestCase):
+class parse_iso_date(unittest.TestCase):
     def test_none(self):
-        self.assertIsNone(utils.parseISODate(None))
+        self.assertIsNone(utils.parse_iso_date(None))
 
     def test_parse(self):
         dt = datetime(2012, 8, 25, 10, 8, 15)
-        self.assertEqual(dt, utils.parseISODate("2012-08-25T10:08:15Z"))
+        self.assertEqual(dt, utils.parse_iso_date("2012-08-25T10:08:15Z"))
 
     def test_requireZ(self):
-        self.assertRaises(ValueError, utils.parseISODate, "2012-08-25T10:08:15")
+        self.assertRaises(ValueError, utils.parse_iso_date, "2012-08-25T10:08:15")
 
 
 class XHTMLToHTML(unittest.TestCase):
-    def test_lxmlComparision(self):
+    def test_lxml_comparision(self):
         xhtml = NS.XHTML
         treeA = xhtml("html",
             xhtml("head",
@@ -120,7 +120,7 @@ class XHTMLToHTML(unittest.TestCase):
         self.assertNotEqual(ET.tostring(treeA), ET.tostring(treeB))
         self.assertEqual(ET.tostring(treeA), ET.tostring(treeC))
 
-    def test_validTree(self):
+    def test_valid_tree(self):
         title = "foobar"
         text = "some text"
 
@@ -144,7 +144,7 @@ class XHTMLToHTML(unittest.TestCase):
             )
         )))
 
-    def test_invalidTree(self):
+    def test_invalid_tree(self):
         title = "foobar"
         text = "some text"
 
@@ -161,9 +161,9 @@ class XHTMLToHTML(unittest.TestCase):
         self.assertRaises(ValueError, utils.XHTMLToHTML, tree)
 
 
-class fileLastModified(Mocks.FSTest):
-    def test_nonExisting(self):
-        self.assertIsNone(utils.fileLastModified(os.path.join(self.fs.Root, "foo")))
+class file_last_modified(Mocks.FSTest):
+    def test_non_existing(self):
+        self.assertIsNone(utils.file_last_modified(os.path.join(self.fs.Root, "foo")))
 
     def test_file(self):
         path = self.fs("test.file")
@@ -172,4 +172,4 @@ class fileLastModified(Mocks.FSTest):
         f.close()
         os.utime(path, (time, time))
 
-        self.assertEqual(TimeUtils.toDatetime(time), utils.fileLastModified(path))
+        self.assertEqual(TimeUtils.to_datetime(time), utils.file_last_modified(path))

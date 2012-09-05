@@ -19,51 +19,51 @@ class Feeds(Node.Tweak, Protocols.Feeds):
     def __init__(self, site, parent, node):
         super(Feeds, self).__init__(site, parent, node)
         self._protocols = []
-        self._protocolMap = {}
-        self._queryParam = Types.NotEmpty(node.get("query-param", "feed"))
+        self._protocolmap = {}
+        self._queryparam = Types.NotEmpty(node.get("query-param", "feed"))
 
         for child in node:
             if child.tag == ET.Comment:
                 continue
-            protocol = Registry.NodePlugins.getPluginInstance(child, site, self)
+            protocol = Registry.NodePlugins.get(child, site, self)
             if not isinstance(protocol, Protocols.Feed):
                 raise Errors.BadChild(protocol, self)
-            self.registerProtocol(protocol)
+            self.register_protocol(protocol)
 
         self.Blog.Feeds = self
 
-    def getFeedsNode(self, forDirectory):
+    def get_feeds_node(self, for_directory):
         feeds = NS.PyBlog("feeds")
-        feeds.set("query-param", self._queryParam)
+        feeds.set("query-param", self._queryparam)
         for protocol in self._protocols:
-            feeds.append(protocol.getFeedNode())
+            feeds.append(protocol.get_feed_node())
         return feeds
 
-    def registerProtocol(self, protocol):
+    def register_protocol(self, protocol):
         value = protocol.QueryValue
-        if value in self._protocolMap:
+        if value in self._protocolmap:
             raise Errors.NodeConfigurationError("Conflict: duplicate parameter value: {0}".format(value))
         self._protocols.append(protocol)
-        self._protocolMap[value] = protocol
+        self._protocolmap[value] = protocol
         logging.debug(_F("Registered {0} as query value {1}", protocol, value))
 
-    def resolveFeedNode(self, node, ctx, superResolve, relPath):
+    def resolve_feed_node(self, node, ctx, super_resolve, relpath):
         """
         .. see-also::
-            :meth:`PyWeblog.Protocols.Feeds.resolveFeedNode` documentation
+            :meth:`PyWeblog.Protocols.Feeds.resolve_feed_node` documentation
             before reading this.
 
         The algorithm to determine the result should be the following:
 
-        1.  Check if relPath is the empty string.
+        1.  Check if relpath is the empty string.
 
-            *   **If not**: Return the result of ``superResolve(ctx, relPath)``
+            *   **If not**: Return the result of ``super_resolve(ctx, relpath)``
                 and abort.
 
         1.  Check if the query parameter used to detect a feed request is
             present in *ctx*.
 
-            *   **If not**: Return the result of ``superResolve(ctx, relPath)``
+            *   **If not**: Return the result of ``super_resolve(ctx, relpath)``
                 and abort.
 
         2.  Check if the value of the query parameter matches a feed protocol
@@ -73,20 +73,20 @@ class Feeds(Node.Tweak, Protocols.Feeds):
 
         3.  Return the appropriate node implementing the feed protocol.
         """
-        if relPath:
-            return superResolve(ctx, relPath)
+        if relpath:
+            return super_resolve(ctx, relpath)
         try:
-            value = ctx.QueryData[self._queryParam].pop()
+            value = ctx.QueryData[self._queryparam].pop()
         except IndexError:
             value = None
         except KeyError:
-            return superResolve(ctx, relPath)
+            return super_resolve(ctx, relpath)
 
         try:
-            feedNode = self._protocolMap[value]
+            feednode = self._protocolmap[value]
         except KeyError:
             return None
 
-        return feedNode.proxy(ctx, node)
+        return feednode.proxy(ctx, node)
 
-    requestHandlers = {}
+    request_handlers = {}

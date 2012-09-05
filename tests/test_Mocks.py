@@ -21,10 +21,10 @@ class MockFSLocation(unittest.TestCase):
         self.assertEqual(os.path.join(self.location.Root, path), self.location(path))
 
     def test_open(self):
-        someFile = "foo.bar"
-        f = self.location.open(someFile, "w")
+        somefile = "foo.bar"
+        f = self.location.open(somefile, "w")
         f.close()
-        self.assertTrue(os.path.isfile(self.location(someFile)))
+        self.assertTrue(os.path.isfile(self.location(somefile)))
 
     def tearDown(self):
         self.location.close()

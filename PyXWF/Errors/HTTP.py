@@ -168,10 +168,10 @@ class HTTP404(HTTPClientError):
     code = 404
     title = "Not Found"
 
-    def __init__(self, resourceName=None, **kwargs):
-        kwargs.setdefault("message", resourceName)
+    def __init__(self, resource_name=None, **kwargs):
+        kwargs.setdefault("message", resource_name)
         super(HTTP404, self).__init__(**kwargs)
-        self.resourceName = resourceName
+        self.resource_name = resource_name
 
 class HTTP405(HTTPClientError):
     code = 405

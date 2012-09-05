@@ -18,17 +18,17 @@ class BraceMessage(object):
 _F = BraceMessage
 
 class NoInstance(type):
-    def _notInstanciable(*args):
+    def _not_instanciable(*args):
         raise TypeError("Cannot instanciate {0}".format(cls.__name__))
 
     def __new__(mcls, name, bases, dct):
-        dct["__new__"] = mcls._notInstanciable
+        dct["__new__"] = mcls._not_instanciable
         return super(NoInstance, mcls).__new__(mcls, name, bases, dct)
 
-def splitTag(tag):
+def split_tag(tag):
     """
     Split an ElementTree tag into its namespace and XML local-name and return
-    these as a tuple ``(namespace, localName)``. If the tag has no namespace
+    these as a tuple ``(namespace, localname)``. If the tag has no namespace
     associated, :data:`None` is returned for *namespace*.
     """
     assert(isinstance(tag, basestring))
@@ -42,7 +42,7 @@ def splitTag(tag):
     else:
         return None, tag
 
-def addClass(node, cls):
+def add_class(node, cls):
     """
     Take the ``@class`` attribute of *node*, split it at spaces, put it into a
     :class:`set`, add *cls* to the set and re-join the set with spaces.
@@ -52,7 +52,7 @@ def addClass(node, cls):
     node.set("class", " ".join(classes))
 
 
-def fileLastModified(fileref, floatTimes=False):
+def file_last_modified(fileref, float_times=False):
     """
     If *fileref* is a file name or a file like with associated fileno which
     points to an actual file, return the date of last modification
@@ -60,7 +60,7 @@ def fileLastModified(fileref, floatTimes=False):
 
     By default, the times are truncated to full seconds. If you need the
     floating point part of the times (if supported by the platform), pass
-    ``True`` to *floatTimes*.
+    ``True`` to *float_times*.
     """
     try:
         if isinstance(fileref, basestring):
@@ -73,16 +73,16 @@ def fileLastModified(fileref, floatTimes=False):
                 return None
     except (OSError, AttributeError):
         return None
-    if floatTimes:
+    if float_times:
         mtime = st.st_mtime
     else:
         mtime = int(st.st_mtime)
     return datetime.utcfromtimestamp(mtime)
 
-def unicodeToXPathStr(value):
+def unicode2xpathstr(value):
     return '"'+unicode(value).replace("\"", "\\\"")+'"'
 
-def parseISODate(s):
+def parse_iso_date(s):
     """
     Parse a date like returned with :meth:`~datetime.datetime.isoformat`, but
     with a trailing `Z` to indicate the UTC timezone.
@@ -97,19 +97,19 @@ def XHTMLToHTML(tree):
     :class:`ValueError` if a non-XHTML namespace is encountered.
     """
     import PyXWF.Namespaces as NS
-    xhtmlNS = str(NS.XHTML)
+    xhtml_ns = str(NS.XHTML)
     for item in tree.iter():
         if not isinstance(item.tag, basestring):
             continue
-        ns, name = splitTag(item.tag)
-        if ns != xhtmlNS:
+        ns, name = split_tag(item.tag)
+        if ns != xhtml_ns:
             raise ValueError("tree contains non-xhtml elements: {0}:{1}".format(ns, name))
         item.tag = name
     ET.cleanup_namespaces(tree)
 
-mobileUARE = re.compile("(\sMobile\s|\sMobile/[0-9a-fA-F]+)")
+mobile_useragent_re = re.compile("(\sMobile\s|\sMobile/[0-9a-fA-F]+)")
 
-userAgentRegexes = [
+useragent_regexes = [
     ("googlebot", re.compile("Googlebot/([0-9]+(\.[0-9]+)?)")),
     ("googlebot", re.compile("Googlebot-Image/([0-9]+(\.[0-9]+)?)")),
     ("bingbot", re.compile("bingbot/([0-9]+(\.[0-9]+)?)")),
@@ -146,7 +146,7 @@ userAgentRegexes = [
     ("blank", re.compile("^\s*-\s*$"))
 ]
 
-userAgentClasses = {
+useragent_classes = {
     "googlebot": "indexer",
     "bingbot": "indexer",
     "yahoo-slurp": "indexer",
@@ -174,9 +174,9 @@ userAgentClasses = {
     "seekbot": "indexer",
 }
 
-def guessUserAgent(headerValue):
+def guess_useragent(headerval):
     """
-    Return a tuple ``(userAgent, version)``, where *userAgent* is one of:
+    Return a tuple ``(useragent, version)``, where *useragent* is one of:
 
     * ``ie`` for Internet Explorer™
     * ``firefox`` for firefox
@@ -196,29 +196,29 @@ def guessUserAgent(headerValue):
     version could not be determined reliably. The version number is represented
     as a floating point value.
     """
-    for agentName, regex in userAgentRegexes:
-        m = regex.search(headerValue)
+    for agentname, regex in useragent_regexes:
+        m = regex.search(headerval)
         if m:
             groups = m.groups()
             if len(groups) > 0:
                 version = float(groups[0])
             else:
                 version = None
-            return agentName, version
+            return agentname, version
     else:
         return (None, None)
 
-def classifyUserAgent(uaName):
-    return userAgentClasses.get(uaName, None)
+def classify_useragent(uaname):
+    return useragent_classes.get(uaname, None)
 
-def isMobileUserAgent(headerValue):
-    return mobileUARE.search(headerValue) is not None
+def is_mobile_useragent(headerval):
+    return mobile_useragent_re.search(headerval) is not None
 
-def chunkString(s, chunkSize=1024):
+def chunk_string(s, chunk_size=1024):
     off = 0
     while True:
-        yield s[off:off+chunkSize]
-        off += chunkSize
+        yield s[off:off+chunk_size]
+        off += chunk_size
         if off >= len(s):
             return
 try:
