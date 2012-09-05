@@ -19,14 +19,16 @@ class Atom(GenericFeed.GenericFeed):
         super(Atom, self).__init__(site, parent, node)
         self._queryValue = Types.NotEmpty(node.get("query-value", "atom"))
         self._template = Types.NotEmpty(Types.NotNone(node.get("template")))
+        self._favicon = node.get("favicon")
 
     def transform(self, ctx, root):
+        root.set("icon", self._favicon or "")
+        self._favicon = self.Site.transformHref(ctx, root, attrName="icon", makeGlobal=True)
         feed = super(Atom, self).transform(ctx, root)
         transformHref = self.Site.transformHref
         for localLink in feed.iter(NS.PyWebXML.link):
             localLink.tag = NS.Atom.link
-            transformHref(ctx, localLink)
-            localLink.text = self._linkPrefix[:-1]+localLink.get("href")
+            transformHref(ctx, localLink, makeGlobal=True)
             del localLink.attrib["href"]
         return feed
 

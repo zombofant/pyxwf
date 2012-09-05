@@ -376,6 +376,14 @@ class Site(Resource.Resource):
             b"mobile_client": "1" if ctx.IsMobileClient else "0"
         }
 
+    def transformRelativeURI(self, ctx, uri, makeGlobal=False):
+        if uri is None or uri.startswith("/") or self.urnScheme.search(uri):  # non local href
+            return uri
+        uri = os.path.join(self.urlRoot, uri)
+        if makeGlobal:
+            uri = "{0}://{1}{2}".format(ctx.URLScheme, ctx.HostName, uri)
+        return uri
+
     def transformHref(self, ctx, node, attrName="href", makeGlobal=False):
         """
         Transform the attribute *attrName* on the ETree node *node* as if it
@@ -384,12 +392,7 @@ class Site(Resource.Resource):
         current URL.
         """
         v = node.get(attrName)
-        if v is None or v.startswith("/") or self.urnScheme.search(v):  # non local href
-            return
-        value = os.path.join(self.urlRoot, v)
-        if makeGlobal:
-            value = "{0}://{1}{2}".format(ctx.URLScheme, ctx.HostName, value)
-        node.set(attrName, value)
+        node.set(attrName, self.transformRelativeURI(ctx, v, makeGlobal=makeGlobal))
 
 
     def _getNode(self, ctx):
