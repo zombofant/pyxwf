@@ -145,6 +145,8 @@ class Post(Resource.Resource):
                 "href": nextpost.path,
                 "title": nextpost.title
             })
+
+        ET.SubElement(meta, getattr(NS.PyBlog, "node-path")).text = self.path
         return page
 
     def __lt__(self, other):
