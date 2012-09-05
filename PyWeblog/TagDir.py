@@ -69,7 +69,7 @@ class TagDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
                 "post-count": unicode(posts)
             })
             tagel.text = tag
-        return self.Site.template_cache[self._list_template].transform(tag_list)
+        return self.site.template_cache[self._list_template].transform(tag_list)
 
     def get_tag_page_path(self, tag):
         return self.Path + tag
@@ -89,7 +89,7 @@ class TagDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
     def resolve_path(self, ctx, relpath):
         node = super(TagDir, self).resolve_path(ctx, relpath)
         if node is self:
-            ctx.use_resource(self.Site.template_cache[self._list_template])
+            ctx.use_resource(self.site.template_cache[self._list_template])
         return node
 
     def update_children(self):
@@ -100,7 +100,7 @@ class TagDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
                 page = self._fixed_children[keyword]
             except KeyError:
                 self._template_node.set("name", keyword)
-                page = TagPage(self.Site, self, self._template_node)
+                page = TagPage(self.site, self, self._template_node)
             self._children[keyword] = page
             self._child_list.append((len(posts), page))
             page.update_children(posts)
@@ -149,7 +149,7 @@ class TagPage(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info, Pro
             feeds.set("base", self.Path)
             self.abstracts.append(feeds)
             self._feeds_node = feeds
-        return self.Site.template_cache[self._list_template].transform(
+        return self.site.template_cache[self._list_template].transform(
             self.abstracts,
             self.Blog.get_transform_args()
         )

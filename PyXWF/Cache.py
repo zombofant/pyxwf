@@ -283,7 +283,7 @@ class Cache(object):
         Setting this limit to 0 will disable limiting.
         """
         with self._limitlock:
-            return self.limit
+            return self._limit
 
     @Limit.setter
     def Limit(self, value):

@@ -20,7 +20,7 @@ class Tweak(object):
         if not isinstance(parent, Blog):
             raise Errors.BadParent(self, parent)
         super(Tweak, self).__init__()
-        self.Site = site
+        self.site = site
         self.Parent = parent
         self.Blog = parent
 
@@ -95,7 +95,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         entry_dir = Types.NotNone(node.get("entry-dir"))
         self.index = Index.Index(self, site.file_document_cache, entry_dir,
             self.Path + "{year}/{month}/{basename}",
-            self.Site.long_date_format,
+            self.site.long_date_format,
             posts_changed_callback=self._posts_changed)
         self.index._reload()
 
@@ -156,7 +156,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
         assert not self._tweaks
         assert not self._childnodes
 
-        site = self.Site
+        site = self.site
         for child in node:
             if child.tag is ET.Comment:
                 continue

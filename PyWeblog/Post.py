@@ -6,7 +6,7 @@ import PyXWF.Namespaces as NS
 
 class PostNode(Nodes.Node, Navigation.Info):
     def __init__(self, parent, post):
-        super(PostNode, self).__init__(parent.Site, parent, None)
+        super(PostNode, self).__init__(parent.site, parent, None)
         self.Blog = parent.Blog
         self._path = parent.Path + post.basename
         self._name = post.basename
@@ -19,7 +19,7 @@ class PostNode(Nodes.Node, Navigation.Info):
         return node
 
     def do_GET(self, ctx):
-        return self.Site.template_cache[self.Blog.post_template].transform(
+        return self.site.template_cache[self.Blog.post_template].transform(
             self.post.get_PyWebXML(),
             self.Blog.get_transform_args()
         )

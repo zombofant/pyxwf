@@ -82,7 +82,7 @@ class RedirectInternal(RedirectBase):
         if hasattr(self, "target_node"):
             return self.target_node
         else:
-            self.target_node = self.Site.get_node(self.to)
+            self.target_node = self.site.get_node(self.to)
             return self.target_node
 
     @property

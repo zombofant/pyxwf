@@ -122,7 +122,7 @@ class Node(object):
     def __init__(self, site, parent, node, **kwargs):
         super(Node, self).__init__(**kwargs)
         self.Parent = parent
-        self.Site = site
+        self.site = site
         self._id = None
         self._name = None
         self._template = None
@@ -259,10 +259,10 @@ class Node(object):
         if self._id == value:
             return
         if self._id is not None:
-            del self.Site.nodes[self._id]
+            del self.site.nodes[self._id]
         self._id = value
         if self._id is not None:
-            self.Site.register_node_id(self._id, self)
+            self.site.register_node_id(self._id, self)
 
 
     @abc.abstractmethod

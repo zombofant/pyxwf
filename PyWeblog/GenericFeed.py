@@ -40,7 +40,7 @@ class GenericFeed(Protocols.Feed):
         if not isinstance(parent, Protocols.Feeds):
             raise BadParent(node, parent)
         super(GenericFeed, self).__init__()
-        self.Site = site
+        self.site = site
         self.Blog = parent.Blog
         self._limit = Types.NumericRange(int, 1, None)(node.get("limit", 10))
         self._link_prefix = Types.NotNone(node.get("link-prefix"))
@@ -97,11 +97,11 @@ class GenericFeed(Protocols.Feed):
         return el
 
     def proxy(self, ctx, node):
-        ctx.use_resource(self.Site.template_cache[self._template])
+        ctx.use_resource(self.site.template_cache[self._template])
         return self.Proxy(self, node)
 
     def transform(self, ctx, root):
-        self.Site.transform_references(ctx, root)
-        feed = self.Site.template_cache[self._template].raw_transform(root, {})
-        self.Site.transform_py_namespace(ctx, feed, crumbs=False, link=False)
+        self.site.transform_references(ctx, root)
+        feed = self.site.template_cache[self._template].raw_transform(root, {})
+        self.site.transform_py_namespace(ctx, feed, crumbs=False, link=False)
         return feed

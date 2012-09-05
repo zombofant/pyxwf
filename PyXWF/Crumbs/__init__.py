@@ -24,7 +24,7 @@ class CrumbBase(object):
 
     def __init__(self, site, node):
         super(CrumbBase, self).__init__()
-        self.Site = site
+        self.site = site
         self.ID = node.get("id")
 
     @abc.abstractmethod

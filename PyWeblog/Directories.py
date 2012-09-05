@@ -15,7 +15,7 @@ import PyWeblog.Protocols as Protocols
 @functools.total_ordering
 class YearDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info):
     def __init__(self, blog, year):
-        super(YearDir, self).__init__(blog.Site, blog, None)
+        super(YearDir, self).__init__(blog.site, blog, None)
         self.Blog = blog
         self._name = unicode(year)
         self._path = self.Parent.Path + unicode(year)
@@ -107,7 +107,7 @@ class MonthDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
 
     def __init__(self, yearnode, month):
         blog = yearnode.Blog
-        super(MonthDir, self).__init__(blog.Site, yearnode, None)
+        super(MonthDir, self).__init__(blog.site, yearnode, None)
         self.Blog = blog
         self.index = blog.index
         self._childmap = {}
@@ -135,7 +135,7 @@ class MonthDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
         return self._monthname
 
     def do_GET(self, ctx):
-        return self.Site.template_cache[self.Blog.month_template].transform(
+        return self.site.template_cache[self.Blog.month_template].transform(
             self.abstracts,
             self.Blog.get_transform_args()
         )

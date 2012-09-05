@@ -34,18 +34,18 @@ class Page(Nodes.Node, Navigation.Info, Resource.Resource):
     def update(self):
         # this is pretty lazy; it will not load the document but only retrieve
         # the datetime object from the file system
-        doc_last_modified = self.Site.file_document_cache\
+        doc_last_modified = self.site.file_document_cache\
                 .get_last_modified(self.filename)
         if self._last_modified is None or doc_last_modified is None or \
                 self._last_modified < doc_last_modified:
-            docproxy = self.Site.file_document_cache.get(self.filename, self.mimetype)
+            docproxy = self.site.file_document_cache.get(self.filename, self.mimetype)
             docproxy.update()
             doc = docproxy.doc
             self._last_modified = doc_last_modified
             self.title = self._navtitle or doc.title
 
     def _get_docproxy(self):
-        return self.Site.file_document_cache.get(self.filename, self.mimetype)
+        return self.site.file_document_cache.get(self.filename, self.mimetype)
 
     def do_GET(self, ctx):
         return self._get_docproxy().doc

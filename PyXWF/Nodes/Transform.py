@@ -40,9 +40,9 @@ class TransformBase(Nodes.Node, Resource.Resource):
                     utils.unicode2xpathstr(self._arg_value(argnode.get("value"))))
             for argnode in node.findall(TransformNS.arg))
 
-        self._transforms = self.Site.template_cache
-        self._xmldata = self.Site.xml_data_cache
-        self._parser = self.Site.parser_registry[ContentTypes.PyWebXML]
+        self._transforms = self.site.template_cache
+        self._xmldata = self.site.xml_data_cache
+        self._parser = self.site.parser_registry[ContentTypes.PyWebXML]
 
         self._last_modified = self._calc_last_modified()
         self._rebuild()
@@ -121,8 +121,8 @@ class TransformTree(TransformBase):
     names = ["tree"]
 
     def _rebuild(self):
-        self._transform = self.Site.template_cache[self._transform_file]
-        self._source = self.Site.xml_data_cache[self._source_file]
+        self._transform = self.site.template_cache[self._transform_file]
+        self._source = self.site.xml_data_cache[self._source_file]
 
         tree = self._transform.raw_transform(self._source.Tree, self._args)
 
@@ -151,7 +151,7 @@ class TransformTree(TransformBase):
 
 class TransformRoot(Directory.DirectoryBase):
     def __init__(self, tree, node):
-        super(TransformRoot, self).__init__(tree.Site, tree, None)
+        super(TransformRoot, self).__init__(tree.site, tree, None)
         self._name = None
         self._path = tree.Path
 

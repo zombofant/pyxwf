@@ -44,7 +44,7 @@ class DirectoryBase(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
             node.get("nav-display", Navigation.Show) if node is not None else Navigation.Show)
 
     def _load_children(self, from_node):
-        site = self.Site
+        site = self.site
         for child in from_node:
             if child.tag is ET.Comment:
                 continue

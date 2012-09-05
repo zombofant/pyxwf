@@ -47,7 +47,7 @@ class HostRedirect(Tweaks.TweakSitleton):
             if ctx.HostName == src:
                 path = "{2}://{0}{1}".format(
                     dst,
-                    os.path.join(self.Site.urlroot, ctx.Path),
+                    os.path.join(self.site.urlroot, ctx.Path),
                     ctx.URLScheme
                 )
                 raise kind(location=path, local=False)

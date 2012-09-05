@@ -39,7 +39,7 @@ class RecentPosts(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info)
         result = super(RecentPosts, self).resolve_path(ctx, relpath)
         if result is self:
             ctx.use_resource(self.Blog.index)
-            ctx.use_resource(self.Site.template_cache[self._list_template])
+            ctx.use_resource(self.site.template_cache[self._list_template])
         return result
 
     def do_GET(self, ctx):
@@ -55,7 +55,7 @@ class RecentPosts(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info)
         )
         for post in postiter:
             abstracts.append(copy.deepcopy(post.abstract))
-        return self.Site.template_cache[self._list_template].transform(
+        return self.site.template_cache[self._list_template].transform(
             abstracts,
             self.Blog.get_transform_args()
         )

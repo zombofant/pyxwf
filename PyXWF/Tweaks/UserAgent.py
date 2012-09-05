@@ -18,7 +18,7 @@ class ForceMobile(object):
     def __init__(self, site):
         super(ForceMobile, self).__init__()
         site.hooks.register("handle.pre-lookup", self.force_mobile)
-        self.Site = site
+        self.site = site
         self.force_mobile = Types.Typecasts.bool(self._tweaks["force-mobile"][-1].get("mobile"))
 
     def force_mobile(self, ctx):
