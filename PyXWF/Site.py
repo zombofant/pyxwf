@@ -23,6 +23,8 @@ import PyXWF.Templates as Templates
 import PyXWF.Resource as Resource
 # import PyXWF.ImportSavepoints as ImportSavepoints
 
+import PyXWF.Tweaks.CoreTweaks
+
 class Site(Resource.Resource):
     """
     Represent and maintain a complete PyXWF framework instance. The sitemap is
@@ -151,113 +153,19 @@ class Site(Resource.Resource):
                 continue
             self.add_crumb(Registry.CrumbPlugins(crumb, self))
 
-    def _load_mimemap(self, mimemap):
-        """
-        Load overrides for MIME types.
-        """
-        for child in mimemap.findall(NS.Site.mm):
-            ext = Types.Typecasts.unicode(child.get("ext"))
-            mime = Types.Typecasts.unicode(child.get("type"))
-            mimetypes.add_type(mime, ext)
-
     def _load_tweaks(self, tweaks):
         """
         Load extended configuration (called tweaks).
         """
-        working_copy = copy.copy(tweaks)
-
-        # performance tweaks
-        perf = working_copy.find(NS.Site.performance)
-        if perf is not None:
-            working_copy.remove(perf)
-        else:
-            perf = ET.Element(NS.Site.performance)
-
-        # cache limit
-        try:
-            maxcache = Types.NumericRange(Types.Typecasts.int, 0, None)\
-                    (perf.attrib.pop("cache-limit"))
-        except KeyError:
-            maxcache = 0
-        # xml pretty printing
-        self.cache.Limit = maxcache
-        try:
-            self.pretty_print = Types.Typecasts.bool(perf.attrib.pop("pretty-print"))
-        except KeyError:
-            self.pretty_print = False
-        if len(perf.attrib):
-            logging.debug(_F("Unused attributes on <performance />: {0}", perf.attrib))
-
-        # mime overrides
-        mimemap = working_copy.find(getattr(NS.Site, "mime-map"))
-        mimetypes.init()
-        if mimemap is not None:
-            working_copy.remove(mimemap)
-            self._load_mimemap(mimemap)
-
-        # date formatting; defaults to locale specific
-        long_date = "%c"
-        short_date = "%c"
-        formatting = working_copy.find(NS.Site.formatting)
-        if formatting is not None:
-            working_copy.remove(formatting)
-            long_date = formatting.get("date-format") or long_date
-            short_date = formatting.get("date-format") or short_date
-            long_date = formatting.get("long-date-format") or long_date
-            short_date = formatting.get("short-date-format") or short_date
-        self.long_date_format = long_date
-        self.short_date_format = short_date
-
-        # error templates
-        self.not_found_template = "templates/errors/not-found.xsl"
-        self.default_template = None
-        templates = working_copy.find(NS.Site.templates)
-        if templates is not None:
-            working_copy.remove(templates)
-            self.not_found_template = templates.get("not-found",
-                    self.not_found_template)
-            self.default_template = templates.get("default",
-                    self.default_template)
-
-        self.html_transforms = []
-        for transform in list(working_copy.findall(getattr(NS.Site, "html-transform"))):
-            working_copy.remove(transform)
-            self.html_transforms.append(Types.NotNone(transform.get("transform")))
-
-        compatibility = working_copy.find(NS.Site.compatibility)
-        if compatibility is None:
-            compatibility = ET.Element(NS.Site.compatibility)
-        else:
-            working_copy.remove(compatibility)
-        self.html4_transform = compatibility.get("html4-transform")
-
-        self._namespacemap = {}
-        self._force_namespaces = set()
-        xml_namespaces = working_copy.find(getattr(NS.Site, "xml-namespaces"))
-        if xml_namespaces is None:
-            xml_namespaces = ET.Element(getattr(NS.Site, "xml-namespaces"))
-        else:
-            working_copy.remove(xml_namespaces)
-        for ns in xml_namespaces.findall(NS.Site.ns):
-            prefix = ns.get("prefix")
-            uri = Types.NotNone(ns.get("uri"))
-            force = Types.Typecasts.bool(ns.get("force", False))
-            self._namespacemap[prefix] = uri
-            if force:
-                self._force_namespaces.add((prefix, uri))
-
         # further information, warn about unknown tags in our namespace
-        for child in working_copy:
+        for child in tweaks:
             if child.tag is ET.Comment:
                 continue
             ns, name = utils.split_tag(child.tag)
-            if ns == NS.Site.xmlns:
-                logging.warning("Unknown tweak parameter: {0}".format(name))
-            else:
-                try:
-                    self.tweak_registry.submit_tweak(child)
-                except Errors.MissingTweakPlugin as err:
-                    logging.warning(unicode(err))
+            try:
+                self.tweak_registry.submit_tweak(child)
+            except Errors.MissingTweakPlugin as err:
+                logging.warning(unicode(err))
 
     def _replace_child(self, parent, old_node, new_node):
         old_idx = parent.index(old_node)
@@ -623,7 +531,7 @@ class Site(Resource.Resource):
                 message = Message.XHTMLMessage(result_tree,
                     status=status, encoding="utf-8",
                     pretty_print=self.pretty_print,
-                    force_namespaces=dict(self._force_namespaces)
+                    force_namespaces=dict(self.force_namespaces)
                 )
         elif isinstance(data, (ET._Element, ET._ElementTree)):
             message = Message.XMLMessage(data, content_type,
