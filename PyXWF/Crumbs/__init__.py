@@ -28,5 +28,12 @@ class CrumbBase(object):
         self.ID = node.get("id")
 
     @abc.abstractmethod
-    def render(self, ctx):
-        pass
+    def render(self, ctx, parent):
+        """
+        Return an iterable of nodes which are to be inserted into the node
+        *parent*. As indicated by the lack of hint on where to insert, an
+        implementor of this method *should not* insert the nodes by itself.
+
+        It is perfectly fine (and even recommended) to implement this as a
+        generator function.
+        """

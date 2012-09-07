@@ -102,7 +102,7 @@ class Navigation(Crumbs.CrumbBase):
                     li.append(subtree)
         return ul
 
-    def render(self, ctx, into_node, at_index):
+    def render(self, ctx, parent):
         if ctx.PageNode:
             active_chain = frozenset(ctx.PageNode.iter_upwards())
         else:
@@ -113,25 +113,25 @@ class Navigation(Crumbs.CrumbBase):
                     depth=1,
                     active_chain=active_chain,
                     active=self.root in active_chain)
-                if tree is not None:
-                    into_node.insert(at_index, tree)
                 header = ET.Element(NS.XHTML.header)
                 hX = ET.SubElement(header,
                     getattr(NS.XHTML, "h{0}".format(self.root_as_header)))
                 self._markupA(ctx, hX, self.root,
                     self.root.get_navigation_info(ctx),
                     propagate=False)
-                into_node.insert(at_index, header)
+                yield header
+                if tree is not None:
+                    yield tree
             else:
                 tree = self._nav_tree(None, ctx, [self.root],
                     depth=0,
                     active_chain=active_chain,
                     active=True)
                 if tree is not None:
-                    into_node.insert(at_index, tree)
+                    yield tree
         else:
             tree = self._nav_tree(None, ctx, self.root.get_navigation_info(ctx),
                 active_chain=active_chain,
                 active=True)
             if tree is not None:
-                into_node.insert(at_index, tree)
+                yield tree

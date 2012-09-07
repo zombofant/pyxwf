@@ -26,9 +26,9 @@ class Breadcrumbs(Crumbs.CrumbBase):
         self.rich = self._richmap(node.get("rich"))
         self.rdfa_prefix = node.get("rdfa-prefix", "v:")
 
-    def render(self, ctx, into_node, at_index):
+    def render(self, ctx, parent):
         if not ctx.PageNode:
-            return None
+            return
         ul = ET.Element(NS.XHTML.ul)
         had_nodes = set()
         pagenode = ctx.PageNode
@@ -59,7 +59,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
                 tail = True
             self.rich(self, ctx, relevant, is_tail=tail)
             ul.insert(0, li)
-        into_node.insert(at_index, ul)
+        yield ul
 
     def rdfa(self, ctx, relevant_node, is_tail=False):
         prefix = self.rdfa_prefix

@@ -31,7 +31,7 @@ class TagCloud(Crumbs.CrumbBase):
         self.maxtags = self._maxtags_type(node.get("max-tags"))
         self.class_prefix = self._class_prefix_type(node.get("css-class-prefix"))
 
-    def render(self, ctx, into_node, at_index):
+    def render(self, ctx, parent):
         ul = ET.Element(NS.XHTML.ul)
         index = self.Blog.index
         tag_dir = self.Blog.TagDirectory
@@ -57,4 +57,4 @@ class TagCloud(Crumbs.CrumbBase):
                 "href": tag_dir.get_tag_page_path(tag)
             })
             a.text = tag
-        into_node.insert(at_index, ul)
+        yield ul
