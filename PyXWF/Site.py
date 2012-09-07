@@ -200,7 +200,26 @@ class Site(Resource.Resource):
         parent = crumb_node.getparent()
         idx = parent.index(crumb_node)
         del parent[idx]
-        crumb.render(ctx, parent, idx)
+        for i, node in enumerate(crumb.render(ctx, parent)):
+            parent.insert(idx+i, node)
+
+    def transform_py_if_mobile(self, ctx, body):
+        todelete = set()
+        for mobile_switch in body.iter(getattr(NS.PyWebXML, "if-mobile")):
+            if Types.Typecasts.bool(mobile_switch.get("mobile", True)) != ctx.IsMobileClient:
+                todelete.add(mobile_switch)
+                continue
+            try:
+                xhtmlel = mobile_switch.attrib.pop("xhtml-element")
+            except KeyError:
+                xhtmlel = "span"
+            mobile_switch.tag = getattr(NS.XHTML, xhtmlel)
+            try:
+                del mobile_switch.attrib["mobile"]
+            except KeyError:
+                pass
+        for mobile_switch in todelete:
+            mobile_switch.getparent().remove(mobile_switch)
 
     def transform_py_namespace(self, ctx, body, crumbs=True, a=True, link=True,
             img=True, mobile_switch=True, content_attr=True):
@@ -216,8 +235,8 @@ class Site(Resource.Resource):
         See :ref:`<py-namespace>` for documentation on what can be done with
         in that XML namespace.
         """
-        if not hasattr(ctx, "crumb_cache"):
-            ctx.crumb_cache = {}
+        if mobile_switch:
+            self.transform_py_if_mobile(ctx, body)
         while crumbs:
             crumbs = False
             for crumb_node in body.iter(NS.PyWebXML.crumb):
@@ -229,7 +248,9 @@ class Site(Resource.Resource):
                     raise ValueError("Invalid crumb id: {0!r}."\
                             .format(crumb_id))
                 self._place_crumb(ctx, crumb_node, crumb)
-
+        if mobile_switch:
+            # just in case another py:if-mobile tag was placed by a crumb
+            self.transform_py_if_mobile(ctx, body)
         if a:
             for locallink in body.iter(NS.PyWebXML.a):
                 locallink.tag = NS.XHTML.a
@@ -245,23 +266,6 @@ class Site(Resource.Resource):
                 locallink.tag = NS.XHTML.link
                 if locallink.get("href"):
                     self.transform_href(ctx, locallink)
-        if mobile_switch:
-            todelete = set()
-            for mobile_switch in body.iter(getattr(NS.PyWebXML, "if-mobile")):
-                if Types.Typecasts.bool(mobile_switch.get("mobile", True)) != ctx.IsMobileClient:
-                    todelete.add(mobile_switch)
-                    continue
-                try:
-                    xhtmlel = mobile_switch.attrib.pop("xhtml-element")
-                except KeyError:
-                    xhtmlel = "span"
-                mobile_switch.tag = getattr(NS.XHTML, xhtmlel)
-                try:
-                    del mobile_switch.attrib["mobile"]
-                except KeyError:
-                    pass
-            for mobile_switch in todelete:
-                mobile_switch.getparent().remove(mobile_switch)
         if content_attr:
             content_attrname = NS.PyWebXML.content
             content_make_uri_attrname = getattr(NS.PyWebXML, "content-make-uri")
