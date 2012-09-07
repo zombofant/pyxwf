@@ -28,27 +28,23 @@ class PyWebXML(Parsers.ParserBase):
             parser_mimetypes=self.mimetypes
         )
 
-    @staticmethod
-    def _link_from_node(node):
-        return Link.create(
-            node.get("rel"), node.get("type"), node.get("href"), node.get("media")
-        )
+    def _link_from_node(self, node):
+        if node.get("rel") == "script":
+            href = self.site.transform_relative_uri(None, node.get("href") or "")
+            return ET.Element(NS.XHTML.script, attrib={
+                "type": node.get("type") or "",
+                "src": href
+            })
+        else:
+            return node
 
-    @classmethod
-    def get_links(cls, meta):
-        return list(meta.findall(NS.PyWebXML.link))
+    def get_links(self, meta):
+        return list(map(self._link_from_node, meta.findall(NS.PyWebXML.link)))
 
     @classmethod
     def get_keywords(cls, meta):
         return list(map(
             lambda node: unicode(node.text), meta.findall(NS.PyWebXML.kw)))
-
-    @classmethod
-    def get_keywords_and_links(cls, meta):
-        """
-        Deprecated – do not use.
-        """
-        return cls.get_keywords(meta), cls.get_links(meta)
 
     @classmethod
     def get_authors(cls, meta):
@@ -87,7 +83,8 @@ class PyWebXML(Parsers.ParserBase):
         if title is None:
             raise ValueError("Title is missing.")
 
-        keywords, links = self.get_keywords_and_links(meta)
+        keywords = self.get_keywords(meta)
+        links = self.get_links(meta)
 
         body = root.find(NS.XHTML.body)
         if body is None:
