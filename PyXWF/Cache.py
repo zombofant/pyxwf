@@ -297,7 +297,7 @@ class Cache(object):
                 raise ValueError("Cache limit must be non-negative.")
 
             if value == 0:
-                del self.heap
+                del self.entries
             else:
                 self.entries = []
                 for cache in self.subcaches.viewvalues():
