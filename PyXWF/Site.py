@@ -285,7 +285,11 @@ class Site(Resource.Resource):
         # XXX: This will possibly explode one day ...
         return {
             b"site_title": utils.unicode2xpathstr(self.title),
-            b"mobile_client": "1" if ctx.IsMobileClient else "0"
+            b"mobile_client": "1" if ctx.IsMobileClient else "0",
+            b"host_name": utils.unicode2xpathstr(ctx.HostName),
+            b"url_scheme": utils.unicode2xpathstr(ctx.URLScheme),
+            b"url_root": utils.unicode2xpathstr(self.urlroot),
+            b"full_uri": utils.unicode2xpathstr(ctx.FullURI)
         }
 
     def transform_relative_uri(self, ctx, uri, make_global=False):
