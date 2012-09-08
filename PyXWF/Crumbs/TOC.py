@@ -111,7 +111,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
     def render(self, ctx, parent):
         ul = ET.Element(NS.XHTML.ul)
         _, name = utils.split_tag(parent.tag)
-        if name != "section":
+        if name != "section" and name != "article":
             parent = parent.getparent()
         section_stack = []
         self._subtree(ctx, ul, parent, section_stack)
