@@ -158,7 +158,9 @@ vary: host
 """+"""äöü""".encode("iso-8859-1"))
 
     def test_charset_no_fallback(self):
-        self.assertRaises(Errors.NotAcceptable, self.send_message, body="äöü", accept_charset="ascii,*;q=0")
+        with Mocks.MockLogging() as mocked_logging:
+            self.assertRaises(Errors.NotAcceptable, self.send_message, body="äöü", accept_charset="ascii,*;q=0")
+            mocked_logging.assertLoggedCount("warning", 1)
 
     def test_charset_detection_complex(self):
         ctx = self.send_message(body="😸", accept_charset="ascii,latin-1;q=0.9,utf-32be;q=0.8,utf-32le;q=0.8,utf-8;q=0.7,*;q=0")
