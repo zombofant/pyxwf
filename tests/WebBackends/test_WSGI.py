@@ -218,3 +218,18 @@ class WSGIContext(unittest.TestCase):
             (b"last-modified", HTTPUtils.format_http_date(d)),
             (b"vary", b"host,if-modified-since")
         ])
+
+    def test_set_cookie(self):
+        ctx = self.get_context()
+        cookie1 = Context.Cookie(b"foo", "bar")
+        cookie2 = Context.Cookie(b"quux", "cookie", expires=TimeUtils.now_date())
+        ctx.set_cookie(cookie1)
+        ctx.set_cookie(cookie2)
+
+        ctx.send_empty_response(Errors.OK)
+        self.assertEqual(self.response_headers, [
+            (b"set-cookie", cookie1.to_cookie_string()),
+            (b"set-cookie", cookie2.to_cookie_string()),
+            (b"vary", b"host")
+        ])
+
