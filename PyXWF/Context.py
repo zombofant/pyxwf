@@ -196,6 +196,10 @@ class Context(object):
         # :meth:`_require_post` )
         self._post_data = None
 
+        # cookie information, as a python dict (can be initialized lazily in
+        # :meth:`_require_cookies` )
+        self._cookies = None
+
         # datetime object representing the value of the incoming
         # If-Modified-Since header, if any. Otherwise None
         self._if_modified_since = None
@@ -251,6 +255,19 @@ class Context(object):
             web backend.
         """
         self._force_no_cache = True
+
+    @abc.abstractmethod
+    def _require_cookies(self):
+        """
+        Extract the cookie information from the request and make it available at
+        :attr:`Cookies`.
+
+        .. note::
+            This must be overriden when implementing a Context for a specific
+            web backend. It is expected that this method sets the
+            :attr:`_cookies` attribute to a dict mapping cookie names to
+            :class:`~Cookie` instances.
+        """
 
     def _set_cache_status(self):
         """
@@ -381,6 +398,13 @@ class Context(object):
             return version >= minversion
         except KeyError:
             return True  # we assume the best ... let them burn
+
+    @classmethod
+    def _parse_cookie_header(cls, value):
+        cookie_strings = value.split(b";")
+        parse_cookie_gen = (Cookie.from_cookie_header(cookie_string.lstrip()) for cookie_string in cookie_strings)
+        cookies = (cookie for cookie in parse_cookie_gen if cookie is not None)
+        return dict((cookie.name, cookie) for cookie in cookies)
 
     @property
     def Method(self):
@@ -539,6 +563,16 @@ class Context(object):
         """
         return frozenset(self._cache_control)
 
+    @property
+    def Cookies(self):
+        """
+        Return a dictionary mapping cookie names to :class:`~Cookie` instances.
+        """
+        if self._cookies is None:
+            self.add_vary("Cookie")
+            self._require_cookies()
+        return self._cookies
+
     @abc.abstractmethod
     def send_response(self, message):
         """
@@ -669,3 +703,10 @@ class Context(object):
         instance.
         """
         return self.send_response(Message.EmptyMessage(status=status))
+
+    def set_cookie(self, cookie):
+        """
+        Add the given :class:`~Cookie` *cookie* to the list of cookies to be
+        sent with the response.
+        """
+        self._cookies.append(cookie)

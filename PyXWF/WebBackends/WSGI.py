@@ -112,6 +112,10 @@ class WSGIContext(Context.Context):
     def _require_post(self):
         raise NotImplementedError()
 
+    def _require_cookies(self):
+        cookie_value = self._request_headers.get("Cookie", "")
+        self._cookies = self._parse_cookie_header(cookie_value)
+
     def send_response(self, message):
         body = self.get_encoded_body(message)
         if body is not None:

@@ -86,6 +86,10 @@ class WebStackContext(Context.Context):
     def _require_post(self):
         raise NotImplemented()
 
+    def _require_cookies(self):
+        value = "; ".join(self._transaction.get_header_values("Cookie"))
+        self._cookies = self._parse_cookie_header(value)
+
     def _headers_to_tx(self):
         tx = self._transaction
         for key, value in self._response_headers.viewitems():
