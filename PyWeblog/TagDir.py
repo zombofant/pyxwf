@@ -154,6 +154,12 @@ class TagPage(Protocols.FeedableDirectoryMixin, Nodes.Node, Navigation.Info, Pro
             self.Blog.get_transform_args()
         )
 
+    def resolve_path(self, ctx, relPath):
+        result = super(TagPage, self).resolve_path(ctx, relPath)
+        if result is self:
+            ctx.use_resource(self.site.template_cache[self._list_template])
+        return result
+
     def get_navigation_info(self, ctx):
         return self
 

@@ -155,6 +155,12 @@ class MonthDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
     def get_posts(self):
         return self._children
 
+    def resolve_path(self, ctx, rel_path):
+        result = super(MonthDir, self).resolve_path(ctx, rel_path)
+        if result is self:
+            ctx.use_resource(self.site.template_cache[self.Blog.month_template])
+        return result
+
     def update_children(self):
         abstracts = ET.Element(getattr(NS.PyBlog, "abstract-list"), attrib={
             "month-name": self._monthstr,

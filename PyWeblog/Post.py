@@ -16,6 +16,7 @@ class PostNode(Nodes.Node, Navigation.Info):
         node = super(PostNode, self).resolve_path(ctx, relpath)
         if node is self:
             ctx.use_resource(self.post)
+            ctx.use_resource(self.site.template_cache[self.Blog.post_template])
         return node
 
     def do_GET(self, ctx):
