@@ -93,7 +93,7 @@ class WebStackContext(Context.Context):
     def _headers_to_tx(self):
         tx = self._transaction
         for key, value in self._response_headers.viewitems():
-            tx.set_header_value(key, value)
+            tx.set_header_value(key, value[0])
 
     def set_response_content_type(self, mimetype, charset):
         tx = self._transaction
@@ -119,6 +119,9 @@ class WebStackContext(Context.Context):
         self._set_property_headers()
         self._headers_to_tx()
         self.Out.write(body)
+
+    def set_cookie(self, *args):
+        raise NotImplementedError("Setting cookies is not supported by WebStack web backend")
 
 class WebStackSite(Site.Site):
     def __init__(self, sitemap_file, **kwargs):

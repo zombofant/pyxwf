@@ -107,8 +107,9 @@ class MockedContext(Context.Context):
         self._set_cache_status()
         self._set_property_headers()
         # sorting is important to create reproducible and easy to test responses
-        for header, value in sorted(self._response_headers.items()):
-            out.write("{0}: {1}\n".format(header, value).encode("ascii"))
+        for header, values in sorted(self._response_headers.items()):
+            for value in values:
+                out.write("{0}: {1}\n".format(header, value).encode("ascii"))
         out.write(b"\n")
         self.Out.write(body)
 

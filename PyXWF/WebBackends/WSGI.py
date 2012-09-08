@@ -126,7 +126,11 @@ class WSGIContext(Context.Context):
             b"{0:d} {1}".format(
                 message.Status.code, message.Status.title
             ),
-            self._response_headers.items()
+            [
+                (header_name, header_value)
+                for header_name, values in self._response_headers.viewitems()
+                for header_value in values
+            ]
         )
         if hasattr(body, "__iter__") and not isinstance(body, str):
             return iter(body)

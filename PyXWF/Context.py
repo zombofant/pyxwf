@@ -19,6 +19,7 @@ import PyXWF.AcceptHeaders as AcceptHeaders
 import PyXWF.Message as Message
 
 logging = logging.getLogger(__name__)
+map = itertools.imap
 
 class Cookie(object):
     @staticmethod
@@ -231,6 +232,7 @@ class Context(object):
         self._is_mobile_client = False
         self._response_headers = {}
         self._vary = set(["host"])
+        self._response_cookies = []
 
     @abc.abstractmethod
     def _require_query(self):
@@ -332,6 +334,11 @@ class Context(object):
             self.set_response_header(b"cache-control", b",".join(self._cache_control))
         else:
             self.clear_response_header(b"cache-control")
+
+        if self._response_cookies:
+            cookie_list = list(map( Cookie.to_cookie_string,
+                                    self._response_cookies))
+            self._response_headers[b"set-cookie"] = cookie_list
 
     def parse_accept(self, header_value):
         """
@@ -676,7 +683,7 @@ class Context(object):
         Set the value of the HTTP/1.1 response header *header* to *value*. Both
         are forced into non-unicode strings as per wsgi specification.
         """
-        self._response_headers[str(header).lower()] = str(value)
+        self._response_headers[str(header).lower()] = [str(value)]
 
     def clear_response_header(self, header):
         """
@@ -711,4 +718,4 @@ class Context(object):
         Add the given :class:`~Cookie` *cookie* to the list of cookies to be
         sent with the response.
         """
-        self._cookies.append(cookie)
+        self._response_cookies.append(cookie)
