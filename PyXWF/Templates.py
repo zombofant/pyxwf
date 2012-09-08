@@ -74,6 +74,7 @@ class Template(Resource.Resource):
                 self.site.transform_href(ctx, link)
                 link.tag = "link"
                 del link.attrib["ie-only"]
+                ET.cleanup_namespaces(link)
                 s = ET.tostring(link, method="html", xml_declaration="no", encoding="utf-8").decode("utf-8")
                 s = "[{0}]>{1}<![endif]".format(ielimit, s)
                 link = ET.Comment()
