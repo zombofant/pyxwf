@@ -1,4 +1,8 @@
-import os, tempfile, shutil, unittest
+import os
+import tempfile
+import shutil
+import unittest
+import logging
 
 from PyXWF.utils import ET
 import PyXWF.utils as utils
@@ -215,3 +219,50 @@ class FakeResource(Resource.Resource):
 
     def update(self):
         pass
+
+# as per http://stackoverflow.com/a/1049375/1248008
+class MockLoggingHandler(logging.Handler):
+    """Mock logging handler to check for expected logs."""
+
+    def __init__(self, *args, **kwargs):
+        self.reset()
+        super(MockLoggingHandler, self).__init__(*args, **kwargs)
+
+    def _getMessageList(self, levelname):
+        return self.messages.setdefault(levelname, [])
+
+    def emit(self, record):
+        msgs = self._getMessageList(record.levelname.lower())
+        msgs.append(record.getMessage())
+
+    def reset(self):
+        self.messages = {}
+
+    def getMessageCount(self, levelname):
+        return len(self._getMessageList(levelname.lower()))
+
+    def findAndRemoveMessage(self, levelname, message):
+        self._getMessageList(levelname).remove(message)
+
+class MockLogging(object):
+    def __init__(self, logger, *args, **kwargs):
+        self._mocked_logging = MockLoggingHandler(*args, **kwargs)
+        self._logger = logger
+
+    def __enter__(self):
+        self._logger.addHandler(self._mocked_logging)
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self._logger.removeHandler(self._mocked_logging)
+        self._mocked_logging.reset()
+
+    def assertLoggedCount(self, levelname, count):
+        if self._mocked_logging.getMessageCount(levelname) != count:
+            raise AssertionError("Amount of logged messages differs")
+
+    def assertLoggedMessage(self, levelname, message):
+        try:
+            self._mocked_logging.findAndRemoveMessage(levelname, message)
+        except (IndexError, ValueError):
+            raise AssertionError("Message has not been logged: {0!r}".format(message))
