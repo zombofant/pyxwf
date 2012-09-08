@@ -34,19 +34,49 @@ class Cookie(object):
             value = value.encode(b"utf-8")
         encoded = base64.urlsafe_b64encode(value)
         return encoded.rstrip(b"=")
-    
+
     @classmethod
-    def from_cookie_header(self, cookie_av):
+    def from_cookie_header(cls, cookie_av):
         """
         Return the :class:`~Cookie` instance by parsing *cookie_av* as per
         RFC 6265, Section 4.2.1.
+
+        If the decoding of *cookie_av* fails for some reason, None is returned
+        and an error is logged.
         """
-        name, _, value = cookie_av.partition("=")
+        if not isinstance(cookie_av, str):
+            raise TypeError("cookie_av must be str, not {0}".format(type(cookie_av).__name__))
+        name, _, value = cookie_av.partition(b"=")
         if not value:
             raise ValueError("cookie_av does not conform to RFC 6265 (no value)")
-    
-    def __init__(self, name, raw_value):
-        pass
+        try:
+            instance = cls(name, cls.decode_value(value))
+        except (ValueError, TypeError) as err:
+            logging.error(_F(
+                "Could not decode cookie-av {0!r}: {1}",
+                cookie_av,
+                err
+            ))
+            return None
+        instance.from_client = True
+        return instance
+
+    def __init__(self, name, value,
+            expires=None, domain=None, path=None, secure=False, httponly=False,
+            maxage=None):
+        if expires is not None and maxage is not None:
+            logging.warning("Cookie has both maxage and expires, maxage will \
+take precedence")
+        self.name = name
+        self.value = value
+        self.expires = expires
+        self.domain = domain
+        self.path = path
+        self.secure = secure
+        self.httponly = httponly
+        self.maxage = maxage
+        self.from_client = False
+
 
 class Context(object):
     """

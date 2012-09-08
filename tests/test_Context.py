@@ -49,6 +49,23 @@ class Cookie(unittest.TestCase):
         roundtripped = MContext.Cookie.decode_value(encoded)
         self.assertEqual(roundtripped, message)
 
+    def test_from_cookie_header_unicode_error(self):
+        cookie_av = "foo={0}".format(MContext.Cookie.encode_value("bar"))
+        self.assertRaises(TypeError, MContext.Cookie.from_cookie_header, cookie_av)
+
+    def test_from_cookie_header_valid(self):
+        cookie_av = b"foo={0}".format(MContext.Cookie.encode_value("bar"))
+        instance = MContext.Cookie.from_cookie_header(cookie_av)
+        self.assertEqual(instance.name, b"foo")
+        self.assertEqual(instance.value, "bar")
+        self.assertFalse(instance.httponly)
+        self.assertFalse(instance.secure)
+        self.assertIsNone(instance.expires)
+        self.assertIsNone(instance.maxage)
+        self.assertIsNone(instance.domain)
+        self.assertIsNone(instance.path)
+        self.assertTrue(instance.from_client)
+
 class Context(unittest.TestCase):
     def send_message(self, body="Foo bar", **kwargs):
         ctx = Mocks.MockedContext("/", **kwargs)
