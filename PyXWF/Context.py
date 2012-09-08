@@ -69,15 +69,71 @@ class Cookie(object):
         if expires is not None and maxage is not None:
             logging.warning("Cookie has both maxage and expires, maxage will \
 take precedence")
-        self.name = name
+        self.name = str(name)
         self.value = value
         self.expires = expires
-        self.domain = domain
-        self.path = path
-        self.secure = secure
-        self.httponly = httponly
-        self.maxage = maxage
+        self.domain = str(domain) if domain is not None else None
+        self.path = str(path) if path is not None else None
+        self.secure = bool(secure)
+        self.httponly = bool(httponly)
+        self.maxage = int(maxage) if maxage is not None else None
         self.from_client = False
+
+    def to_cookie_string(self):
+        cookie_pair = b"{0}={1}".format(self.name, self.encode_value(self.value))
+        cookie_avs = []
+        if self.domain:
+            cookie_avs.append(b"Domain={0}".format(self.domain))
+        if self.path is not None:
+            cookie_avs.append(b"Path={0}".format(self.path))
+        if self.expires is not None:
+            cookie_avs.append(b"Expires={0}".format(
+                HTTPUtils.format_http_date(self.expires)
+            ))
+        if self.maxage is not None:
+            cookie_avs.append(b"Max-Age={0:d}".format(self.maxage))
+        if self.secure:
+            cookie_avs.append(b"Secure")
+        if self.httponly:
+            cookie_avs.append(b"HttpOnly")
+        if cookie_avs:
+            cookie_avs.insert(0, b"")
+        return cookie_pair + b"; ".join(cookie_avs)
+
+    def __eq__(self, other):
+        try:
+            return (
+                self.name == other.name and
+                self.value == other.value and
+                self.expires == other.expires and
+                self.domain == other.domain and
+                self.path == other.path and
+                self.secure == other.secure and
+                self.httponly == other.httponly and
+                self.maxage == other.maxage
+            )
+        except AttributeError:
+            return NotImplemented
+
+    def __ne__(self, other):
+        result = self == other
+        if result is not NotImplemented:
+            return not result
+        return result
+
+    def __repr__(self):
+        return "<Cookie {0}={1!r} domain={2!r} path={3!r} expires={4} maxage={5}{6}>".format(
+            self.name,
+            self.value,
+            self.domain,
+            self.path,
+            self.expires,
+            self.maxage,
+            " ".join(attr for attr in [
+                "secure" if self.secure else None,
+                "httponly" if self.httponly else None
+            ] if attr is not None)
+        )
 
 
 class Context(object):
