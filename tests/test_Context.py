@@ -81,6 +81,48 @@ class Cookie(unittest.TestCase):
             mocked_logging.assertLoggedCount("error", 1)
             self.assertIsNone(instance)
 
+    def test___init__(self):
+        name = b"foo"
+        value = "bar"
+        instance = MContext.Cookie(name, value)
+        self.assertEqual(instance.name, name)
+        self.assertEqual(instance.value, value)
+        self.assertFalse(instance.httponly)
+        self.assertFalse(instance.secure)
+        self.assertIsNone(instance.expires)
+        self.assertIsNone(instance.maxage)
+        self.assertIsNone(instance.domain)
+        self.assertIsNone(instance.path)
+        self.assertFalse(instance.from_client)
+
+    def test___init___warn_expires_and_maxage(self):
+        # note that these are not actually valid parameters for both options,
+        # but for this test it only matters that both are not None
+        with Mocks.MockLogging(logging.getLogger()) as mocked_logging:
+            instance = MContext.Cookie(b"foo", "bar", expires=True, maxage=True)
+            mocked_logging.assertLoggedCount("warning", 1)
+
+    def test_to_cookie_string_simple(self):
+        name = b"foo"
+        value = "bar"
+        instance = MContext.Cookie(name, value)
+        cookie_string = b"foo={0}".format(MContext.Cookie.encode_value(value))
+        generated_cookie_string = instance.to_cookie_string()
+        self.assertEqual(cookie_string, generated_cookie_string)
+        self.assertIsInstance(generated_cookie_string, str)
+
+    def test_to_cookie_string_with_attributes(self):
+        name = b"foo"
+        value = "bar"
+        domain = "example.com"
+        path = "/"
+        instance = MContext.Cookie(name, value, domain=domain, path=path)
+        cookie_string = b"foo={0}".format(MContext.Cookie.encode_value(value))
+        cookie_string += "; Domain=" + domain + "; Path=" + path
+        generated_cookie_string = instance.to_cookie_string()
+        self.assertEqual(cookie_string, generated_cookie_string)
+        self.assertIsInstance(generated_cookie_string, str)
+
 class Context(unittest.TestCase):
     def send_message(self, body="Foo bar", **kwargs):
         ctx = Mocks.MockedContext("/", **kwargs)
