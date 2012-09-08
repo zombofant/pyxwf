@@ -1,8 +1,13 @@
 # encoding=utf-8
 from __future__ import unicode_literals, print_function
 
-import operator, abc, collections, functools, logging, itertools
-from fnmatch import fnmatch
+import operator
+import abc
+import collections
+import functools
+import logging
+import itertools
+import base64
 
 from PyXWF.utils import _F
 import PyXWF.Types as Types
@@ -14,6 +19,34 @@ import PyXWF.AcceptHeaders as AcceptHeaders
 import PyXWF.Message as Message
 
 logging = logging.getLogger(__name__)
+
+class Cookie(object):
+    @staticmethod
+    def decode_value(value):
+        missing = 4 - len(value) % 4
+        if 0 < missing < 4:
+            value += b"=" * missing
+        return base64.urlsafe_b64decode(value).decode(b"utf-8")
+
+    @staticmethod
+    def encode_value(value):
+        if isinstance(value, unicode):
+            value = value.encode(b"utf-8")
+        encoded = base64.urlsafe_b64encode(value)
+        return encoded.rstrip(b"=")
+    
+    @classmethod
+    def from_cookie_header(self, cookie_av):
+        """
+        Return the :class:`~Cookie` instance by parsing *cookie_av* as per
+        RFC 6265, Section 4.2.1.
+        """
+        name, _, value = cookie_av.partition("=")
+        if not value:
+            raise ValueError("cookie_av does not conform to RFC 6265 (no value)")
+    
+    def __init__(self, name, raw_value):
+        pass
 
 class Context(object):
     """
