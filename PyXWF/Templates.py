@@ -65,6 +65,8 @@ class Template(Resource.Resource):
         head = ET.SubElement(html, NS.XHTML.head)
         ET.SubElement(head, NS.XHTML.title).text = \
                 newdoc.title or document.title
+        for hbase in newdoc.ext.iterchildren(tag=NS.XHTML.base):
+            head.append(hbase)
         for link in newdoc.links:
             ielimit = link.get("ie-only")
             if ielimit is not None:
