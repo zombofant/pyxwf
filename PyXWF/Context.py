@@ -402,7 +402,9 @@ class Context(object):
     @classmethod
     def _parse_cookie_header(cls, value):
         cookie_strings = value.split(b";")
-        parse_cookie_gen = (Cookie.from_cookie_header(cookie_string.lstrip()) for cookie_string in cookie_strings)
+        parse_cookie_gen = (Cookie.from_cookie_header(cookie_string.lstrip())
+                            for cookie_string in cookie_strings
+                            if cookie_string)
         cookies = (cookie for cookie in parse_cookie_gen if cookie is not None)
         return dict((cookie.name, cookie) for cookie in cookies)
 
