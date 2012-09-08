@@ -126,7 +126,7 @@ class WSGIContext(Context.Context):
         elif body is None:
             return []
         else:
-            return utils.chunk_string(body)
+            return [body]
 
 
 class WSGISite(Site.Site):
