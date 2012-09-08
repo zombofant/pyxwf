@@ -36,25 +36,27 @@ class Cookie(object):
         return encoded.rstrip(b"=")
 
     @classmethod
-    def from_cookie_header(cls, cookie_av):
+    def from_cookie_header(cls, cookie_pair):
         """
-        Return the :class:`~Cookie` instance by parsing *cookie_av* as per
+        Return the :class:`~Cookie` instance by parsing *cookie_pair* as per
         RFC 6265, Section 4.2.1.
 
-        If the decoding of *cookie_av* fails for some reason, None is returned
+        If the decoding of *cookie_pair* fails for some reason, None is returned
         and an error is logged.
         """
-        if not isinstance(cookie_av, str):
-            raise TypeError("cookie_av must be str, not {0}".format(type(cookie_av).__name__))
-        name, _, value = cookie_av.partition(b"=")
+        if not isinstance(cookie_pair, str):
+            raise TypeError("cookie_pair must be str, not {0}".format(type(cookie_pair).__name__))
         try:
+            if b";" in cookie_pair:
+                raise ValueError("cookie_pair contains \";\"")
+            name, _, value = cookie_pair.partition(b"=")
             if not value:
-                raise ValueError("cookie_av does not conform to RFC 6265 (no value)")
+                raise ValueError("cookie_pair does not conform to RFC 6265 (no value)")
             instance = cls(name, cls.decode_value(value))
         except (ValueError, TypeError) as err:
             logging.error(_F(
                 "Could not decode cookie-av {0!r}: {1}",
-                cookie_av,
+                cookie_pair,
                 err
             ))
             return None
