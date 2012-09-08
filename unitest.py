@@ -72,11 +72,7 @@ import logging
 if platform.python_implementation() == "PyPy":
     import numpypy
 
-logging.basicConfig(level=logging.NOTSET)
-root_logger = logging.getLogger()
-stdout_handler = root_logger.handlers[0]
-root_logger.removeHandler(stdout_handler)
-del stdout_handler, root_logger
+logging.basicConfig(level=logging.WARNING)
 
 STATE_PASS = 0
 STATE_SKIP = 1

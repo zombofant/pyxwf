@@ -84,7 +84,7 @@ class MockedContext(Context.Context):
         self._accept_charset = self.parse_accept_charset(accept_charset)
         self._determine_html_content_type()
         self._if_modified_since = if_modified_since
-        self._query_data = {}
+        self._query_data = query_data
 
     @property
     def Out(self):
@@ -92,6 +92,12 @@ class MockedContext(Context.Context):
 
     def _require_query(self):
         pass
+
+    def _require_post(self):
+        self._post_data = {}
+
+    def _require_cookies(self):
+        self._cookie_data = {}
 
     def send_response(self, message):
         out = self.Out
@@ -245,17 +251,28 @@ class MockLoggingHandler(logging.Handler):
         self._getMessageList(levelname).remove(message)
 
 class MockLogging(object):
-    def __init__(self, logger, *args, **kwargs):
-        self._mocked_logging = MockLoggingHandler(*args, **kwargs)
+    def __init__(self, logger=logging.getLogger(), level=logging.NOTSET):
+        self._mocked_logging = MockLoggingHandler(level=level)
         self._logger = logger
 
     def __enter__(self):
+        _root_logger = logging.getLogger()
+        if self._logger is _root_logger:
+            self._stdout_handler = _root_logger.handlers[0]
+            _root_logger.removeHandler(self._stdout_handler)
+        else:
+            self._stdout_handler = None
+            self._logger.propagate = False
         self._logger.addHandler(self._mocked_logging)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._logger.removeHandler(self._mocked_logging)
         self._mocked_logging.reset()
+        if self._stdout_handler is not None:
+            self._logger.addHandler(self._stdout_handler)
+        else:
+            self._logger.propagate = True
 
     def assertLoggedCount(self, levelname, count):
         if self._mocked_logging.getMessageCount(levelname) != count:
