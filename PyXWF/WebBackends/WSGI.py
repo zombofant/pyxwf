@@ -109,6 +109,9 @@ class WSGIContext(Context.Context):
         if self._query_data is None:
             self._query_data = urlparse.parse_qs(self._query_string)
 
+    def _require_post(self):
+        raise NotImplementedError()
+
     def send_response(self, message):
         body = self.get_encoded_body(message)
         if body is not None:

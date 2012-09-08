@@ -228,6 +228,7 @@ class Context(object):
         self._response_headers = {}
         self._vary = set(["host"])
 
+    @abc.abstractmethod
     def _require_query(self):
         """
         Extract query string from the web frameworks transaction and make it
@@ -238,8 +239,8 @@ class Context(object):
             This must be overridden when implementing a Context for a specific
             web backend.
         """
-        raise NotImplemented()
 
+    @abc.abstractmethod
     def _require_post(self):
         """
         Extract the post data from the request and make it available at
