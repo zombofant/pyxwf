@@ -182,3 +182,20 @@ content-type: application/xhtml+xml; charset=utf-8
 vary: host
 
 """+message.get_encoded_body())
+
+    def test_parse_cookie_header(self):
+        Cookie = MContext.Cookie
+        cookies = [
+            Cookie(b"foo", "bar"),
+            Cookie(b"baz", "quux"),
+        ]
+        cookie_header = b"; ".join(map(Cookie.to_cookie_string, cookies))
+        cookies = dict((cookie.name, cookie) for cookie in cookies)
+
+        #with Mocks.MockLogging(logging.getLogger()) as mocked_logging:
+        parsed = MContext.Context._parse_cookie_header(cookie_header)
+        # mocked_logging.assertLoggedCount("error", 0)
+        self.assertEqual(
+            parsed,
+            cookies
+        )
