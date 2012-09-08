@@ -47,9 +47,9 @@ class Cookie(object):
         if not isinstance(cookie_av, str):
             raise TypeError("cookie_av must be str, not {0}".format(type(cookie_av).__name__))
         name, _, value = cookie_av.partition(b"=")
-        if not value:
-            raise ValueError("cookie_av does not conform to RFC 6265 (no value)")
         try:
+            if not value:
+                raise ValueError("cookie_av does not conform to RFC 6265 (no value)")
             instance = cls(name, cls.decode_value(value))
         except (ValueError, TypeError) as err:
             logging.error(_F(

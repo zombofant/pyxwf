@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import unittest
 import base64
+import logging
 
 from PyXWF.utils import ET
 import PyXWF.Context as MContext
@@ -65,6 +66,20 @@ class Cookie(unittest.TestCase):
         self.assertIsNone(instance.domain)
         self.assertIsNone(instance.path)
         self.assertTrue(instance.from_client)
+
+    def test_from_cookie_header_invalid(self):
+        cookie_av = b"foo"
+        mocked_logging = Mocks.MockLogging(logging.getLogger())
+        with mocked_logging:
+            instance = MContext.Cookie.from_cookie_header(cookie_av)
+            mocked_logging.assertLoggedCount("error", 1)
+            self.assertIsNone(instance)
+
+        cookie_av = b"foo;bar"
+        with mocked_logging:
+            instance = MContext.Cookie.from_cookie_header(cookie_av)
+            mocked_logging.assertLoggedCount("error", 1)
+            self.assertIsNone(instance)
 
 class Context(unittest.TestCase):
     def send_message(self, body="Foo bar", **kwargs):
