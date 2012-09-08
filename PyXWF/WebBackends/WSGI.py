@@ -113,7 +113,7 @@ class WSGIContext(Context.Context):
         raise NotImplementedError()
 
     def _require_cookies(self):
-        cookie_value = self._request_headers.get("Cookie", "")
+        cookie_value = self._request_headers.get("cookie", b"")
         self._cookies = self._parse_cookie_header(cookie_value)
 
     def send_response(self, message):

@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function
 import unittest, wsgiref, wsgiref.util
 from datetime import datetime
 
+import PyXWF.Context as Context
 import PyXWF.Errors as Errors
 import PyXWF.HTTPUtils as HTTPUtils
 import PyXWF.TimeUtils as TimeUtils
@@ -73,6 +74,22 @@ class WSGIContext(unittest.TestCase):
         self.assertEqual(ctx.FullURI, "/foo/bar?quux=baz")
         self.assertEqual(ctx.Path, "foo/bar")
         self.assertEqual(ctx.QueryData, {"quux": ["baz"]})
+
+    def test_no_cookies(self):
+        ctx = self.get_context()
+        self.assertEqual(ctx.Cookies, {})
+
+    def test_cookie_parsing(self):
+        cookies = [
+            Context.Cookie("foo", "bar")
+        ]
+        cookie_string = b"; ".join(map(Context.Cookie.to_cookie_string, cookies))
+        cookies = Context.Context._parse_cookie_header(cookie_string)
+        myheaders = {
+            b"cookie": cookie_string
+        }
+        ctx = self.get_context(custom_headers=myheaders)
+        self.assertEqual(ctx.Cookies, cookies)
 
     def test_if_modified_since_bad_request(self):
         self.assertRaises(Errors.BadRequest, self.get_context, custom_headers={
