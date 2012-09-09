@@ -2,7 +2,9 @@ from __future__ import print_function, unicode_literals, absolute_import
 
 import logging
 import mimetypes
+import os
 
+import PyXWF
 import PyXWF.Tweaks as Tweaks
 import PyXWF.Namespaces as NS
 import PyXWF.Types as Types
@@ -30,7 +32,7 @@ class CoreTweaks(Tweaks.TweakSitleton):
         )
         site.pretty_print = False
         site.cache.Limit = 0
-        site.html4_transform = None
+        site.html4_transform = os.path.join(PyXWF.data_path, "xsl", "tohtml4.xsl")
         site.long_date_format = "%c"
         site.short_date_format = "%c"
         site.not_found_template = "templates/errors/not-found.xsl"

@@ -1,9 +1,13 @@
 __version__ = "devel"
 
 import logging
+import os
+
+pyxwf_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+data_path = os.path.join(pyxwf_path, "data")
 
 if __version__ == "devel":
-    import subprocess, os
+    import subprocess
 
     def figure_out_version():
         head = "unknown"
@@ -34,8 +38,9 @@ if __version__ == "devel":
 
     prevcwd = os.getcwd()
     try:
-        path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        os.chdir(path)
+
+        os.chdir(pyxwf_path)
         __version__ = figure_out_version()
     finally:
         os.chdir(prevcwd)
+
