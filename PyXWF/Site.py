@@ -422,15 +422,13 @@ class Site(Resource.Resource):
 
     def update(self):
         """
-        If neccessary, reload the whole sitemap. Print a warning to the log, as
-        this is still fragile.
+        If neccessary, reload the whole sitemap. This works as long as the new
+        sitemap does not depend on any python code changes.
         """
         sitemap_timestamp = utils.file_last_modified(self.sitemap_file)
         if sitemap_timestamp > self.sitemap_timestamp:
-            logging.info("sitemap xml changed -- reloading COMPLETE site.")
+            logging.info("sitemap xml changed -- reloading complete site.")
             self.hooks.call("global-reload")
-            # Registry.clear_all()
-            # self.savepoint.rollback()
             self.load_sitemap(self.sitemap_file)
 
     def handle_not_found(self, ctx, resource_name):

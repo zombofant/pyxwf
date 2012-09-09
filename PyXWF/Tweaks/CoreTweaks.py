@@ -14,7 +14,7 @@ logging = logging.getLogger(__name__)
 
 class CoreTweaks(Tweaks.TweakSitleton):
     __metaclass__ = Registry.SitletonMeta
-    
+
     namespace = str(NS.Site)
 
     def __init__(self, site):

@@ -15,6 +15,8 @@ import PyXWF.Context as Context
 import PyXWF.Site as Site
 import PyXWF.HTTPUtils as HTTPUtils
 
+logging = logging.getLogger(__name__)
+
 class WSGIContext(Context.Context):
     @classmethod
     def wsgi_parse_environ(self, environ):
@@ -95,6 +97,7 @@ class WSGIContext(Context.Context):
             raise Errors.BadRequest(message=str(err))
 
     def _parse_user_agent(self, value):
+        logging.debug(_F("Parsing user agent: {0}", value))
         self._useragent_name, \
         self._useragent_version \
             = utils.guess_useragent(value)
