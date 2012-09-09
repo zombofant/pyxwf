@@ -228,7 +228,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     def get_transform_args(self):
         args = {}
         try:
-            args[b"tag-root"] = utils.unicode2xpathstr(self._tag_dir.Path + "/")
+            args[b"tag-root"] = utils.unicode2xpathstr(self._tag_dir.Path)
         except AttributeError:
             args[b"tag-root"] = "0"
         return args
