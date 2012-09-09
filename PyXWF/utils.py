@@ -110,39 +110,40 @@ def XHTMLToHTML(tree):
 mobile_useragent_re = re.compile("(\sMobile\s|\sMobile/[0-9a-fA-F]+)")
 
 useragent_regexes = [
-    ("googlebot", re.compile("Googlebot/([0-9]+(\.[0-9]+)?)")),
-    ("googlebot", re.compile("Googlebot-Image/([0-9]+(\.[0-9]+)?)")),
-    ("bingbot", re.compile("bingbot/([0-9]+(\.[0-9]+)?)")),
-    ("ahrefsbot", re.compile("AhrefsBot/([0-9]+(\.[0-9]+)?)")),
-    ("yandexbot", re.compile("YandexBot/([0-9]+(\.[0-9]+)?)")),
-    ("yahoo-slurp", re.compile("Yahoo! Slurp/([0-9]+(\.[0-9]+)?)")),
+    ("googlebot", re.compile("Googlebot/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("googlebot", re.compile("Googlebot-Image/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("bingbot", re.compile("bingbot/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("ahrefsbot", re.compile("AhrefsBot/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("yandexbot", re.compile("YandexBot/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("yahoo-slurp", re.compile("Yahoo! Slurp/(?P<version>[0-9]+(\.[0-9]+)?)")),
     ("yahoo-slurp", re.compile("Yahoo! Slurp")),
     ("speedy-spider", re.compile("Speedy Spider")),
     ("sistrix-crawler", re.compile("SISTRIX Crawler")),
-    ("msnbot", re.compile("msnbot/([0-9]+(\.[0-9]+)?)")),
-    ("msnbot", re.compile("msnbot-media/([0-9]+(\.[0-9]+)?)")),
-    ("konqueror", re.compile("Konqueror/([0-9]+(\.[0-9]+)?)")),
-    ("chrome", re.compile("Chrome/([0-9]+(\.[0-9]+)?)")),
+    ("msnbot", re.compile("msnbot/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("msnbot", re.compile("msnbot-media/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("konqueror", re.compile("Konqueror/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("chrome", re.compile("Chrome/(?P<version>[0-9]+(\.[0-9]+)?)")),
     ("ie", re.compile("MSIE ([0-9]+(\.[0-9]+)?)")),
-    ("firefox", re.compile("Firefox/([0-9]+(\.[0-9]+)?)")),
+    ("firefox", re.compile("Firefox/(?P<version>[0-9]+(\.[0-9]+)?)")),
     ("firefox", re.compile("Gecko/[0-9]+\s+Firefox[0-9]+")),
-    ("firefox", re.compile("Minefield/([0-9]+(\.[0-9]+)?)")),
-    ("firefox", re.compile("Iceape/([0-9]+(\.[0-9]+)?)")),
-    ("firefox", re.compile("Iceweasel/([0-9]+(\.[0-9]+)?)")),
-    ("seamonkey", re.compile("SeaMonkey/([0-9]+(\.[0-9]+)?)")),
-    ("safari", re.compile("Safari/([0-9]+(\.[0-9]+)?)")),
-    ("opera", re.compile("Opera/([0-9]+(\.[0-9]+)?)")),
-    ("lynx", re.compile("Lynx/([0-9]+(\.[0-9]+)?)")),
+    ("firefox", re.compile("Minefield/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("firefox", re.compile("Iceape/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("firefox", re.compile("Iceweasel/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("seamonkey", re.compile("SeaMonkey/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("safari", re.compile("Safari/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("opera", re.compile("Opera/([0-9.]+).*Version/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("opera", re.compile("Opera/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("lynx", re.compile("Lynx/(?P<version>[0-9]+(\.[0-9]+)?)")),
     ("links", re.compile("Links ")),
-    ("w3m", re.compile("w3m/([0-9]+(\.[0-9]+)?)")),
-    ("wget", re.compile("[Ww]get/([0-9]+(\.[0-9]+)?)")),
+    ("w3m", re.compile("w3m/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("wget", re.compile("[Ww]get/(?P<version>[0-9]+(\.[0-9]+)?)")),
     ("rotfuchs", re.compile("Gecko Rotfuchs")),
-    ("epiphany", re.compile("Epiphany/([0-9]+(\.[0-9]+)?)")),
-    ("rssowl", re.compile("RSSOwl/([0-9]+(\.[0-9]+)?)")),
+    ("epiphany", re.compile("Epiphany/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("rssowl", re.compile("RSSOwl/(?P<version>[0-9]+(\.[0-9]+)?)")),
     ("askbot", re.compile("Ask Jeeves")),
-    ("exabot", re.compile("Exabot/([0-9]+(\.[0-9]+)?)")),
-    ("seekbot", re.compile("Seekbot/([0-9]+(\.[0-9]+)?)")),
-    ("libwww-perl", re.compile("libwww-perl/([0-9]+(\.[0-9]+)?)")),
+    ("exabot", re.compile("Exabot/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("seekbot", re.compile("Seekbot/(?P<version>[0-9]+(\.[0-9]+)?)")),
+    ("libwww-perl", re.compile("libwww-perl/(?P<version>[0-9]+(\.[0-9]+)?)")),
     ("blank", re.compile("^\s*-\s*$"))
 ]
 
@@ -199,9 +200,9 @@ def guess_useragent(headerval):
     for agentname, regex in useragent_regexes:
         m = regex.search(headerval)
         if m:
-            groups = m.groups()
+            groups = m.groupdict()
             if len(groups) > 0:
-                version = float(groups[0])
+                version = float(groups["version"])
             else:
                 version = None
             return agentname, version
