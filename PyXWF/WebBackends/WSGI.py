@@ -15,7 +15,7 @@ import PyXWF.Context as Context
 import PyXWF.Site as Site
 import PyXWF.HTTPUtils as HTTPUtils
 
-logging = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 class WSGIContext(Context.Context):
     @classmethod
@@ -97,7 +97,7 @@ class WSGIContext(Context.Context):
             raise Errors.BadRequest(message=str(err))
 
     def _parse_user_agent(self, value):
-        logging.debug(_F("Parsing user agent: {0}", value))
+        logger.debug(_F("Parsing user agent: {0}", value))
         self._useragent_name, \
         self._useragent_version \
             = utils.guess_useragent(value)
@@ -125,15 +125,23 @@ class WSGIContext(Context.Context):
             self.set_response_content_type(message.MIMEType, message.Encoding)
         self._set_cache_status(message.Status.code == 304)
         self._set_property_headers()
+        response_headers = [
+            (header_name, header_value)
+            for header_name, values in self._response_headers.viewitems()
+            for header_value in values
+        ]
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(_F(
+                "{status} {name}\n{headers}",
+                status=message.Status.code,
+                name=message.Status.title,
+                headers="\n".join("{0}: {1}".format(name, value) for name, value in response_headers)
+            ))
         self._start_response(
             b"{0:d} {1}".format(
                 message.Status.code, message.Status.title
             ),
-            [
-                (header_name, header_value)
-                for header_name, values in self._response_headers.viewitems()
-                for header_value in values
-            ]
+            response_headers
         )
         if hasattr(body, "__iter__") and not isinstance(body, str):
             return iter(body)
@@ -155,6 +163,12 @@ class WSGISite(Site.Site):
                 raise Errors.BadRequest(unicode(err))
             message = self.handle(ctx)
         except Errors.NotModified as status:
+            logger.debug(_F(
+                "Not Modified: IfModifiedSince={0}, LastModified={1}, Cachable={2}",
+                ctx.IfModifiedSince,
+                ctx.LastModified,
+                ctx.Cachable
+            ))
             return ctx.send_empty_response(status)
         except Errors.HTTPRedirection as status:
             loc = status.location
