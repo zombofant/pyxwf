@@ -212,10 +212,9 @@ class WSGIContext(unittest.TestCase):
         self.assertEqual(ctx.LastModified, d)
         self.assertEqual(ctx.IfModifiedSince, d)
         self.assertRaises(Errors.NotModified, ctx.check_not_modified)
-        ctx.send_empty_response(Errors.OK)
+        ctx.send_empty_response(Errors.NotModified)
         self.assertEqual(self.response_headers, [
             (b"cache-control", b"must-revalidate"),
-            (b"last-modified", HTTPUtils.format_http_date(d)),
             (b"vary", b"host,if-modified-since")
         ])
 

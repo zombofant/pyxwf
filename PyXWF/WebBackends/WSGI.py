@@ -123,7 +123,7 @@ class WSGIContext(Context.Context):
         body = self.get_encoded_body(message)
         if body is not None:
             self.set_response_content_type(message.MIMEType, message.Encoding)
-        self._set_cache_status()
+        self._set_cache_status(message.Status.code == 304)
         self._set_property_headers()
         self._start_response(
             b"{0:d} {1}".format(

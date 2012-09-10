@@ -271,18 +271,23 @@ class Context(object):
             :class:`~Cookie` instances.
         """
 
-    def _set_cache_status(self):
+    def _set_cache_status(self, no_last_modified=False):
         """
         Use the values of :attr:`Cachable` and :attr:`LastModified` to set up
         the response headers which relate to caching. This may change the value
         of the ``Last-Modified`` header and will add a cache control token.
+
+        If *no_last_modified* is True (default is False), the Last-Modified
+        header will not be set. This is required per RFC 2616 for 304 Not
+        Modified responses.
         """
         if self.Cachable:
             last_modified = self.LastModified
             if last_modified is not None:
                 self.add_cache_control("must-revalidate")
-                self.set_response_header("Last-Modified",
-                    HTTPUtils.format_http_date(last_modified))
+                if not no_last_modified:
+                    self.set_response_header("Last-Modified",
+                        HTTPUtils.format_http_date(last_modified))
         else:
             self.add_cache_control("no-cache")
 
