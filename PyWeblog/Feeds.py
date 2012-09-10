@@ -10,6 +10,8 @@ import PyXWF.Types as Types
 import PyWeblog.Node as Node
 import PyWeblog.Protocols as Protocols
 
+logger = logging.getLogger(__name__)
+
 class Feeds(Node.Tweak, Protocols.Feeds):
     __metaclass__ = Registry.NodeMeta
 
@@ -45,7 +47,7 @@ class Feeds(Node.Tweak, Protocols.Feeds):
             raise Errors.NodeConfigurationError("Conflict: duplicate parameter value: {0}".format(value))
         self._protocols.append(protocol)
         self._protocolmap[value] = protocol
-        logging.debug(_F("Registered {0} as query value {1}", protocol, value))
+        logger.debug(_F("Registered {0} as query value {1}", protocol, value))
 
     def resolve_feed_node(self, node, ctx, super_resolve, relpath):
         """

@@ -1,6 +1,10 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
-import abc, operator, copy, os, logging
+import abc
+import operator
+import copy
+import os
+import logging
 
 from PyXWF.utils import ET, _F
 import PyXWF.Nodes as Nodes
@@ -12,6 +16,8 @@ import PyXWF.Navigation as Navigation
 
 import PyWeblog.Node as BlogNode
 import PyWeblog.Protocols as Protocols
+
+logger = logging.getLogger(__name__)
 
 class TagDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
         Protocols.TagDir):
@@ -105,8 +111,8 @@ class TagDir(Nodes.DirectoryResolutionBehaviour, Nodes.Node, Navigation.Info,
             self._child_list.append((len(posts), page))
             page.update_children(posts)
         self._child_list.sort(key=lambda x: (x[0], x[1].Name))
-        logging.debug(_F("Tag dir updated: {0} children", len(self._child_list)))
-        logging.debug(_F("Tags: {0}", ", ".join(self._children.keys())))
+        logger.debug(_F("Tag dir updated: {0} children", len(self._child_list)))
+        logger.debug(_F("Tags: {0}", ", ".join(self._children.keys())))
 
     def __iter__(self):
         if self._show_pages_in_nav:

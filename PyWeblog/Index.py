@@ -1,11 +1,16 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
-import functools, os, logging, operator
+import functools
+import os
+import logging
+import operator
 
 from PyXWF.utils import ET, BraceMessage as _F, blist
 import PyXWF.Resource as Resource
 import PyXWF.Errors as Errors
 import PyXWF.Namespaces as NS
+
+logger = logging.getLogger(__name__)
 
 SortedPostList = blist.sortedlist
 
@@ -181,7 +186,7 @@ class Index(Resource.Resource):
         self._posts_changed_callback = posts_changed_callback
 
     def _reload(self):
-        logging.info("Updating blog index")
+        logger.info("Updating blog index")
 
         ignore_names = frozenset(["blog.reload", "blog.index"])
 
@@ -212,11 +217,11 @@ class Index(Resource.Resource):
                 except (Errors.MissingParserPlugin,
                         Errors.UnknownMIMEType) as err:
 
-                    logging.warning(_F("While loading blog post at {1!r}: {0}",\
+                    logger.warning(_F("While loading blog post at {1!r}: {0}",\
                                        err, filename))
                     errors += 1
                 except ValueError as err:
-                    logging.error(_F("While loading blog post at {1!r}: {0}", \
+                    logger.error(_F("While loading blog post at {1!r}: {0}", \
                                      err, filename))
                     errors += 1
 
@@ -228,10 +233,10 @@ class Index(Resource.Resource):
                                          self._posts))
         except ValueError:
             self._last_modified = None
-            logging.warning(_F("No blog posts found in {0}", self._dir))
+            logger.warning(_F("No blog posts found in {0}", self._dir))
 
         if len(missing) or added or updated or errors:
-            logging.info(_F(
+            logger.info(_F(
     "Updated blog index; {0} removed, {1} added, {2} updated, {3} errors",
                 len(missing),
                 added,

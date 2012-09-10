@@ -1,6 +1,8 @@
 from __future__ import unicode_literals, print_function, absolute_import
 
-import operator, itertools, logging
+import operator
+import itertools
+import logging
 
 from PyXWF.utils import ET, blist, _F
 import PyXWF.utils as utils
@@ -14,6 +16,8 @@ import PyXWF.Types as Types
 import PyWeblog.Protocols as Protocols
 import PyWeblog.Index as Index
 import PyWeblog.Directories as Directories
+
+logger = logging.getLogger(__name__)
 
 class Tweak(object):
     def __init__(self, site, parent, node):
@@ -167,7 +171,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
                 self._add_child(plugin)
 
     def _posts_changed(self):
-        logging.debug("Posts changed callback")
+        logger.debug("Posts changed callback")
         known_years = set(map(operator.attrgetter("year"), self._year_nodes.viewvalues()))
         curr_years = set()
         for year, monthiter in self.index.iter_deep():
@@ -203,7 +207,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     def TagDirectory(self, value):
         if not isinstance(value, Protocols.TagDir):
             raise TypeError("TagDirectory must implement TagDir protocol.")
-        logging.debug(_F("Blog was assigned a new tag dir: {0}", value))
+        logger.debug(_F("Blog was assigned a new tag dir: {0}", value))
         self._tag_dir = value
         if self._tag_dir is not None:
             self._tag_dir.update_children()
@@ -222,7 +226,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
     def Feeds(self, value):
         if not isinstance(value, Protocols.Feeds):
             raise TypeError("Feeds must implement Feeds protocol.")
-        logging.debug(_F("Blog was assigned a new feed provider: {0}", value))
+        logger.debug(_F("Blog was assigned a new feed provider: {0}", value))
         self._feeds = value
 
     def get_transform_args(self):

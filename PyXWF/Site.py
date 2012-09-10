@@ -5,7 +5,15 @@ and passes them through the tree defined in the sitemap xml.
 """
 from __future__ import unicode_literals
 
-import itertools, os, importlib, copy, mimetypes, warnings, re, sys, logging
+import itertools
+import os
+import importlib
+import copy
+import mimetypes
+import warnings
+import re
+import sys
+import logging
 
 from PyXWF.utils import ET, _F, threading, blist
 import PyXWF
@@ -21,9 +29,10 @@ import PyXWF.Registry as Registry
 import PyXWF.Cache as Cache
 import PyXWF.Templates as Templates
 import PyXWF.Resource as Resource
-# import PyXWF.ImportSavepoints as ImportSavepoints
 
 import PyXWF.Tweaks.CoreTweaks
+
+logger = logging.getLogger(__name__)
 
 class Site(Resource.Resource):
     """
@@ -45,7 +54,7 @@ class Site(Resource.Resource):
     urn_scheme = re.compile("^\w+:")
 
     def __init__(self, sitemap_file, default_url_root=None, **kwargs):
-        logging.info(_F(
+        logger.info(_F(
 "Initializing PyXWF/{pyxwf_version} at {pid} with lxml.etree/{etree_version}, {threading}, blist/{blist_version}",
             pyxwf_version=PyXWF.__version__,
             etree_version=ET.__version__,
@@ -165,7 +174,7 @@ class Site(Resource.Resource):
             try:
                 self.tweak_registry.submit_tweak(child)
             except Errors.MissingTweakPlugin as err:
-                logging.warning(unicode(err))
+                logger.warning(unicode(err))
 
     def _replace_child(self, parent, old_node, new_node):
         old_idx = parent.index(old_node)
@@ -418,7 +427,7 @@ class Site(Resource.Resource):
 
         self.hooks.call("crumbs-loaded")
         self.hooks.call("loading-finished")
-        logging.debug("Sitemap loaded successfully")
+        logger.debug("Sitemap loaded successfully")
 
     def update(self):
         """
@@ -427,7 +436,7 @@ class Site(Resource.Resource):
         """
         sitemap_timestamp = utils.file_last_modified(self.sitemap_file)
         if sitemap_timestamp > self.sitemap_timestamp:
-            logging.info("sitemap xml changed -- reloading complete site.")
+            logger.info("sitemap xml changed -- reloading complete site.")
             self.hooks.call("global-reload")
             self.load_sitemap(self.sitemap_file)
 
