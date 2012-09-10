@@ -1,3 +1,7 @@
+"""
+A basic XSLT template implementation.
+"""
+
 import abc, itertools, os
 
 from PyWeb.utils import ET
@@ -9,6 +13,12 @@ import PyWeb.Document as Document
 import PyWeb.Parsers.PyWebXML as PyWebXML
 
 class Template(Resource.Resource):
+    """
+    Baseclass for templating, which is not bound to XSLT yet. It provides some
+    shared mechanims, like being file-bound and a finalization method which
+    does the final transformation (including PyWeb specific transformations
+    which are provided by the Site object).
+    """
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, fileName):
@@ -25,6 +35,11 @@ class Template(Resource.Resource):
         pass
 
     def final(self, site, ctx, document, licenseFallback=None):
+        """
+        Do the final transformation on *document*. This includes adding
+        keywords and author information, setting up the title, loading crumbs,
+        replacing local links and more.
+        """
         templateArgs = site.getTemplateArguments()
         templateArgs.update(document.getTemplateArguments())
 
@@ -64,6 +79,9 @@ class Template(Resource.Resource):
 
 
 class XSLTTemplate(Template):
+    """
+    A specific templating implementation which uses XSLT as backend.
+    """
     def __init__(self, fileName):
         super(XSLTTemplate, self).__init__(fileName)
         self._parseTemplate()
@@ -91,6 +109,10 @@ class XSLTTemplate(Template):
 
 
 class XSLTTemplateCache(Cache.FileSourcedCache):
+    """
+    A :cls:`Cache.FileSourcedCache` which is specialized for
+    :cls:`XSLTTemplate` instances.
+    """
     def _load(self, path):
         return XSLTTemplate(path)
 
