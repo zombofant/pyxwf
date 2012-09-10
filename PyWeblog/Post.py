@@ -47,6 +47,7 @@ class BlogPost(Nodes.Node, Navigation.Info, Resource.Resource):
         self._createBlogTree(docRef.doc)
         self._lastModified = docRef.LastModified
 
+        docRef.proposeUncache()
         return parent, self._name, self._path
 
     def __init__(self, blog, fileName):
