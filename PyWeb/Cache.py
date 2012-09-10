@@ -1,7 +1,12 @@
+"""
+
+"""
+
 import abc, functools, time, os
 
 import PyWeb.Nodes as Nodes
 import PyWeb.Errors as Errors
+import PyWeb.utils as utils
 
 class Cachable(object):
     __metaclass__ = abc.ABCMeta
@@ -18,6 +23,12 @@ class Cachable(object):
     def uncache(self):
         if self._cache_master is not None:
             self._cache_master._remove(self)
+
+    def proposeUncache(self):
+        # it must be something which is definetly in the past (a date which is
+        # easier to find than a date which is definetly in the future. Greetings
+        # to MTA folks).
+        self._cache_lastAccess = 0
 
     @staticmethod
     def _cache_key(self):
@@ -66,6 +77,17 @@ class SubCache(object):
 
     def __len__(self):
         return len(self.entries)
+
+    def getLastModified(self, key):
+        """
+        Return the datetime representing the last modification of the cached
+        content. The default implementation requests the cached element from
+        the cache and queries the LastModified property.
+
+        Derived classes may (and should!) provide mechanisms which can query
+        the LastModified timestamp without completely loading an object.
+        """
+        return self[key].LastModified
 
 
 class Cache(object):
@@ -189,5 +211,15 @@ class FileSourcedCache(SubCache):
             obj = self._load(path, **kwargs)
             super(FileSourcedCache, self).__setitem__(path, obj)
             return obj
+
+    def getLastModified(self, key):
+        """
+        In contrast to the implementation given in :cls:`SubCache`, this
+        implementation uses the timestamp of last modification of the file
+        referenced by *key*. This implies that a resource is not neccessarily
+        loaded (or even loadable!) even if a LastModified can be retrieved
+        successfully.
+        """
+        return utils.fileLastModified(self._transformKey(key))
 
     __setitem__ = None
