@@ -36,16 +36,18 @@ class Breadcrumbs(Crumbs.CrumbBase):
         self.legacy_topology = Types.Typecasts.bool(
             node.get("legacy-topology", False)
         )
+
+        optional_headers = node.xpath("*[@id='optional-header']")
+        if optional_headers:
+            self.optional_header = copy.deepcopy(optional_headers[0])
+        else:
+            self.optional_header = None
+
+        section_links = node.xpath("*[@id='seclink']")
+        if section_links:
+            self.section_links = True
+            self.section_link_template = copy.deepcopy(section_links[0])
         self.maxdepth = Types.DefaultForNone(None, Types.NumericRange(int, 1, None))(node.get("max-depth"))
-        for child in node:
-            if child.tag is ET.Comment:
-                pass
-            if child.tag == NS.XHTML.a:
-                if child.get("id") == "seclink":
-                    self.section_links = True
-                    self.section_link_template = copy.deepcopy(child)
-                    continue
-            raise Errors.BadChild(child, node)
 
 
     def _header(self, ctx, header_node, list_parent, section_stack):
@@ -179,7 +181,9 @@ class Breadcrumbs(Crumbs.CrumbBase):
             self._legacy_tree(ctx, ul, parent, section_stack)
         else:
             self._subtree(ctx, ul, parent, section_stack)
-        if not self.tag_only:
+        if not self.tag_only and len(ul) > 0:
+            if self.optional_header is not None:
+                yield self.optional_header
             yield ul
 
 
