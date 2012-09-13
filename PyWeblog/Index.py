@@ -297,7 +297,7 @@ class Index(Resource.Resource):
     def _resort_post(self, post, new_date, new_authors, new_keywords):
         self._unindex_post(post)
 
-        year, month = new_creation_date.year, new_creation_date.month
+        year, month = new_date.year, new_date.month
         self._autocreate_month_dir(year, month).add(post)
         for keyword in new_keywords:
             self._autocreate_keyword_dir(keyword).add(post)
