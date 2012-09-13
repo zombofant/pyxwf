@@ -231,7 +231,8 @@ class Site(Resource.Resource):
             mobile_switch.getparent().remove(mobile_switch)
 
     def transform_py_namespace(self, ctx, body, crumbs=True, a=True, link=True,
-            img=True, mobile_switch=True, content_attr=True):
+            img=True, mobile_switch=True, content_attr=True,
+            drop_empty_attr=True):
         """
         Do PyXWF specific transformations on the XHTML tree *body*. This
         includes transforming local a tags, local img tags and placing crumbs.
@@ -288,6 +289,11 @@ class Site(Resource.Resource):
                 el.set("content", el.get(content_attrname))
                 del el.attrib[content_attrname]
                 self.transform_href(ctx, el, "content", make_global=make_global)
+        if drop_empty_attr:
+            drop_empty_attrname = getattr(NS.PyWebXML, "drop-empty")
+            for el in list(body.iterfind(".//*[@{0}]".format(drop_empty_attrname))):
+                if len(el) == 0:
+                    el.getparent().remove(el)
 
 
     def get_template_arguments(self, ctx):
