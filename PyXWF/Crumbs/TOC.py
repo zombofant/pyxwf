@@ -23,13 +23,18 @@ class Breadcrumbs(Crumbs.CrumbBase):
             node.get("section-numbers", True)
         )
         self.section_number_class = node.get("section-number-class", "toc-section-number")
+        self.header_class = node.get("header-class", "toc-header")
         self.section_links = False
         self.anchor_prefix = Types.NotEmpty(node.get("anchor-prefix", "sec-"))
+        self.target = node.get("target")
         self.show_root = Types.Typecasts.bool(
             node.get("show-root", False)
         )
         self.tag_only = Types.Typecasts.bool(
             node.get("tag-only", False)
+        )
+        self.legacy_topology = Types.Typecasts.bool(
+            node.get("legacy-topology", False)
         )
         self.maxdepth = Types.DefaultForNone(None, Types.NumericRange(int, 1, None))(node.get("max-depth"))
         for child in node:
@@ -44,15 +49,18 @@ class Breadcrumbs(Crumbs.CrumbBase):
 
 
     def _header(self, ctx, header_node, list_parent, section_stack):
-        for child in header_node:
-            if child.tag in self.header_tags:
-                hX = child
-                break
+        if header_node.tag in self.header_tags:
+            hX = header_node
         else:
-            return None
+            for child in header_node:
+                if child.tag in self.header_tags:
+                    hX = child
+                    break
+            else:
+                return None
 
-        idx = header_node.index(hX)
-        print(ET.tostring(hX))
+        if self.header_class is not None:
+            utils.add_class(header_node, self.header_class)
         id = hX.get("id")
         section_number = ".".join(map(unicode, section_stack))
         if id is None:
@@ -108,13 +116,69 @@ class Breadcrumbs(Crumbs.CrumbBase):
             self._subtree(ctx, list_parent, section, section_stack, depth+1)
             section_stack.pop()
 
+    def _next_hX(self, node):
+        for sibling in node.itersiblings():
+            if sibling.tag in self.header_tags:
+                return sibling
+        return None
+
+    def _next_header(self, prev_hX):
+        next_hX = self._next_hX(prev_hX)
+        if next_hX is None:
+            return (None, None)
+        depth = int(next_hX.tag[-1])
+        return next_hX, depth
+
+    def _legacy_subtree(self, ctx, list_parent, hX, section_stack, depth=0):
+        header_depth = int(hX.tag[-1])
+        if depth > 0 or self.show_root:
+            li = self._header(ctx, hX, list_parent, section_stack)
+
+        i = 0
+        next_hX, depth = self._next_header(hX)
+        while next_hX is not None:
+            if depth <= header_depth:
+                return next_hX, depth
+
+            ul = ET.SubElement(li, NS.XHTML.ul)
+            i += 1
+            section_stack.append(i)
+            next_hX, depth = self._legacy_subtree(ctx, ul, next_hX, section_stack, depth+1)
+            section_stack.pop()
+        return None, None
+
+
+    def _legacy_tree(self, ctx, list_parent, content_parent, section_stack):
+        hX = content_parent[0]
+        if hX.tag not in self.header_tags:
+            hX = self._next_hX(hX)
+
+        i = 0
+        while hX is not None:
+            i += 1
+            section_stack.append(i)
+            hX, _ = self._legacy_subtree(ctx, list_parent, hX, section_stack)
+            section_stack.pop()
+
     def render(self, ctx, parent):
         ul = ET.Element(NS.XHTML.ul)
-        _, name = utils.split_tag(parent.tag)
-        if name != "section" and name != "article":
-            parent = parent.getparent()
         section_stack = []
-        self._subtree(ctx, ul, parent, section_stack)
+        if self.target is not None:
+            root = parent.getroottree()
+            parent = root.xpath("//*[@id={0}]".format(
+                utils.unicode2xpathstr(self.target)
+            ))
+            if not parent:
+                return
+            parent = parent[0]
+        else:
+            _, name = utils.split_tag(parent.tag)
+            if name != "section" and name != "article":
+                parent = parent.getparent()
+        if self.legacy_topology:
+            self._legacy_tree(ctx, ul, parent, section_stack)
+        else:
+            self._subtree(ctx, ul, parent, section_stack)
         if not self.tag_only:
             yield ul
 
