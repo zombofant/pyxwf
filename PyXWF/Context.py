@@ -315,6 +315,13 @@ class Context(object):
             # but is in fact unable to parse valid XHTML.
             logging.debug("Forcing XHTML support to false: Chrome < 7 detected!")
             html_content_type = ContentTypes.html
+        elif self._useragent_name == "firefox" and self._useragent_version == 6:
+            # this is google+ user agent. g+ seems to be unable to correctly
+            # parse XHTML schema.org information (or metadata in general), which
+            # screws up snippets.
+            # see: http://stackoverflow.com/q/12426591/1248008
+            logging.warning("EVIL HACK: g+ client detected, disabling XHTML")
+            html_content_type = ContentTypes.html
         else:
             logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
             html_content_type = self._accept.best_match(
