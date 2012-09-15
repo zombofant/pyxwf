@@ -183,7 +183,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
             self._subtree(ctx, ul, parent, section_stack)
         if not self.tag_only and len(ul) > 0:
             if self.optional_header is not None:
-                yield self.optional_header
+                yield copy.deepcopy(self.optional_header)
             yield ul
 
 

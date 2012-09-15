@@ -292,6 +292,7 @@ class Site(Resource.Resource):
         if drop_empty_attr:
             drop_empty_attrname = getattr(NS.PyWebXML, "drop-empty")
             for el in list(body.iterfind(".//*[@{0}]".format(drop_empty_attrname))):
+                del el.attrib[drop_empty_attrname]
                 if len(el) == 0:
                     el.getparent().remove(el)
 
