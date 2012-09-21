@@ -454,6 +454,7 @@ class Site(Resource.Resource):
         """
         try:
             tpl = self.template_cache[self.not_found_template]
+            ctx.use_resource(tpl)
         except Exception as err:
             warnings.warn(str(err))
             body = ET.Element(NS.XHTML.body)
@@ -504,6 +505,7 @@ class Site(Resource.Resource):
                 template = None
             if template is None:
                 template = self.template_cache[self.default_template]
+                ctx.use_resource(template)
         else:
             # setup the context
             ctx.PageNode = node
