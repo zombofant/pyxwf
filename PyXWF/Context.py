@@ -320,7 +320,9 @@ class Context(object):
             # parse XHTML schema.org information (or metadata in general), which
             # screws up snippets.
             # see: http://stackoverflow.com/q/12426591/1248008
+            # see: https://code.google.com/p/google-plus-platform/issues/detail?id=370
             logging.warning("EVIL HACK: g+ client detected, disabling XHTML")
+            logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
             html_content_type = ContentTypes.html
         else:
             logging.debug("Accept: {0}".format(", ".join(map(str, self._accept))))
