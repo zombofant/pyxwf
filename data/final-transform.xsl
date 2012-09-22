@@ -181,7 +181,7 @@
 
     <!-- legacy <py:if-mobile /> -->
     <xsl:template name="py-legacy-if-mobile-subtree">
-        <xsl:apply-templates name="@*[local-name() != 'mobile']|node()" />
+        <xsl:apply-templates select="@*[local-name() != 'mobile' and local-name() != 'xhtml-element']|node()" />
     </xsl:template>
 
     <xsl:template match="py:if-mobile">

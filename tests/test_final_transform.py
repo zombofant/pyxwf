@@ -148,10 +148,12 @@ class FinalTransform(Mocks.SiteTest):
         ET.SubElement(if_mobile_true, NS.XHTML.div)
         if_mobile_false1 = ET.SubElement(body, getattr(NS.PyWebXML, "if-mobile"))
         if_mobile_false1.set("mobile", "false")
+        if_mobile_false1.set("id", "baz")
         ET.SubElement(if_mobile_false1, NS.XHTML.span)
         if_mobile_false2 = ET.SubElement(body, getattr(NS.PyWebXML, "if-mobile"))
         if_mobile_false2.set("mobile", "false")
         if_mobile_false2.set("xhtml-element", "div")
+        if_mobile_false2.set("class", "bar")
         ET.SubElement(if_mobile_false2, NS.XHTML.span)
 
         ctx = self.mock_ctx()
@@ -168,13 +170,22 @@ class FinalTransform(Mocks.SiteTest):
 
     def test_drop_empty(self):
         root, _, body = self.base_tree()
-        drop_empty = ET.SubElement(body, NS.XHTML.div)
-        drop_empty.set(getattr(NS.PyWebXML, "drop-empty"), "true")
+        drop_empty1 = ET.SubElement(body, NS.XHTML.div)
+        drop_empty1.set(getattr(NS.PyWebXML, "drop-empty"), "true")
+        drop_empty1.set("class", "foo")
+        drop_empty2 = ET.SubElement(body, NS.XHTML.div)
+        drop_empty2.set(getattr(NS.PyWebXML, "drop-empty"), "true")
+        drop_empty2.set("class", "foo")
+        drop_empty2.set("id", "bar")
+        ET.SubElement(drop_empty2, NS.XHTML.a)
 
         ctx = self.mock_ctx()
         tree_xsl = self.raw_transform(root, ctx=ctx)
-        tree_py = self.py_transform(root, ctx=ctx)
-        self.assertTreeEqual(tree_xsl, tree_py)
+
+        body.remove(drop_empty1)
+        del drop_empty2.attrib[getattr(NS.PyWebXML, "drop-empty")]
+
+        self.assertTreeEqual(tree_xsl, root)
 
     def test_localr(self):
         root, _, body = self.base_tree()
