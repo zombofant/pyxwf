@@ -56,63 +56,93 @@ class FinalTransform(Mocks.SiteTest):
             ET.tostring(tree_b),
         )
 
-    def test_legacy_a_and_img(self):
+    def replace_py_content(self, node, new_value):
+        node.set("content", new_value)
+        del node.attrib[NS.PyWebXML.content]
+        content_uri_attr = getattr(NS.PyWebXML, "content-make-uri")
+        if content_uri_attr in node.attrib:
+            del node.attrib[content_uri_attr]
+
+    def test_a_and_img(self):
         root, _, body = self.base_tree()
-        a = ET.SubElement(body, NS.PyWebXML.a)
-        a.set("href", "foobar/baz")
-        a.tail = "\n"
-        a = ET.SubElement(body, NS.PyWebXML.a)
-        a.set("href", "/foobar/baz")
-        a.tail = "\n"
-        img = ET.SubElement(body, NS.PyWebXML.img)
-        img.set("href", "foobar/baz")
-        img.tail = "\n"
-        img = ET.SubElement(body, NS.PyWebXML.img)
-        img.set("href", "/foobar/baz")
-        img.tail = "\n"
+        a1 = ET.SubElement(body, NS.PyWebXML.a)
+        a1.set("href", "foobar/baz")
+        a1.tail = "\n"
+        a2 = ET.SubElement(body, NS.PyWebXML.a)
+        a2.set("href", "/foobar/baz")
+        a2.tail = "\n"
+        img1 = ET.SubElement(body, NS.PyWebXML.img)
+        img1.set("href", "foobar/baz")
+        img1.tail = "\n"
+        img2 = ET.SubElement(body, NS.PyWebXML.img)
+        img2.set("href", "/foobar/baz")
+        img2.tail = "\n"
 
         ctx = self.mock_ctx()
         tree_xsl = self.raw_transform(root, ctx=ctx)
-        tree_py = self.py_transform(root, ctx=ctx)
-        self.assertTreeEqual(tree_xsl, tree_py)
 
-    def test_legacy_py_content(self):
+        a1.tag = NS.XHTML.a
+        a1.set("href", "/foobar/baz")
+        a2.tag = NS.XHTML.a
+        img1.tag = NS.XHTML.img
+        img1.set("src", "/foobar/baz")
+        del img1.attrib["href"]
+        img2.tag = NS.XHTML.img
+        img2.set("src", "/foobar/baz")
+        del img2.attrib["href"]
+
+        self.assertTreeEqual(tree_xsl, root)
+
+    def test_py_content(self):
         root, _, body = self.base_tree()
-        div = ET.SubElement(body, NS.XHTML.div)
-        div.set(NS.PyWebXML.content, "foobar/baz")
-        div.set(getattr(NS.PyWebXML, "content-make-uri"), "true")
-        div.tail = "\n"
-        div = ET.SubElement(body, NS.XHTML.div)
-        div.set(NS.PyWebXML.content, "/foobar/baz")
-        div.set(getattr(NS.PyWebXML, "content-make-uri"), "true")
-        div.tail = "\n"
-        div = ET.SubElement(body, NS.XHTML.div)
-        div.set(NS.PyWebXML.content, "foobar/baz")
-        div.tail = "\n"
-        div = ET.SubElement(body, NS.XHTML.div)
-        div.set(NS.PyWebXML.content, "/foobar/baz")
-        div.tail = "\n"
+        div1 = ET.SubElement(body, NS.XHTML.div)
+        div1.set(NS.PyWebXML.content, "foobar/baz")
+        div1.set(getattr(NS.PyWebXML, "content-make-uri"), "true")
+        div1.tail = "\n"
+        div2 = ET.SubElement(body, NS.XHTML.div)
+        div2.set(NS.PyWebXML.content, "/foobar/baz")
+        div2.set(getattr(NS.PyWebXML, "content-make-uri"), "true")
+        div2.tail = "\n"
+        div3 = ET.SubElement(body, NS.XHTML.div)
+        div3.set(NS.PyWebXML.content, "foobar/baz")
+        div3.tail = "\n"
+        div4 = ET.SubElement(body, NS.XHTML.div)
+        div4.set(NS.PyWebXML.content, "/foobar/baz")
+        div4.tail = "\n"
 
         ctx = self.mock_ctx()
         tree_xsl = self.raw_transform(root, ctx=ctx)
-        tree_py = self.py_transform(root, ctx=ctx)
-        self.assertTreeEqual(tree_xsl, tree_py)
 
-    def test_legacy_link(self):
+        uri = "{0}://{1}/foobar/baz".format(
+            ctx.URLScheme,
+            ctx.HostName
+        )
+        self.replace_py_content(div1, uri)
+        self.replace_py_content(div2, uri)
+        self.replace_py_content(div3, "/foobar/baz")
+        self.replace_py_content(div4, "/foobar/baz")
+
+        self.assertTreeEqual(tree_xsl, root)
+
+    def test_link(self):
         root, head, _ = self.base_tree()
-        link = ET.SubElement(head, NS.PyWebXML.link)
-        link.set("href", "/foobar/baz")
-        link.tail = "\n"
-        link = ET.SubElement(head, NS.PyWebXML.link)
-        link.set("href", "foobar/baz")
-        link.tail = "\n"
+        link1 = ET.SubElement(head, NS.PyWebXML.link)
+        link1.set("href", "/foobar/baz")
+        link1.tail = "\n"
+        link2 = ET.SubElement(head, NS.PyWebXML.link)
+        link2.set("href", "foobar/baz")
+        link2.tail = "\n"
 
         ctx = self.mock_ctx()
         tree_xsl = self.raw_transform(root, ctx=ctx)
-        tree_py = self.py_transform(root, ctx=ctx)
-        self.assertTreeEqual(tree_xsl, tree_py)
 
-    def test_legacy_py_mobile(self):
+        link1.tag = NS.XHTML.link
+        link2.tag = NS.XHTML.link
+        link2.set("href", "/foobar/baz")
+
+        self.assertTreeEqual(tree_xsl, root)
+
+    def test_py_mobile(self):
         root, _, body = self.base_tree()
         if_mobile_true = ET.SubElement(body, getattr(NS.PyWebXML, "if-mobile"))
         ET.SubElement(if_mobile_true, NS.XHTML.div)
@@ -122,8 +152,12 @@ class FinalTransform(Mocks.SiteTest):
 
         ctx = self.mock_ctx()
         tree_xsl = self.raw_transform(root, ctx=ctx)
-        tree_py = self.py_transform(root, ctx=ctx)
-        self.assertTreeEqual(tree_xsl, tree_py)
+
+        body.remove(if_mobile_true)
+        if_mobile_false.tag = NS.XHTML.span
+        del if_mobile_false.attrib["mobile"]
+
+        self.assertTreeEqual(tree_xsl, root)
 
     def test_drop_empty(self):
         root, _, body = self.base_tree()
