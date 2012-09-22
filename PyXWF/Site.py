@@ -522,6 +522,9 @@ class Site(Resource.Resource):
             if content_type == ContentTypes.xhtml:
                 if not ctx.HTML5Support and self.html4_transform:
                     ctx.use_resource(self.template_cache[self.html4_transform])
+            if self.disable_xhtml:
+                ctx.CanUseXHTML = False
+                logging.debug("XHTML disabled in config")
             if not ctx.CanUseXHTML:
                 # we'll do conversion later
                 content_type = ContentTypes.html
