@@ -189,7 +189,7 @@
             <xsl:when test="((@mobile = 'true' or not(@mobile)) and $deliver_mobile) or (@mobile = 'false' and not($deliver_mobile))">
                 <xsl:choose>
                     <xsl:when test="@xhtml-element">
-                        <xsl:element name="h:{@xhtml-element">
+                        <xsl:element name="h:{@xhtml-element}">
                             <xsl:call-template name="py-legacy-if-mobile-subtree" />
                         </xsl:element>
                     </xsl:when>

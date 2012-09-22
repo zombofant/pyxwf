@@ -146,16 +146,23 @@ class FinalTransform(Mocks.SiteTest):
         root, _, body = self.base_tree()
         if_mobile_true = ET.SubElement(body, getattr(NS.PyWebXML, "if-mobile"))
         ET.SubElement(if_mobile_true, NS.XHTML.div)
-        if_mobile_false = ET.SubElement(body, getattr(NS.PyWebXML, "if-mobile"))
-        if_mobile_false.set("mobile", "false")
-        ET.SubElement(if_mobile_false, NS.XHTML.span)
+        if_mobile_false1 = ET.SubElement(body, getattr(NS.PyWebXML, "if-mobile"))
+        if_mobile_false1.set("mobile", "false")
+        ET.SubElement(if_mobile_false1, NS.XHTML.span)
+        if_mobile_false2 = ET.SubElement(body, getattr(NS.PyWebXML, "if-mobile"))
+        if_mobile_false2.set("mobile", "false")
+        if_mobile_false2.set("xhtml-element", "div")
+        ET.SubElement(if_mobile_false2, NS.XHTML.span)
 
         ctx = self.mock_ctx()
         tree_xsl = self.raw_transform(root, ctx=ctx)
 
         body.remove(if_mobile_true)
-        if_mobile_false.tag = NS.XHTML.span
-        del if_mobile_false.attrib["mobile"]
+        if_mobile_false1.tag = NS.XHTML.span
+        del if_mobile_false1.attrib["mobile"]
+        if_mobile_false2.tag = NS.XHTML.div
+        del if_mobile_false2.attrib["mobile"]
+        del if_mobile_false2.attrib["xhtml-element"]
 
         self.assertTreeEqual(tree_xsl, root)
 
