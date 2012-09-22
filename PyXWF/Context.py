@@ -555,6 +555,10 @@ class Context(object):
         self.add_vary("Accept")
         return self._can_use_xhtml
 
+    @CanUseXHTML.setter
+    def CanUseXHTML(self, value):
+        self._can_use_xhtml = bool(value)
+
     @property
     def IsMobileClient(self):
         """
