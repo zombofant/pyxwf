@@ -57,6 +57,16 @@ class PyWebXML(object):
     xmlns = "http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
     cache = ["a"]
 
+class LocalR(object):
+    __metaclass__ = __metaclass__
+    xmlns = "http://pyxwf.zombofant.net/xmlns/href/localr"
+    cache = ["href", "src"]
+
+class LocalG(object):
+    __metaclass__ = __metaclass__
+    xmlns = "http://pyxwf.zombofant.net/xmlns/href/localg"
+    cache = ["href", "src"]
+
 class Site(object):
     __metaclass__ = __metaclass__
     xmlns = "http://pyxwf.zombofant.net/xmlns/site"

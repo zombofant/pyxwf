@@ -309,9 +309,13 @@ class Site(Resource.Resource):
         }
 
     def transform_relative_uri(self, ctx, uri, make_global=False):
-        if uri is None or uri.startswith("/") or self.urn_scheme.search(uri):  # non local href
-            return uri
-        uri = os.path.join(self.urlroot, uri)
+        if uri is None or self.urn_scheme.search(uri):  # non local href
+            return uri or ""
+        if uri.startswith("/"):
+            if not make_global:
+                return uri
+        else:
+            uri = os.path.join(self.urlroot, uri)
         if make_global:
             uri = "{0}://{1}{2}".format(ctx.URLScheme, ctx.HostName, uri)
         return uri

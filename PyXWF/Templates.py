@@ -126,5 +126,3 @@ class XSLTTemplateCache(Cache.FileSourcedCache):
     """
     def _load(self, path):
         return XSLTTemplate(self.site, path)
-
-
