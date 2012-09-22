@@ -206,6 +206,24 @@ class FinalTransform(Mocks.SiteTest):
 
         self.assertTreeEqual(tree_xsl, root)
 
+    def test_mixed(self):
+        root, _, body = self.base_tree()
+        body.text = "\n"
+        a = ET.SubElement(body, NS.PyWebXML.a)
+        a.set("href", "foobar/baz")
+        a.set(NS.PyWebXML.content, "foobar/baz")
+        a.tail = "\n"
+
+        ctx = self.mock_ctx()
+        tree_xsl = self.raw_transform(root, ctx=ctx)
+
+        a.tag = NS.XHTML.a
+        a.set("href", "/foobar/baz")
+        a.set("content", "/foobar/baz")
+        del a.attrib[NS.PyWebXML.content]
+
+        self.assertTreeEqual(tree_xsl, root)
+
     def tearDown(self):
         del self.transform
         super(FinalTransform, self).tearDown()

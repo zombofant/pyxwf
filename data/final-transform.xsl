@@ -160,24 +160,23 @@
     </xsl:template>
 
     <!-- legacy @py:content -->
-    <xsl:template match="node()[@py:content]">
-        <xsl:copy>
-            <xsl:attribute name="content">
-                <xsl:choose>
-                    <xsl:when test="string(@py:content-make-uri) = 'true'">
-                        <xsl:call-template name="py-transform-localg-href">
-                            <xsl:with-param name="href" select="@py:content" />
-                        </xsl:call-template>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:call-template name="py-transform-localr-href">
-                            <xsl:with-param name="href" select="@py:content" />
-                        </xsl:call-template>
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:attribute>
-            <xsl:apply-templates select="@*[local-name() != 'content' and local-name() != 'content-make-uri']|node()" />
-        </xsl:copy>
+    <xsl:template match="@py:content-make-uri"></xsl:template>
+
+    <xsl:template match="@py:content">
+        <xsl:attribute name="content">
+            <xsl:choose>
+                <xsl:when test="string(../@py:content-make-uri) = 'true'">
+                    <xsl:call-template name="py-transform-localg-href">
+                        <xsl:with-param name="href" select="." />
+                    </xsl:call-template>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:call-template name="py-transform-localr-href">
+                        <xsl:with-param name="href" select="." />
+                    </xsl:call-template>
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:attribute>
     </xsl:template>
 
     <!-- legacy <py:if-mobile /> -->
