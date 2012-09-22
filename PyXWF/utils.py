@@ -103,6 +103,7 @@ def XHTMLToHTML(tree):
             continue
         ns, name = split_tag(item.tag)
         if ns != xhtml_ns:
+            logging.debug("offending element: {0}".format(ET.tostring(item)))
             raise ValueError("tree contains non-xhtml elements: {0}:{1}".format(ns, name))
         item.tag = name
     ET.cleanup_namespaces(tree)
