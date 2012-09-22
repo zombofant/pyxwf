@@ -103,5 +103,5 @@ class GenericFeed(Protocols.Feed):
     def transform(self, ctx, root):
         self.site.transform_references(ctx, root)
         feed = self.site.template_cache[self._template].raw_transform(root, {})
-        self.site.transform_py_namespace(ctx, feed, crumbs=False, link=False)
+        feed = self.site.transform_py_namespace(ctx, feed, crumbs=False)
         return feed

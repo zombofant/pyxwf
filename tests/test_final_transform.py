@@ -32,7 +32,7 @@ class FinalTransform(Mocks.SiteTest):
     def py_transform(self, body, ctx=None):
         ctx = ctx or self.mock_ctx()
         tree_py = copy.deepcopy(body)
-        self.site.transform_py_namespace(ctx, tree_py)
+        tree_py = self.site.transform_py_namespace(ctx, tree_py)
         return tree_py
 
     def raw_transform(self, body, ctx=None):

@@ -66,6 +66,10 @@ class Site(Resource.Resource):
         self.startcwd = os.getcwd()
         self.default_url_root = default_url_root
         self.cache = Cache.Cache(self)
+        self.final_transform = Templates.XSLTTemplate(
+            self,
+            os.path.join(PyXWF.data_path, "final-transform.xsl")
+        )
         # self.savepoint = ImportSavepoints.RollbackImporter()
         try:
             self.load_sitemap(sitemap_file)
@@ -212,27 +216,7 @@ class Site(Resource.Resource):
         for i, node in enumerate(crumb.render(ctx, parent)):
             parent.insert(idx+i, node)
 
-    def transform_py_if_mobile(self, ctx, body):
-        todelete = set()
-        for mobile_switch in body.iter(getattr(NS.PyWebXML, "if-mobile")):
-            if Types.Typecasts.bool(mobile_switch.get("mobile", True)) != ctx.IsMobileClient:
-                todelete.add(mobile_switch)
-                continue
-            try:
-                xhtmlel = mobile_switch.attrib.pop("xhtml-element")
-            except KeyError:
-                xhtmlel = "span"
-            mobile_switch.tag = getattr(NS.XHTML, xhtmlel)
-            try:
-                del mobile_switch.attrib["mobile"]
-            except KeyError:
-                pass
-        for mobile_switch in todelete:
-            mobile_switch.getparent().remove(mobile_switch)
-
-    def transform_py_namespace(self, ctx, body, crumbs=True, a=True, link=True,
-            img=True, mobile_switch=True, content_attr=True,
-            drop_empty_attr=True):
+    def transform_py_namespace(self, ctx, body, crumbs=True):
         """
         Do PyXWF specific transformations on the XHTML tree *body*. This
         includes transforming local a tags, local img tags and placing crumbs.
@@ -245,8 +229,6 @@ class Site(Resource.Resource):
         See :ref:`<py-namespace>` for documentation on what can be done with
         in that XML namespace.
         """
-        if mobile_switch:
-            self.transform_py_if_mobile(ctx, body)
         while crumbs:
             crumbs = False
             for crumb_node in body.iter(NS.PyWebXML.crumb):
@@ -258,49 +240,17 @@ class Site(Resource.Resource):
                     raise ValueError("Invalid crumb id: {0!r}."\
                             .format(crumb_id))
                 self._place_crumb(ctx, crumb_node, crumb)
-        if mobile_switch:
-            # just in case another py:if-mobile tag was placed by a crumb
-            self.transform_py_if_mobile(ctx, body)
-        if a:
-            for locallink in body.iter(NS.PyWebXML.a):
-                locallink.tag = NS.XHTML.a
-                self.transform_href(ctx, locallink)
-        if img:
-            for localimg in body.iter(NS.PyWebXML.img):
-                localimg.tag = NS.XHTML.img
-                self.transform_href(ctx, localimg)
-                localimg.set("src", localimg.get("href"))
-                del localimg.attrib["href"]
-        if link:
-            for locallink in body.iter(NS.PyWebXML.link):
-                locallink.tag = NS.XHTML.link
-                if locallink.get("href"):
-                    self.transform_href(ctx, locallink)
-        if content_attr:
-            content_attrname = NS.PyWebXML.content
-            content_make_uri_attrname = getattr(NS.PyWebXML, "content-make-uri")
-            for el in body.iterfind(".//*[@{0}]".format(content_attrname)):
-                make_uri = el.get(content_make_uri_attrname)
-                if make_uri is not None:
-                    del el.attrib[content_make_uri_attrname]
-                    make_global = Types.Typecasts.bool(make_uri)
-                else:
-                    make_global = False
-                el.set("content", el.get(content_attrname))
-                del el.attrib[content_attrname]
-                self.transform_href(ctx, el, "content", make_global=make_global)
-        if drop_empty_attr:
-            drop_empty_attrname = getattr(NS.PyWebXML, "drop-empty")
-            for el in list(body.iterfind(".//*[@{0}]".format(drop_empty_attrname))):
-                del el.attrib[drop_empty_attrname]
-                if len(el) == 0:
-                    el.getparent().remove(el)
+        return self.final_transform.raw_transform(
+            body,
+            self.get_template_arguments(ctx)
+        ).getroot()
 
 
     def get_template_arguments(self, ctx):
         # XXX: This will possibly explode one day ...
         return {
             b"site_title": utils.unicode2xpathstr(self.title),
+            b"deliver_mobile": "1" if ctx.IsMobileClient else "0",
             b"mobile_client": "1" if ctx.IsMobileClient else "0",
             b"host_name": utils.unicode2xpathstr(ctx.HostName),
             b"url_scheme": utils.unicode2xpathstr(ctx.URLScheme),

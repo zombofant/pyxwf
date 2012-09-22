@@ -89,7 +89,7 @@ class Template(Resource.Resource):
         for hmeta in newdoc.hmeta:
             head.append(hmeta)
         html.append(body)
-        self.site.transform_py_namespace(ctx, html)
+        html = self.site.transform_py_namespace(ctx, html)
 
         return ET.ElementTree(html)
 

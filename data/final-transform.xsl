@@ -55,17 +55,23 @@
                 <xsl:value-of select="$href" />
             </xsl:when>
             <xsl:otherwise>
-                <xsl:value-of select="$localr_prefix" />
+                <xsl:value-of select="$url_root" />
                 <xsl:value-of select="$href" />
             </xsl:otherwise>
         </xsl:choose>
+    </xsl:template>
+
+    <xsl:template name="py-host-prefix">
+        <xsl:value-of select="$url_scheme" />
+        <xsl:text>://</xsl:text>
+        <xsl:value-of select="$host_name" />
     </xsl:template>
 
     <xsl:template name="py-transform-localg-href">
         <xsl:param name="href" select="@href" />
         <xsl:choose>
             <xsl:when test="starts-with(string($href), '/')">
-                <xsl:value-of select="$host_prefix" />
+                <xsl:call-template name="py-host-prefix" />
                 <xsl:value-of select="$href" />
             </xsl:when>
             <xsl:when test="starts-with(string($href), '#')">
@@ -75,8 +81,8 @@
                 <xsl:value-of select="$href" />
             </xsl:when>
             <xsl:otherwise>
-                <xsl:value-of select="$host_prefix" />
-                <xsl:value-of select="$localr_prefix" />
+                <xsl:call-template name="py-host-prefix" />
+                <xsl:value-of select="$url_root" />
                 <xsl:value-of select="$href" />
             </xsl:otherwise>
         </xsl:choose>
