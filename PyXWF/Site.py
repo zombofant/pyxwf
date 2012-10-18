@@ -448,8 +448,10 @@ class Site(Resource.Resource):
         status = Errors.OK
         try:
             # attempt lookup
+            logger.debug("dispatching request")
             node = self._get_node(ctx)
         except Errors.NotFound as status:
+            logger.debug("no target node found, generating error page")
             if status.document is not None:
                 data = status.document
                 template = status.template
@@ -461,65 +463,79 @@ class Site(Resource.Resource):
                 template = self.template_cache[self.default_template]
                 ctx.use_resource(template)
         else:
+            logger.debug("preparing context")
             # setup the context
             ctx.PageNode = node
+
+            logger.debug("load & announce template")
             # load the template and mark it for use
             template = self.template_cache[node.Template]
             ctx.use_resource(template)
 
+            logger.debug("load & announce transformations")
             # evaluate the iterable as we need the list multiple times in this
             # code path
             html_transforms = list(html_transforms)
             ctx.use_resources(html_transforms)
 
+            logger.debug("checking content type")
             content_type = node.get_content_type(ctx)
             if content_type == ContentTypes.xhtml:
                 if not ctx.HTML5Support and self.html4_transform:
                     ctx.use_resource(self.template_cache[self.html4_transform])
             if self.disable_xhtml:
                 ctx.CanUseXHTML = False
-                logging.debug("XHTML disabled in config")
+                logger.debug("XHTML disabled in config")
             if not ctx.CanUseXHTML:
                 # we'll do conversion later
                 content_type = ContentTypes.html
             ctx.check_acceptable(content_type)
 
+            logger.debug("probing for cache early out")
             # raise NotModified if the result will be available on the client
             # side
             ctx.check_not_modified()
 
+            logger.debug("asking node for document to return")
             # otherwise, create the document and return it
             data = node.handle(ctx)
 
         if isinstance(data, Document.Document):
+            logger.debug("got Document, rendering")
             # do the final transformation on the content fetched from the node
             result_tree = template.final(ctx, data,
                     license_fallback=self._license)
 
+            logger.debug("performing additional transformations")
             for xslt in html_transforms:
                 result_tree = xslt.raw_transform(result_tree, {})
 
             if not ctx.HTML5Support and self.html4_transform:
+                logger.debug("xhtml5->xhtml1 transformation")
                 transform = self.template_cache[self.html4_transform]
                 result_tree = transform.raw_transform(result_tree, {})
 
             if not ctx.CanUseXHTML:
+                logger.debug("xhtml->html transformation & pass result")
                 message = Message.HTMLMessage.from_xhtml_tree(result_tree,
                     status=status, encoding="utf-8",
                     pretty_print=self.pretty_print
                 )
             else:
+                logger.debug("pass result")
                 message = Message.XHTMLMessage(result_tree,
                     status=status, encoding="utf-8",
                     pretty_print=self.pretty_print,
                     force_namespaces=dict(self.force_namespaces)
                 )
         elif isinstance(data, (ET._Element, ET._ElementTree)):
+            logger.debug("got Element(Tree)?, returning XML document")
             message = Message.XMLMessage(data, content_type,
                 status=status, encoding="utf-8",
                 cleanup_namespaces=True, pretty_print=self.pretty_print
             )
         elif isinstance(data, basestring):
+            logger.debug("got string, returning plain text")
             message = Message.TextMessage(data, content_type,
                 status=status, encoding="utf-8"
             )
