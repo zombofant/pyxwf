@@ -76,7 +76,7 @@ class Template(Resource.Resource):
             rel = link.get("rel")
             if rel == "script":
                 link = ET.Element(NS.XHTML.script, attrib={
-                    "src": link.get("href"),
+                    NS.PyWebXML.localr: link.get("href"),
                     "type": link.get("type")
                 })
             else:
@@ -137,4 +137,7 @@ class XSLTTemplateCache(Cache.FileSourcedCache):
     :class:`~XSLTTemplate` instances.
     """
     def _load(self, path):
-        return XSLTTemplate(self.site, path)
+        logger.debug(_F("requesting template at {0}", path))
+        tpl = XSLTTemplate(self.site, path)
+        logger.debug(_F("template at {0} loaded ok", path))
+        return tpl
