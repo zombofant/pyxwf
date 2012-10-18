@@ -76,7 +76,7 @@ class Template(Resource.Resource):
             rel = link.get("rel")
             if rel == "script":
                 link = ET.Element(NS.XHTML.script, attrib={
-                    NS.PyWebXML.localr: link.get("href"),
+                    NS.LocalR.src: link.get("href"),
                     "type": link.get("type")
                 })
             else:
