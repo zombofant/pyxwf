@@ -2,9 +2,13 @@
 A basic XSLT template implementation.
 """
 
-import abc, itertools, os, copy
+import abc
+import itertools
+import os
+import copy
+import logging
 
-from PyXWF.utils import ET
+from PyXWF.utils import ET, _F
 import PyXWF.utils as utils
 import PyXWF.Resource as Resource
 import PyXWF.Cache as Cache
@@ -13,6 +17,8 @@ import PyXWF.Document as Document
 import PyXWF.Registry as Registry
 import PyXWF.ContentTypes as ContentTypes
 import PyXWF.Parsers.PyWebXML as PyWebXML
+
+logger = logging.getLogger(__name__)
 
 class Template(Resource.Resource):
     """
@@ -60,7 +66,6 @@ class Template(Resource.Resource):
         if body is None:
             raise ValueError("Transform did not return a valid body.")
 
-
         html = ET.Element(NS.XHTML.html)
         head = ET.SubElement(html, NS.XHTML.head)
         ET.SubElement(head, NS.XHTML.title).text = \
@@ -68,18 +73,25 @@ class Template(Resource.Resource):
         for hbase in newdoc.ext.iterchildren(tag=NS.XHTML.base):
             head.append(hbase)
         for link in newdoc.links:
-            ielimit = link.get("ie-only")
-            if ielimit is not None:
-                link = copy.copy(link)
-                self.site.transform_href(ctx, link)
-                link.tag = "link"
-                del link.attrib["ie-only"]
-                ET.cleanup_namespaces(link)
-                s = ET.tostring(link, method="html", xml_declaration="no", encoding="utf-8").decode("utf-8")
-                s = "[{0}]>{1}<![endif]".format(ielimit, s)
-                link = ET.Comment()
-                link.text = s
-                link.tail = "\n"
+            rel = link.get("rel")
+            if rel == "script":
+                link = ET.Element(NS.XHTML.script, attrib={
+                    "src": link.get("href"),
+                    "type": link.get("type")
+                })
+            else:
+                ielimit = link.get("ie-only")
+                if ielimit is not None:
+                    link = copy.copy(link)
+                    self.site.transform_href(ctx, link)
+                    link.tag = "link"
+                    del link.attrib["ie-only"]
+                    ET.cleanup_namespaces(link)
+                    s = ET.tostring(link, method="html", xml_declaration="no", encoding="utf-8").decode("utf-8")
+                    s = "[{0}]>{1}<![endif]".format(ielimit, s)
+                    link = ET.Comment()
+                    link.text = s
+                    link.tail = "\n"
             head.append(link)
         if len(newdoc.keywords) > 0:
             ET.SubElement(head, NS.XHTML.meta, attrib={

@@ -29,14 +29,7 @@ class PyWebXML(Parsers.ParserBase):
         )
 
     def _link_from_node(self, node):
-        if node.get("rel") == "script":
-            href = self.site.transform_relative_uri(None, node.get("href") or "")
-            return ET.Element(NS.XHTML.script, attrib={
-                "type": node.get("type") or "",
-                "src": href
-            })
-        else:
-            return node
+        return node
 
     def get_links(self, meta):
         return list(map(self._link_from_node, meta.findall(NS.PyWebXML.link)))
