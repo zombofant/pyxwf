@@ -1,4 +1,7 @@
-import abc, os, mimetypes
+import abc
+import os
+import mimetypes
+import copy
 from datetime import datetime
 
 from PyXWF.utils import ET
@@ -132,10 +135,13 @@ class Document(Cache.Cachable):
             kw.text = keyword
 
         for link in self.links:
-            meta.append(link)
+            meta.append(copy.deepcopy(link))
 
         for hmeta in self.hmeta:
-            meta.append(hmeta)
+            meta.append(copy.deepcopy(hmeta))
+
+        for ext in self.ext:
+            meta.append(copy.deepcopy(ext))
 
         if self.date:
             date = ET.SubElement(meta, NS.PyWebXML.date)
@@ -147,7 +153,7 @@ class Document(Cache.Cachable):
         if self.description:
             ET.SubElement(meta, NS.PyWebXML.description).text = self.description
 
-        page.append(self.body)
+        page.append(copy.deepcopy(self.body))
 
         return page
 
