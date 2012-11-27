@@ -122,12 +122,16 @@ class ContextTest(unittest.TestCase):
 
 class FSTest(unittest.TestCase):
     def setUp(self):
+        import time
         super(FSTest, self).setUp()
+        self.old_last_modified = utils.file_last_modified
+        utils.file_last_modified = lambda *args: time.time()
         self.fs = MockFSLocation()
 
     def tearDown(self):
         self.fs.close()
         del self.fs
+        utils.file_last_modified = self.old_last_modified
         super(FSTest, self).tearDown()
 
 

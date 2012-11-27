@@ -162,6 +162,10 @@ class XHTMLToHTML(unittest.TestCase):
 
 
 class file_last_modified(Mocks.FSTest):
+    def setUp(self):
+        super(file_last_modified, self).setUp()
+        utils.file_last_modified = self.old_last_modified
+
     def test_non_existing(self):
         self.assertIsNone(utils.file_last_modified(os.path.join(self.fs.Root, "foo")))
 
