@@ -71,7 +71,9 @@ class Template(Resource.Resource):
         ET.SubElement(head, NS.XHTML.title).text = \
                 newdoc.title or document.title
         html_ns = unicode(NS.XHTML)
-        for helement in newdoc.ext.iterchildren():
+        for hmeta in newdoc.hmeta:
+            head.append(hmeta)
+        for helement in newdoc.ext:
             tag = helement.tag
             if not isinstance(tag, basestring):
                 continue

@@ -22,6 +22,16 @@ class PyWebXML(Parsers.ParserBase):
     __metaclass__ = Registry.SitletonMeta
 
     mimetypes = ["application/x-pywebxml"]
+    _known_nodes = {
+        NS.XHTML.meta,
+        NS.PyWebXML.title,
+        NS.PyWebXML.link,
+        NS.PyWebXML.author,
+        NS.PyWebXML.date,
+        NS.PyWebXML.description,
+        NS.PyWebXML.kw,
+        NS.PyWebXML.script,
+    }
 
     def __init__(self, site):
         super(PyWebXML, self).__init__(site,
@@ -31,8 +41,14 @@ class PyWebXML(Parsers.ParserBase):
     def _link_from_node(self, node):
         return node
 
+    def _is_ext_node(self, node):
+        return node.tag is not ET.Comment and node.tag not in self._known_nodes
+
     def get_links(self, meta):
-        return list(map(self._link_from_node, meta.findall(NS.PyWebXML.link)))
+        return list(map(self._link_from_node, itertools.chain(
+            meta.findall(NS.PyWebXML.link),
+            meta.findall(NS.PyWebXML.script)
+        )))
 
     @classmethod
     def get_keywords(cls, meta):
@@ -89,7 +105,7 @@ class PyWebXML(Parsers.ParserBase):
         hmeta = self.get_meta(meta)
         description = self.get_description(meta)
 
-        ext = meta
+        ext = [node for node in meta if self._is_ext_node(node)]
 
         return Document.Document(title, keywords, links, body,
             ext=ext, date=date, authors=authors, hmeta=hmeta,
