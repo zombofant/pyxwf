@@ -70,8 +70,14 @@ class Template(Resource.Resource):
         head = ET.SubElement(html, NS.XHTML.head)
         ET.SubElement(head, NS.XHTML.title).text = \
                 newdoc.title or document.title
-        for hbase in newdoc.ext.iterchildren(tag=NS.XHTML.base):
-            head.append(hbase)
+        html_ns = unicode(NS.XHTML)
+        for helement in newdoc.ext.iterchildren():
+            tag = helement.tag
+            if not isinstance(tag, basestring):
+                continue
+            ns, name = utils.split_tag(tag)
+            if ns == html_ns:
+                head.append(helement)
         for link in newdoc.links:
             rel = link.get("rel")
             if rel == "script":
@@ -98,8 +104,6 @@ class Template(Resource.Resource):
                 "name": "keywords",
                 "content": ",".join(newdoc.keywords)
             })
-        for hmeta in newdoc.hmeta:
-            head.append(hmeta)
         html.append(body)
         html = self.site.transform_py_namespace(ctx, html)
 
