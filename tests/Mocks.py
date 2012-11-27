@@ -150,12 +150,29 @@ class DynamicSiteTest(FSTest):
         <p>PyXWF.Nodes.Redirect</p>
         <p>PyXWF.Nodes.Directory</p>
     </plugins>
-    <tweaks />
+    <tweaks>
+        <templates default="default-template.xsl" />
+    </tweaks>
     <dir:tree
             id="treeRoot">
     </dir:tree>
     <crumbs />
 </site>""".encode("utf-8")
+
+    default_template_xml = """<?xml version="1.0" encoding="utf-8" ?>
+<xsl:stylesheet
+        version='1.0'
+        xmlns:h="http://www.w3.org/1999/xhtml"
+        xmlns:py="http://pyxwf.zombofant.net/xmlns/documents/pywebxml"
+        xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+        xmlns:a="http://pyxwf.zombofant.net/xmlns/templates/default">
+    <xsl:output method="xml" encoding="utf-8" />
+
+    <xsl:template match="/py:page">
+        <xsl:copy-of select="." />
+    </xsl:template>
+
+</xsl:stylesheet>""".encode("utf-8")
 
     def get_basic_sitemap(self):
         sitemap = ET.XML(self.sitemap_xml)
@@ -193,11 +210,10 @@ class DynamicSiteTest(FSTest):
         return sitemap
 
     def setup_site(self, sitemap):
-        f = self.fs.open("sitemap.xml", "w")
-        try:
+        with self.fs.open("sitemap.xml", "wb") as f:
             f.write(ET.tostring(sitemap))
-        finally:
-            f.close()
+        with self.fs.open("default-template.xsl", "wb") as f:
+            f.write(self.default_template_xml)
         self.site = MockedSite(self.fs)
 
     def tearDown(self):
