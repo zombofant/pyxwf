@@ -469,7 +469,10 @@ class Site(Resource.Resource):
 
             logger.debug("load & announce template")
             # load the template and mark it for use
-            template = self.template_cache[node.Template]
+            template_path = node.Template or self.default_template
+            if template_path is None:
+                raise ValueError("no valid template -- neither node nor default template is properly set.")
+            template = self.template_cache[template_path]
             ctx.use_resource(template)
 
             logger.debug("load & announce transformations")
