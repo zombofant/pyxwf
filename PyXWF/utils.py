@@ -56,7 +56,7 @@ def file_last_modified(fileref, float_times=False):
     """
     If *fileref* is a file name or a file like with associated fileno which
     points to an actual file, return the date of last modification
-    stored in the filesystem, **None** otherwise.
+    stored in the filesystem, :data:`None` otherwise.
 
     By default, the times are truncated to full seconds. If you need the
     floating point part of the times (if supported by the platform), pass
