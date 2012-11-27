@@ -10,6 +10,7 @@ from PyXWF.utils import ET
 import PyXWF.utils as utils
 import PyXWF.Namespaces as NS
 import PyXWF.Templates as Templates
+import PyXWF.ContentTypes as ContentTypes
 
 import tests.Mocks as Mocks
 
@@ -17,7 +18,7 @@ class FinalTransform(Mocks.SiteTest):
     def setUp(self):
         super(FinalTransform, self).setUp()
         transform_path = os.path.join(PyXWF.data_path, "final-transform.xsl")
-        self.transform = Templates.XSLTTemplate(None, transform_path)
+        self.transform = Templates.XSLTTemplate(self.site, transform_path)
         self.maxDiff = None
 
     def mock_ctx(self):
@@ -35,8 +36,7 @@ class FinalTransform(Mocks.SiteTest):
         tree_py = self.site.transform_py_namespace(ctx, tree_py)
         return tree_py
 
-    def raw_transform(self, body, ctx=None):
-        ctx = ctx or self.mock_ctx()
+    def _get_transform_args(self, ctx):
         d = self.site.get_template_arguments(ctx)
         d[b"localr_prefix"] = utils.unicode2xpathstr(self.site.urlroot)
         d[b"host_prefix"] = utils.unicode2xpathstr(
@@ -46,7 +46,17 @@ class FinalTransform(Mocks.SiteTest):
             )
         )
         d[b"deliver_mobile"] = str(ctx.IsMobileClient).lower()
+        return d
+
+    def raw_transform(self, body, ctx=None):
+        ctx = ctx or self.mock_ctx()
+        d = self._get_transform_args(ctx)
         return self.transform.raw_transform(body, d)
+
+    def full_fransform(self, document, ctx=None):
+        ctx = ctx or self.mock_ctx()
+        d = self._get_transform_args(ctx)
+        return self.transform.final(ctx, document)
 
     def assertTreeEqual(self, tree_a, tree_b):
         ET.cleanup_namespaces(tree_a)
@@ -139,6 +149,21 @@ class FinalTransform(Mocks.SiteTest):
         link1.tag = NS.XHTML.link
         link2.tag = NS.XHTML.link
         link2.set("href", "/foobar/baz")
+
+        self.assertTreeEqual(tree_xsl, root)
+
+    def test_script(self):
+        root, head, _ = self.base_tree()
+        script = ET.SubElement(head, NS.PyWebXML.script)
+        script.set("href", "/foobar/baz")
+        script.tail = "\n"
+
+        ctx = self.mock_ctx()
+        tree_xsl = self.raw_transform(root, ctx=ctx)
+
+        script.tag = NS.XHTML.script
+        script.set("src", "/foobar/baz")
+        del script.attrib["href"]
 
         self.assertTreeEqual(tree_xsl, root)
 
@@ -241,6 +266,30 @@ class FinalTransform(Mocks.SiteTest):
         del a.attrib[NS.PyWebXML.content]
 
         self.assertTreeEqual(tree_xsl, root)
+
+    def test_preserve_existing(self):
+        pwx = NS.PyWebXML
+        xhtml = NS.XHTML
+        root = pwx("page",
+            pwx("meta",
+                xhtml("script", href="foo")
+            ),
+            xhtml("body", "bar")
+        )
+        document = self.site.parser_registry[ContentTypes.PyWebXML].parse_tree(root)
+
+        ctx = self.mock_ctx()
+        tree_xsl = self.transform.final(ctx, document)
+
+        correct_tree = xhtml("html",
+            xhtml("head",
+                xhtml("title", "None"),
+                xhtml("script", href="foo")
+            ),
+            xhtml("body", "bar")
+        )
+
+        self.assertTreeEqual(tree_xsl, correct_tree)
 
     def tearDown(self):
         del self.transform

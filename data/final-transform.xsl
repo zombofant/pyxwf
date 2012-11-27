@@ -147,6 +147,19 @@
         </xsl:element>
     </xsl:template>
 
+    <!-- legacy: <py:script /> -->
+    <xsl:template match="py:script">
+        <xsl:element name="h:script">
+            <xsl:if test="@href">
+                <xsl:attribute name="src">
+                    <xsl:call-template name="py-transform-localr-href" />
+                </xsl:attribute>
+            </xsl:if>
+            <xsl:apply-templates select="@*[local-name() != 'href']|node()" />
+            <xsl:value-of select="." />
+        </xsl:element>
+    </xsl:template>
+
     <!-- legacy <py:img /> -->
     <xsl:template match="py:img">
         <h:img>
