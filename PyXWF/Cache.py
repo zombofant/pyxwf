@@ -322,6 +322,8 @@ class FileSourcedCache(SubCache):
 
     def __init__(self, master, rootpath):
         super(FileSourcedCache, self).__init__(master)
+        if rootpath is None:
+            raise ValueError("rootpath must not be None")
         self.rootpath = rootpath
 
     @abc.abstractmethod
