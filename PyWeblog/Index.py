@@ -40,6 +40,8 @@ class Post(Resource.Resource):
 
     def _cache_metadata(self, document):
         creation_date = document.date
+        if document.date is None:
+            raise ValueError("Document is missing the Date header.")
         authors = document.authors
         keywords = document.keywords
         description = document.description or ""
