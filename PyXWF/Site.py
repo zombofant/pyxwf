@@ -216,6 +216,16 @@ class Site(Resource.Resource):
         for i, node in enumerate(crumb.render(ctx, parent)):
             parent.insert(idx+i, node)
 
+    def _load_optional_transformations(self):
+        if self.remove_xhtml_prefixes:
+            self.prefixless_xhtml = Templates.XSLTTemplate(
+                self,
+                os.path.join(PyXWF.data_path, "prefixless-xhtml.xsl")
+            )
+        else:
+            self.prefixless_xhtml = None
+
+
     def transform_py_namespace(self, ctx, body, crumbs=True):
         """
         Do PyXWF specific transformations on the XHTML tree *body*. This
@@ -388,7 +398,9 @@ class Site(Resource.Resource):
 
         self.hooks.call("crumbs-loaded")
         self.hooks.call("loading-finished")
-        logger.debug("Sitemap loaded successfully")
+        logger.debug("Sitemap loaded successfully, executing post-config")
+
+        self._load_optional_transformations()
 
     def update(self):
         """

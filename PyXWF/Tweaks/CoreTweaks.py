@@ -42,6 +42,7 @@ class CoreTweaks(Tweaks.TweakSitleton):
         site.force_namespaces = set()
         site.html_transforms = []
         site.disable_xhtml = False
+        site.remove_xhtml_prefixes = False
 
     @classmethod
     def parse_tweak(cls, node, attribs, defaults={}):
@@ -81,6 +82,7 @@ class CoreTweaks(Tweaks.TweakSitleton):
         )
         self.site.html4_transform = results.get("html4-transform", self.site.html4_transform)
         self.site.disable_xhtml = Types.Typecasts.bool(results.get("disable-xhtml", self.site.disable_xhtml))
+        self.site.remove_xhtml_prefixes = Types.Typecasts.bool(results.get("remove-xhtml-prefixes", self.site.remove_xhtml_prefixes))
 
     def tweak_formatting(self, node):
         results = self.parse_tweak(
