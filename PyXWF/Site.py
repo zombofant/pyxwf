@@ -538,6 +538,13 @@ class Site(Resource.Resource):
                 )
             else:
                 logger.debug("pass result")
+                if not ctx.PrefixedXHTMLSupport and self.remove_xhtml_prefixes:
+                    logger.debug("Client is unable to deal with prefixed XHTML, performing transform")
+                    result_tree = self.prefixless_xhtml.raw_transform(
+                        result_tree,
+                        {}
+                    )
+
                 message = Message.XHTMLMessage(result_tree,
                     status=status, encoding="utf-8",
                     pretty_print=self.pretty_print,
