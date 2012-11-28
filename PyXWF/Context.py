@@ -183,6 +183,7 @@ class Context(object):
     }
 
     useragent_prefixed_xhtml_support = {
+        # see <https://bugzilla.mozilla.org/show_bug.cgi?id=816012>
         "firefox": None,
         "opera": 12.0,
         "chrome": 20.0,
