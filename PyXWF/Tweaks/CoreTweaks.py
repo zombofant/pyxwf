@@ -9,6 +9,7 @@ import PyXWF.Tweaks as Tweaks
 import PyXWF.Namespaces as NS
 import PyXWF.Types as Types
 import PyXWF.Registry as Registry
+from PyXWF.utils import _F
 
 logging = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class CoreTweaks(Tweaks.TweakSitleton):
         result.update(defaults)
         for attrib, value in node.attrib.items():
             if attrib not in known:
-                logging.log("Encountered unknown tweak attribute: {0}/@{1}".format(node.tag, attrib))
+                logging.warning(_F("Encountered unknown tweak attribute: {0}/@{1}", node.tag, attrib))
                 continue
             result[attrib] = typecasts.get(attrib, lambda x: x)(value)
         return result
