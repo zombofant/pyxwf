@@ -78,7 +78,8 @@ class CoreTweaks(Tweaks.TweakSitleton):
             node,
             [
                 "html4-transform",
-                "disable-xhtml"
+                "disable-xhtml",
+                "remove-xhtml-prefixes"
             ],
         )
         self.site.html4_transform = results.get("html4-transform", self.site.html4_transform)
