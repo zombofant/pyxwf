@@ -102,10 +102,7 @@ class WSGIContext(Context.Context):
         self._useragent_version \
             = utils.guess_useragent(value)
 
-        self._html5_support = self.useragent_supports_html5(
-            self._useragent_name,
-            self._useragent_version
-        )
+        self.useragent_support(self._useragent_name, self._useragent_version)
         self._is_mobile_client = utils.is_mobile_useragent(value)
 
     def _require_query(self):

@@ -182,6 +182,14 @@ class Context(object):
         "opera": 11.1
     }
 
+    useragent_prefixed_xhtml_support = {
+        "firefox": None,
+        "opera": 12.0,
+        "chrome": 20.0,
+        "safari": None,
+        "ie": None
+    }
+
     def __init__(self):
         # Method of the HTTP request ("GET", "POST", ...)
         self._method = None
@@ -227,6 +235,7 @@ class Context(object):
         self._can_use_xhtml = False
         self._cache_control = set()
         self._html5_support = False
+        self._prefixed_xhtml_support = False
         self._useragent_name = None
         self._useragent_version = None
         self._is_mobile_client = False
@@ -406,6 +415,17 @@ class Context(object):
             logging.debug("Accept-Charset: {0}".format(", ".join(map(str, self._accept_charset))))
             raise Errors.NotAcceptable()
 
+    def useragent_support(self, useragent, version):
+        """
+        Set the attributes backing :prop:`HTML5Support` and
+        :prop:`PrefixedXHTMLSupport` based on the *useragent* and its *version*.
+        """
+        self._html5_support = self.useragent_supports_html5(useragent, version)
+        self._prefixed_xhtml_support = self.useragent_supports_prefixed_xhtml(
+            useragent,
+            version
+        )
+
     @classmethod
     def useragent_supports_html5(cls, useragent, version):
         """
@@ -419,6 +439,29 @@ class Context(object):
             return version >= minversion
         except KeyError:
             return True  # we assume the best ... let them burn
+
+    @classmethod
+    def useragent_supports_prefixed_xhtml(cls, useragent, version):
+        """
+        Make a negative guess on the prefixed XHTML support. Some user agents
+        (mainly firefox, even with version 16.0) are unable to deal with XHTML
+        if it has XML namespace prefixes. Running javascript will fail then.
+        Compare <http://stackoverflow.com/q/13591707/1248008> for more info.
+
+        Return whether the current user agent is *known* to support prefixed
+        XHTML. If the UA is unknown, False will be returned for maximum
+        compatibility. Please note that the transform removing the prefixes has
+        to be enabled explicitly in the config (
+        ``<py:compatibility remove-xhtml-prefixes="true" />``).
+        """
+        try:
+            minversion = cls.useragent_prefixed_xhtml_support[useragent]
+            if minversion is None:
+                return False
+            return version >= minversion
+        except KeyError:
+            return False
+
 
     @classmethod
     def _parse_cookie_header(cls, value):
@@ -582,6 +625,15 @@ class Context(object):
         """
         self.add_vary("User-Agent")
         return self._html5_support
+
+    @property
+    def PrefixedXHTMLSupport(self):
+        """
+        Return whether the User-Agent is positively known to support XHTML with
+        namespace prefixes.
+        """
+        self.add_vary("User-Agent")
+        return self._prefixed_xhtml_support
 
     @property
     def CacheControl(self):

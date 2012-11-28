@@ -77,7 +77,7 @@ class WebStackContext(Context.Context):
         header = values[0]
         useragent, version = utils.guess_useragent(header)
         self._useragent_name, self._useragent_version = useragent, version
-        self._html5_support = self.useragent_supports_html5(useragent, version)
+        self.useragent_support(useragent, version)
         self._is_mobile_client = utils.is_mobile_useragent(header)
 
     def _require_query(self):
