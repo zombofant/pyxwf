@@ -88,6 +88,11 @@ class ConfigurationError(Exception):
     def __init__(self, message):
         super(ConfigurationError, self).__init__(message)
 
+class CrumbConfigurationError(ConfigurationError):
+    def __init__(self, message, crumb):
+        self.crumb = crumb
+        super(CrumbConfigurationError, self).__init__(message)
+
 class NodeConfigurationError(ConfigurationError):
     def __init__(self, message, node):
         self.node = node
