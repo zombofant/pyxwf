@@ -189,7 +189,7 @@ class TransformCacheSitleton(Sitleton.Sitleton):
 
     def __init__(self, site):
         super(TransformCacheSitleton, self).__init__(site)
-        self.key = id(self)
+        self.key = "{0!s}{1:016x}".format(self, id(self))
         self.cache = site.cache.specialized_cache(self.key, TransformCache)
 
     @classmethod
