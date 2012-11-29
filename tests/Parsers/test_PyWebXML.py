@@ -29,8 +29,6 @@ class PyWebXML(Mocks.DynamicSiteTest):
 
         parsed = self._parse(test_tree)
 
-
-
         self.maxDiff = None
         self.assertMultiLineEqual(
             ET.tostring(parsed.to_PyWebXML_page()),
