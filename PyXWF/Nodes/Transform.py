@@ -17,6 +17,7 @@ import PyXWF.Sitleton as Sitleton
 import PyXWF.Nodes.Directory as Directory
 
 cache_logging = logging.getLogger("PyXWF.Cache")
+logger = logging.getLogger(__name__)
 
 class TransformNS(object):
     __metaclass__ = NS.__metaclass__
@@ -189,7 +190,8 @@ class TransformCacheSitleton(Sitleton.Sitleton):
 
     def __init__(self, site):
         super(TransformCacheSitleton, self).__init__(site)
-        self.key = "{0!s}{1:016x}".format(self, id(self))
+        logger.debug(_F("registering cache sitleton {1!s} at site {0!s}", self.site, self))
+        self.key = "{0!s}".format(self)
         self.cache = site.cache.specialized_cache(self.key, TransformCache)
 
     @classmethod
