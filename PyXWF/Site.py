@@ -65,7 +65,6 @@ class Site(Resource.Resource):
         super(Site, self).__init__(**kwargs)
         self.startcwd = os.getcwd()
         self.default_url_root = default_url_root
-        self.cache = Cache.Cache(self)
         self.final_transform = Templates.XSLTTemplate(
             self,
             os.path.join(PyXWF.data_path, "final-transform.xsl")
@@ -352,6 +351,9 @@ class Site(Resource.Resource):
         # set this up for later auto-reload
         self.sitemap_file = sitemap_file
         self.sitemap_timestamp = utils.file_last_modified(sitemap_file)
+
+        # reinitialize cache
+        self.cache = Cache.Cache(self)
 
         # parse the sitemap
         root = ET.parse(sitemap_file).getroot()
