@@ -165,11 +165,84 @@ repository to see how a WSGI script might look. Most important is to set up the
 path to the *data directory* properly, and make sure that PyXWF is in your
 python path.
 
+We'll go through it here anyways. It's basically a normal python script, which
+is set up for use with WSGI (see the
+`PEP-3333 <http://www.python.org/dev/peps/pep-3333/>`_ for more info about
+WSGI itself). A very simplistic approach might look like this and we'll call
+this file **pyxwf.py**::
+
+    #!/usr/bin/python2
+    # encoding=utf-8
+    from __future__ import unicode_literals, print_function
+
+    import sys
+    import os
+    import logging
+
+    # you can configure logging here as you wish. This is the recommended
+    # configuration for testing (disable DEBUG-logging on the cache, it's rather
+    # verbose and not particularily helpful at the start)
+    logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger("PyXWF.Cache").setLevel(logging.INFO)
+
+    conf = {
+        "pythonpath": ["/path/to/pyxwf"],
+        "datapath": "/path/to/site"
+    }
+
+    try:
+        sys.path.extend(conf["pythonpath"])
+    except KeyError:
+        pass
+    os.chdir(conf["datapath"])
+
+    import PyXWF.WebBackends.WSGI as WSGI
+
+    sitemapFile = os.path.join(conf["datapath"], "sitemap.xml")
+
+    application = WSGI.WSGISite(
+        sitemapFile,
+        default_url_root=conf.get("urlroot")
+    )
+
+The *datapath* in the *conf* dictionary refers to the directory in which PyXWF
+will look for all files. In fact, all references to files inside the
+``sitemap.xml`` are relative to that path. Later on in the snippet above, we
+also look for the ``sitemap.xml`` itself in that location. Note that you have
+to add the path to the ``PyXWF`` package to your pythonpath (if you have not
+already done this globally).
+
+Test it quickly (without dedicated webserver)
+---------------------------------------------
+
+For this, PyXWF comes with a script called ``serve.py``. It'll help you to run
+test your website as soon as you have a WSGI script running. This will break
+though as soon as you have static content which is served from outside of
+PyXWF. But for the start, it's fine. It's basic use is pretty simple (and
+``./serve.py -h`` will tell you more). Just navigate to the PyXWF directory and
+do::
+
+    ./serve.py /path/to/pyxwf.py
+
+(you created the file ``pyxwf.py`` in the previous step!) This will spam some
+log messages. After it quiets down, you'll be able to access your site using
+the URL http://localhost:8080/.
+
+As soon as you need static files (images, CSS, …), you'll want to use a
+dedicated webserver for that, as PyXWF does not deliver such files by default.
+The next section deals with setting up PyXWF with Apache, but you're free to
+skip this in favour of finding out how awesome PyXWF really is.
+
+You can in fact also run the example delivered with PyXWF using ``serve.py``::
+
+    ./serve.py misc/example/pyxwf.py
+
 ``mod_wsgi`` with Apache
 ------------------------
 
 We are using a configuration similar to this one for zombofant.net::
 
+    WSGIApplicationGroup %{GLOBAL}
     WSGIScriptAlias / /path/to/zombofant/data/pyxwf.py
 
     # access to static files via Apache, PyXWF won't do that
@@ -180,5 +253,9 @@ Actually, thats all you need. Read up on
 `WSGI configuration <https://code.google.com/p/modwsgi/wiki/QuickConfigurationGuide>`_
 to see how to adapt this to your needs if it doesn't work out of the box.
 
-From there on you should be able to access PyXWF through your webbrowser.
-Congratulations!
+Before you cheer in happiness, a word of warning. The directive
+``WSGIApplicationGroup`` is required for PyXWF to work properly with ``lxml``,
+but may also break having multiple PyXWF sites on one server. The solution
+is to use one ``WSGIProcessGroup`` for each site. I might write another section
+about this, but for the basic setup the above snippet is okay, so I'll leave
+that for later.
