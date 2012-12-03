@@ -160,7 +160,7 @@ neccessary configuration steps to get it to work.
 Create the WSGI script
 ----------------------
 
-You may want to have a look at ``misc/examples/pyxwf.py`` from the PyXWF
+You may want to have a look at ``misc/start/pyxwf.py`` from the PyXWF
 repository to see how a WSGI script might look. Most important is to set up the
 path to the *data directory* properly, and make sure that PyXWF is in your
 python path.
@@ -233,9 +233,10 @@ dedicated webserver for that, as PyXWF does not deliver such files by default.
 The next section deals with setting up PyXWF with Apache, but you're free to
 skip this in favour of finding out how awesome PyXWF really is.
 
-You can in fact also run the example delivered with PyXWF using ``serve.py``::
+You can in fact also run the examples delivered with PyXWF using ``serve.py``,
+for example::
 
-    ./serve.py misc/example/pyxwf.py
+    ./serve.py misc/start/pyxwf.py
 
 ``mod_wsgi`` with Apache
 ------------------------
