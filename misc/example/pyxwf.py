@@ -2,15 +2,21 @@
 # encoding=utf-8
 from __future__ import unicode_literals, print_function
 
-import sys, os
+import sys
+import os
+import logging
 
-# we keep our pyxwf instance configurations in /etc/webconf, which is set up as
-# python package by adding an empty __init__.py. Each web project gets its own
-# python module which contains a dict called ``conf``.
-# See also site_name.py
-sys.path.append("/etc")
-from webconf.site_name import conf
-sys.path.remove("/etc")
+# you can configure logging here as you wish. This is the recommended
+# configuration for testing (disable DEBUG-logging on the cache, it's rather
+# verbose and not particularily helpful at the start)
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("PyXWF.Cache").setLevel(logging.INFO)
+
+conf = {
+    "pythonpath": ["."],
+    "datapath": os.path.join(os.getcwd(), "misc/example"),
+    "urlroot": "/"
+}
 
 try:
     sys.path.extend(conf["pythonpath"])
@@ -18,15 +24,11 @@ except KeyError:
     pass
 os.chdir(conf["datapath"])
 
-import WebStack
-from WebStack.Adapters.WSGI import WSGIAdapter
-import PyXWF.Stack
+import PyXWF.WebBackends.WSGI as WSGI
 
 sitemapFile = os.path.join(conf["datapath"], "sitemap.xml")
 
-application = WSGIAdapter(PyXWF.Stack.WebStackSite(
-	sitemapFile,
-	defaultURLRoot=conf.get("urlroot")
-    ),
-    handle_errors=0
+application = WSGI.WSGISite(
+    sitemapFile,
+    default_url_root=conf.get("urlroot")
 )
