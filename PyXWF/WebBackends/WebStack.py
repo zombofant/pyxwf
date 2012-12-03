@@ -126,6 +126,8 @@ class WebStackContext(Context.Context):
 class WebStackSite(Site.Site):
     def __init__(self, sitemap_file, **kwargs):
         super(WebStackSite, self).__init__(sitemap_file, **kwargs)
+        logging.warn("WebStack backend is deprecated. Do migrate to WSGI soon \
+or write your own backend, if you need CGI for example..")
 
     def respond(self, transaction):
         try:
