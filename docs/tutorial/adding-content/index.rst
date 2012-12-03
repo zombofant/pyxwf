@@ -20,6 +20,27 @@ about navigations (which are really easy business with PyXWF).
     which will be executed as the appropriate HTTP response (or handled as an
     alias)
 
+To give this all a more aimed touch, we'll imagine the following situation. We
+want to start a community website, where we have some projects which we want
+to display status of. We also want a small blog where people can post about
+their projects. That sounds a lot? It's actually pretty easy to acomplish. In
+this section, we'll start with adding generic information about our community.
+
+Adding a directory
+------------------
+
+We before had the following sitemap tree::
+
+        <dir:tree
+                id="treeRoot"
+                template="templates/default.xsl">
+            <page:node  name="" id="home"
+                src="home.xml"
+                type="application/x-pywebxml" />
+        </dir:tree>
+
+
+
 .. rubric:: Footnotes
 
 .. [#xhtml] Why XHTML? XHTML is a reasonable (the only, if you'd ask me) way to
