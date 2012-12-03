@@ -26,11 +26,6 @@ class Atom(GenericFeed.GenericFeed):
         self._favicon = self.site.transform_href(ctx, root, attrname="icon", make_global=True)
         feed = super(Atom, self).transform(ctx, root)
         transform_href = self.site.transform_href
-        for locallink in feed.iter(NS.PyWebXML.link):
-            locallink.tag = NS.Atom.link
-            transform_href(ctx, locallink)
-            locallink.text = self._link_prefix[:-1]+locallink.get("href")
-            del locallink.attrib["href"]
         return feed
 
     # these are handled by a proxy class. this instance is _never_ returned as
