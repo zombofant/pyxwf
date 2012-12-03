@@ -14,7 +14,7 @@ logging.getLogger("PyXWF.Cache").setLevel(logging.INFO)
 
 conf = {
     "pythonpath": ["."],
-    "datapath": os.path.join(os.getcwd(), "misc/start"),
+    "datapath": os.path.join(os.getcwd(), "examples/start"),
     "urlroot": "/"
 }
 
