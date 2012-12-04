@@ -291,7 +291,7 @@ class Context(object):
         header will not be set. This is required per RFC 2616 for 304 Not
         Modified responses.
         """
-        self._cache_control = {}
+        self._cache_control = set()
         if self.Cachable:
             last_modified = self.LastModified
             if last_modified is not None:
