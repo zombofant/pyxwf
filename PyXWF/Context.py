@@ -291,10 +291,14 @@ class Context(object):
         header will not be set. This is required per RFC 2616 for 304 Not
         Modified responses.
         """
+        self._cache_control = {}
         if self.Cachable:
             last_modified = self.LastModified
             if last_modified is not None:
                 self.add_cache_control("must-revalidate")
+                # let's see whether that finally forces firefox to fix our
+                # reload issues.
+                self.add_cache_control("max-age=0")
                 if not no_last_modified:
                     self.set_response_header("Last-Modified",
                         HTTPUtils.format_http_date(last_modified))
