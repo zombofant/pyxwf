@@ -57,6 +57,10 @@ class Navigation(Crumbs.CrumbBase):
         self.root_as_header = Types.DefaultForNone(False,
             Types.NumericRange(int, 1, 6))(node.get("root-as-header"))
 
+    @staticmethod
+    def page_representative(ctx, page):
+        return page.get_navigation_info(ctx).get_representative()
+
     def _propagate_active(self, enode):
         if not self.child_active_class:
             return
@@ -73,9 +77,7 @@ class Navigation(Crumbs.CrumbBase):
         a.text = nav_info.get_title()
         representative = nav_info.get_representative()
         if representative in active_chain:
-            pagenode = ctx.PageNode.get_navigation_info(ctx)\
-                       .get_representative()
-
+            pagenode = self.page_representative(ctx.PageNode)
             if deepest or representative is pagenode:
                 if self.active_class:
                     utils.add_class(a, self.active_class)
@@ -108,17 +110,17 @@ class Navigation(Crumbs.CrumbBase):
                 li = ET.SubElement(ul, NS.XHTML.li)
                 a = self._markupA(ctx, li, child, nav_info, active_chain, depth==self.maxdepth)
                 subtree = self._nav_tree(li, ctx, nav_info, depth+1, active_chain,
-                    active=child in active_chain)
+                    active=self.page_representative(child) in active_chain)
                 if subtree is not None:
                     li.append(subtree)
         return ul
 
     def render(self, ctx, parent):
         if ctx.PageNode:
-            active_chain = frozenset(
-                page.get_navigation_info(ctx).get_representative()
-                for page in ctx.PageNode.iter_upwards()
-            )
+            active_chain = frozenset(map(
+                self.page_representative,
+                ctx.PageNode.iter_upwards()
+            ))
         else:
             active_chain = frozenset()
         logging.debug(_F("active chain: {}", active_chain))
