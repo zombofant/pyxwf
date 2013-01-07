@@ -68,13 +68,20 @@ class Navigation(Crumbs.CrumbBase):
                     utils.add_class(a, cls)
             enode = enode.getparent()
 
-    def _markupA(self, ctx, parent, node, nav_info, propagate=True):
+    def _markupA(self, ctx, parent, node, nav_info, active_chain, deepest=False):
         a = ET.SubElement(parent, NS.PyWebXML.a, href=node.Path)
         a.text = nav_info.get_title()
-        if nav_info.get_representative() is ctx.PageNode:
-            utils.add_class(a, self.active_class)
-            if propagate:
-                self._propagate_active(a)
+        representative = nav_info.get_representative()
+        if representative in active_chain:
+            pagenode = ctx.PageNode.get_navigation_info(ctx)\
+                       .get_representative()
+
+            if deepest or representative is pagenode:
+                if self.active_class:
+                    utils.add_class(a, self.active_class)
+            else:
+                if self.child_active_class:
+                    utils.add_class(a, self.child_active_class)
         return a
 
     def _nav_tree(self, parent, ctx, info, depth=0, active_chain=set(), active=False):
@@ -99,7 +106,7 @@ class Navigation(Crumbs.CrumbBase):
                 nodeiter.push(iter(nav_info))
             elif display_mode >= self.mindisplay:
                 li = ET.SubElement(ul, NS.XHTML.li)
-                self._markupA(ctx, li, child, nav_info, True)
+                a = self._markupA(ctx, li, child, nav_info, active_chain, depth==self.maxdepth)
                 subtree = self._nav_tree(li, ctx, nav_info, depth+1, active_chain,
                     active=child in active_chain)
                 if subtree is not None:
@@ -108,7 +115,10 @@ class Navigation(Crumbs.CrumbBase):
 
     def render(self, ctx, parent):
         if ctx.PageNode:
-            active_chain = frozenset(ctx.PageNode.iter_upwards())
+            active_chain = frozenset(
+                page.get_navigation_info(ctx).get_representative()
+                for page in ctx.PageNode.iter_upwards()
+            )
         else:
             active_chain = frozenset()
         logging.debug(_F("active chain: {}", active_chain))
@@ -124,7 +134,7 @@ class Navigation(Crumbs.CrumbBase):
                     getattr(NS.XHTML, "h{0}".format(self.root_as_header)))
                 self._markupA(ctx, hX, self.root,
                     self.root.get_navigation_info(ctx),
-                    propagate=False)
+                    active_chain=active_chain)
                 yield header
                 if tree is not None:
                     yield tree
