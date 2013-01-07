@@ -77,7 +77,7 @@ class Navigation(Crumbs.CrumbBase):
         a.text = nav_info.get_title()
         representative = nav_info.get_representative()
         if representative in active_chain:
-            pagenode = self.page_representative(ctx.PageNode)
+            pagenode = self.page_representative(ctx, ctx.PageNode)
             if deepest or representative is pagenode:
                 if self.active_class:
                     utils.add_class(a, self.active_class)
@@ -110,7 +110,7 @@ class Navigation(Crumbs.CrumbBase):
                 li = ET.SubElement(ul, NS.XHTML.li)
                 a = self._markupA(ctx, li, child, nav_info, active_chain, depth==self.maxdepth)
                 subtree = self._nav_tree(li, ctx, nav_info, depth+1, active_chain,
-                    active=self.page_representative(child) in active_chain)
+                    active=self.page_representative(ctx, child) in active_chain)
                 if subtree is not None:
                     li.append(subtree)
         return ul
@@ -118,7 +118,7 @@ class Navigation(Crumbs.CrumbBase):
     def render(self, ctx, parent):
         if ctx.PageNode:
             active_chain = frozenset(map(
-                self.page_representative,
+                lambda x: self.page_representative(ctx, x),
                 ctx.PageNode.iter_upwards()
             ))
         else:
