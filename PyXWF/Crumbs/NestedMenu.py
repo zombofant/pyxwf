@@ -1,10 +1,14 @@
-from PyXWF.utils import ET
+import logging
+
+from PyXWF.utils import ET, _F
 import PyXWF.utils as utils
 import PyXWF.Types as Types
 import PyXWF.Namespaces as NS
 import PyXWF.Registry as Registry
 import PyXWF.Crumbs as Crumbs
 import PyXWF.Navigation as Nav
+
+logger = logging.getLogger(__name__)
 
 class IteratorStack(object):
     def __init__(self):
@@ -107,8 +111,10 @@ class Navigation(Crumbs.CrumbBase):
             active_chain = frozenset(ctx.PageNode.iter_upwards())
         else:
             active_chain = frozenset()
+        logging.debug(_F("active chain: {}", active_chain))
         if self.show_root:
             if self.root_as_header is not None:
+                logger.debug("root w/ root as header")
                 tree = self._nav_tree(None, ctx, self.root.get_navigation_info(ctx),
                     depth=1,
                     active_chain=active_chain,
@@ -123,6 +129,7 @@ class Navigation(Crumbs.CrumbBase):
                 if tree is not None:
                     yield tree
             else:
+                logger.debug("root w/o root as header")
                 tree = self._nav_tree(None, ctx, [self.root],
                     depth=0,
                     active_chain=active_chain,
@@ -130,6 +137,7 @@ class Navigation(Crumbs.CrumbBase):
                 if tree is not None:
                     yield tree
         else:
+            logger.debug("no root")
             tree = self._nav_tree(None, ctx, self.root.get_navigation_info(ctx),
                 active_chain=active_chain,
                 active=True)
