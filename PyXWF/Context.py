@@ -8,6 +8,7 @@ import functools
 import logging
 import itertools
 import base64
+import urllib
 
 from PyXWF.utils import _F
 import PyXWF.Types as Types
@@ -664,6 +665,29 @@ class Context(object):
         as response. This will render the filelike behind :attr:`Out` invalid
         for use for writing. This must be implemented by a derived class.
         """
+
+    def get_reconstructed_uri(self, urlroot, update_query={}):
+        """
+        Return the full URI to reconstruct the request as stored in the
+        Context currently. This takes into account any changes to the
+        QueryData for example.
+        """
+        querydict = dict(self.QueryData)
+        querydict.update(update_query)
+        if not querydict:
+            query = ""
+        else:
+            query = "?" + urllib.urlencode(querydict)
+        path = self._path
+        if path and urlroot and path[0] == '/' and urlroot[-1] == '/':
+            urlroot = urlroot[:-1]
+        return "{protocol}://{host}{base}{path}{query}".format(
+            protocol=self.URLScheme,
+            host=self.HostName,
+            base=urlroot,
+            path=self._path,
+            query=query
+        )
 
     def use_resource(self, resource):
         """

@@ -124,6 +124,21 @@ class Cookie(unittest.TestCase):
         self.assertIsInstance(generated_cookie_string, str)
 
 class Context(unittest.TestCase):
+    def test_uri_reconstruction(self):
+        urlroot = "/foo/bar/"
+        ctx = Mocks.MockedContext(urlroot,
+            path="baz",
+            query_data={
+                "param1": "value1",
+                "param2": "&value2"
+            },
+            host="mockingbird.example.com"
+        )
+        self.assertEqual(
+            "http://mockingbird.example.com/foo/bar/baz?param2=%26value2&param1=value1",
+            ctx.get_reconstructed_uri(urlroot)
+        )
+
     def send_message(self, body="Foo bar", **kwargs):
         ctx = Mocks.MockedContext("/", **kwargs)
         message = Message.TextMessage(body, encoding="utf-8")
