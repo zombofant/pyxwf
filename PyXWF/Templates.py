@@ -70,7 +70,10 @@ class Template(Resource.Resource):
         head = ET.SubElement(html, NS.XHTML.head)
         ET.SubElement(head, NS.XHTML.title).text = \
                 newdoc.title or document.title
+
         html_ns = unicode(NS.XHTML)
+        valid_ext_ns = set((unicode(NS.XHTML), unicode(NS.PyWebXML)))
+
         for hmeta in newdoc.hmeta:
             head.append(hmeta)
         for helement in newdoc.ext:
@@ -78,7 +81,7 @@ class Template(Resource.Resource):
             if not isinstance(tag, basestring):
                 continue
             ns, name = utils.split_tag(tag)
-            if ns == html_ns:
+            if ns in valid_ext_ns:
                 head.append(helement)
         for link in newdoc.links:
             rel = link.get("rel")
