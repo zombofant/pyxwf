@@ -135,7 +135,8 @@ class ThemeSwitch(Tweaks.TweakSitleton):
                 ctx.set_cookie(Context.Cookie(
                     self._cookiename,
                     theme_name,
-                    expires=datetime.utcnow()+timedelta(days=365)
+                    expires=datetime.utcnow()+timedelta(days=365),
+                    path=self.site.urlroot
                 ))
                 del querydict["settheme"]
                 raise Errors.Found(
