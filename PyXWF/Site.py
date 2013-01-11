@@ -508,10 +508,14 @@ class Site(Resource.Resource):
                 content_type = ContentTypes.html
             ctx.check_acceptable(content_type)
 
-            logger.debug("probing for cache early out")
-            # raise NotModified if the result will be available on the client
-            # side
-            ctx.check_not_modified()
+            if self.client_cache:
+                logger.debug("probing for cache early out")
+                # raise NotModified if the result is already known to
+                # the client (as per If-Modified-Since header)
+                ctx.check_not_modified()
+            else:
+                # no client-side caching allowed.
+                logger.debug("client side caching disabled")
 
             logger.debug("asking node for document to return")
             # otherwise, create the document and return it

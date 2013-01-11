@@ -44,6 +44,7 @@ class CoreTweaks(Tweaks.TweakSitleton):
         site.html_transforms = []
         site.disable_xhtml = False
         site.remove_xhtml_prefixes = False
+        site.client_cache = True
 
     @classmethod
     def parse_tweak(cls, node, attribs, defaults={}):
@@ -67,11 +68,13 @@ class CoreTweaks(Tweaks.TweakSitleton):
             node,
             {
                 "cache-limit": Types.NumericRange(int, 0, None),
-                "pretty-print": Types.Typecasts.bool
+                "pretty-print": Types.Typecasts.bool,
+                "client-cache": Types.Typecasts.bool
             }
         )
         self.site.pretty_print = results.get("pretty-print", self.site.pretty_print)
         self.site.cache.Limit = results.get("cache-limit", self.site.cache.Limit)
+        self.site.client_cache = results.get("client-cache", self.site.client_cache)
 
     def tweak_compatibility(self, node):
         results = self.parse_tweak(
