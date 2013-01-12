@@ -276,6 +276,24 @@ overwritten by those which have been set by previous nodes.
     Requires a path to an XSL document. This is the template to use
     if the node which is to be served has no template specified.
 
+*   ``@not-found``
+
+    Requires a path to an XSL document. If set, this will be called
+    whenever PyXWF was unable to resolve a request for a resource. As
+    there is no resource to be passed to the XSLT, a small document
+    describing the error is passed instead. The format allows the user
+    to re-use the template for several error messages. It is expected
+    to return a valid PyWebXML document.
+
+    The input document given to the XSLT is the following::
+
+        <py:error type="not-found">
+            <py:resourceName>failed-path<py:resourceName>
+        </py:error>
+
+    The *failed-path* is replaced with the path PyXWF was unable to
+    resolve.
+
 ``<mimemap />`` — declare file extensions
 =========================================
 
