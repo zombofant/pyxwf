@@ -22,6 +22,8 @@ consider default and useful:
 *  ``h:`` maps to ``http://www.w3.org/1999/xhtml``, the XHTML namespace.
 *  ``py:`` maps to ``http://pyxwf.zombofant.net/xmlns/documents/pywebxml``,
    the namespace for PyWebXML documents.
+*  ``site:`` maps to ``http://pyxwf.zombofant.net/xmlns/site``, the
+   namespace for ``sitemap.xml`` files.
 
 Table of contents
 -----------------
@@ -30,6 +32,7 @@ Table of contents
    :maxdepth: 3
 
    tutorial/index
+   sitemap/index
    plugins/index
    pywebxml/index
    reference/index
