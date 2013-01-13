@@ -56,6 +56,7 @@ class Navigation(Crumbs.CrumbBase):
         self.mindisplay = Types.Typecasts.int(node.get("min-display", 1))
         self.root_as_header = Types.DefaultForNone(False,
             Types.NumericRange(int, 1, 6))(node.get("root-as-header"))
+        self.pass_id = Types.Typecasts.bool(node.get("pass-id", False));
 
     @staticmethod
     def page_representative(ctx, page):
@@ -76,6 +77,8 @@ class Navigation(Crumbs.CrumbBase):
         a = ET.SubElement(parent, NS.PyWebXML.a, href=node.Path)
         a.text = nav_info.get_title()
         representative = nav_info.get_representative()
+        if self.pass_id and node.ID:
+            a.set("id", node.ID)
         if representative in active_chain:
             pagenode = self.page_representative(ctx, ctx.PageNode)
             if deepest or representative is pagenode:
