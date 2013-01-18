@@ -14,6 +14,7 @@ import warnings
 import re
 import sys
 import logging
+import platform
 
 from PyXWF.utils import ET, _F, threading, blist
 import PyXWF
