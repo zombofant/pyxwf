@@ -60,6 +60,8 @@ class WSGIContext(Context.Context):
 
         self._determine_html_content_type()
 
+        logger.debug(_F("request uri: {}", self.get_reconstructed_uri("/.../")))
+
     def _load_preference_list(self, headername, preflist, default):
         try:
             headervalue = self._request_headers[headername]
