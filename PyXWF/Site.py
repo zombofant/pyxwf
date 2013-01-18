@@ -55,12 +55,14 @@ class Site(Resource.Resource):
 
     def __init__(self, sitemap_file, default_url_root=None, **kwargs):
         logger.info(_F(
-"Initializing PyXWF/{pyxwf_version} at {pid} with lxml.etree/{etree_version}, {threading}, blist/{blist_version}",
+"Initializing PyXWF/{pyxwf_version} at {pid} with {python}/{python_version} lxml.etree/{etree_version}, {threading}, blist/{blist_version}",
             pyxwf_version=PyXWF.__version__,
             etree_version=ET.__version__,
             threading=threading.__name__,
             blist_version=blist.__version__,
-            pid=os.getpid()
+            pid=os.getpid(),
+            python=platform.python_implementation(),
+            python_version=platform.python_version()
         ))
         super(Site, self).__init__(**kwargs)
         self.startcwd = os.getcwd()
