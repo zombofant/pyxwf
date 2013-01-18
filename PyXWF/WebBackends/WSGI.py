@@ -35,7 +35,7 @@ class WSGIContext(Context.Context):
             server_port = None
         relpath = environ.get("PATH_INFO").decode("utf-8")
         logging.debug(environ)
-        url_scheme = environ.get("wsgi.scheme", "http")
+        url_scheme = environ.get("mod_wsgi.scheme", environ.get("wsgi.scheme", "http"))
         method = environ.get("REQUEST_METHOD")
         query_string = environ.get("QUERY_STRING", "")
         fulluri = environ.get("SCRIPT_NAME").decode("utf-8") + relpath + \
