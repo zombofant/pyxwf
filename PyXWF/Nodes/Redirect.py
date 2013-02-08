@@ -2,6 +2,7 @@ import os
 
 import PyXWF.Errors as Errors
 
+import PyXWF.Types as Types
 import PyXWF.Nodes as Nodes
 import PyXWF.Registry as Registry
 import PyXWF.Navigation as Navigation
@@ -76,6 +77,24 @@ class RedirectInternal(RedirectBase):
         self.to = node.get("to")
         self._navtitle = node.get("nav-title")
         self._navdisplay = Navigation.DisplayMode(node.get("nav-display", Navigation.Show))
+        self._as_directory = Types.Typecasts.bool(node.get("as-directory", False))
+        if self.method is Errors.InternalRedirect:
+            raise Errors.NodeConfigurationError("Directory redirect must not be internal", self)
+
+    def resolve_path(self, ctx, relpath):
+        if self._as_directory:
+            ctx.redirect_target = os.path.join(self.TargetNode.Path + relpath).encode("utf-8")
+            return self
+        else:
+            return super(RedirectInternal, self).resolve_path(ctx, relpath)
+
+    def redirect(self, ctx):
+        if self._as_directory:
+            if self.Cachable:
+                ctx.add_cache_control("private")
+            raise self.method(ctx.redirect_target)
+        else:
+            return super(RedirectInternal, self).redirect(ctx)
 
     @property
     def TargetNode(self):
@@ -91,3 +110,5 @@ class RedirectInternal(RedirectBase):
 
     def get_navigation_info(self, ctx):
         return self.Info(ctx, self)
+
+    request_handlers = redirect
