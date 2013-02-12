@@ -69,17 +69,13 @@ class Breadcrumbs(Crumbs.CrumbBase):
             id = self.anchor_prefix + section_number
             hX.set("id", id)
         section_title = "".join(hX.itertext())
-        if hX.text:
-            text = hX.text
-            hX.text = ""
-            text_span = ET.Element(NS.XHTML.span)
-            text_span.text = text
-            hX.insert(0, text_span)
         if self.section_numbers:
             secno_node = ET.Element(NS.XHTML.span, attrib={
                 "class": self.section_number_class
             })
             secno_node.text = section_number
+            secno_node.tail = hX.text
+            hX.text = ""
             hX.insert(0, secno_node)
         if self.section_links:
             seclink_node = copy.deepcopy(self.section_link_template)
