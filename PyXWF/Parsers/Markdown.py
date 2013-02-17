@@ -46,11 +46,15 @@ class Markdown(Parsers.ParserBase, Tweaks.TweakSitleton):
 
     def tweak(self, tweak):
         kwargs = {}
+        extras = ["metadata"]
         if not self._allow_html_type(tweak.get("allow-html")):
             kwargs["safe_mode"] = "escape"
 
+        if Types.Typecasts.bool(tweak.get("smarty-pants", True)):
+            extras.append("smarty-pants")
+
         self.md = markdown2.Markdown(
-            extras=["metadata"],
+            extras=extras,
             **kwargs
         )
 
