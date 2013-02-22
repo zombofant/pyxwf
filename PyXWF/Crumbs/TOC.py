@@ -10,7 +10,7 @@ import PyXWF.Crumbs as Crumbs
 import PyXWF.Types as Types
 import PyXWF.Errors as Errors
 
-class Breadcrumbs(Crumbs.CrumbBase):
+class TOC(Crumbs.CrumbBase):
     __metaclass__ = Registry.CrumbMeta
     namespace = "http://pyxwf.zombofant.net/xmlns/crumbs/toc"
     names = ["crumb"]
@@ -18,7 +18,7 @@ class Breadcrumbs(Crumbs.CrumbBase):
     header_tags = set(getattr(NS.XHTML, "h{0}".format(i)) for i in range(1, 7))
 
     def __init__(self, site, node):
-        super(Breadcrumbs, self).__init__(site, node)
+        super(TOC, self).__init__(site, node)
         self.section_numbers = Types.Typecasts.bool(
             node.get("section-numbers", True)
         )

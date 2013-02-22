@@ -15,7 +15,7 @@ class CrumbBase(object):
             __metaclass__ = Registry.CrumbMeta
 
             # xml namespace
-            namespace = "hettp://example.com/some-fancy-crumb"
+            namespace = "http://example.com/some-fancy-crumb"
 
             # list of xml local-names to register for in the above namespace
             names = ["crumb"]

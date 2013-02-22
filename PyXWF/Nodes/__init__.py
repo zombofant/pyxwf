@@ -88,7 +88,7 @@ class Node(object):
             __metaclass__ = Registry.NodeMeta
 
             # xml namespace
-            namespace = "hettp://example.com/cool-node"
+            namespace = "http://example.com/cool-node"
 
             # list of xml local-names to register for in the above namespace
             # if you don't want to do something fancy, just use ["node"]
