@@ -228,7 +228,7 @@ class Index(Resource.Resource):
                     errors += 1
 
         for filename in missing:
-            post = self._post_files.pop(filename)
+            post = self._post_files[filename]
             self._remove_post(post)
         try:
             self._last_modified = max(map(operator.attrgetter("LastModified"),
@@ -295,6 +295,7 @@ class Index(Resource.Resource):
     def _remove_post(self, post):
         self._unindex_post(post)
         self._posts.remove(post)
+        self._post_files.pop(post.filename)
 
     def _resort_post(self, post, new_date, new_authors, new_keywords):
         self._unindex_post(post)
