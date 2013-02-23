@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 # encoding=utf8
 # File name: unitest.py
-# This file is part of: pyuni
+# This file is part of: pyxwf
 #
 # LICENSE
 #
@@ -21,7 +21,7 @@
 #
 # FEEDBACK & QUESTIONS
 #
-# For feedback and questions about pyuni please e-mail one of the
+# For feedback and questions about pyxwf please e-mail one of the
 # authors named in the AUTHORS file.
 ########################################################################
 from __future__ import unicode_literals, print_function, division
