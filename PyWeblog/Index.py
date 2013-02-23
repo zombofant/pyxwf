@@ -229,7 +229,7 @@ class Index(Resource.Resource):
 
         for filename in missing:
             post = self._post_files[filename]
-            self.remove(post)
+            self._remove_post(post)
         try:
             self._last_modified = max(map(operator.attrgetter("LastModified"),
                                          self._posts))
@@ -295,6 +295,7 @@ class Index(Resource.Resource):
     def _remove_post(self, post):
         self._unindex_post(post)
         self._posts.remove(post)
+        self._post_files.pop(post.filename)
 
     def _resort_post(self, post, new_date, new_authors, new_keywords):
         self._unindex_post(post)
@@ -309,7 +310,7 @@ class Index(Resource.Resource):
                 self._dateformat,
                 resort_callback=self._resort_post,
                 find_neighbours_callback=self._find_neighbours)
-        self._autocreate_month_dir(   post.creation_date.year,
+        self._autocreate_month_dir( post.creation_date.year,
                                     post.creation_date.month).add(post)
         for keyword in post.keywords:
             self._autocreate_keyword_dir(keyword).add(post)
