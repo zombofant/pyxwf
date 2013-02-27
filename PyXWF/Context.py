@@ -628,6 +628,15 @@ class Context(object):
         self.add_vary("Accept")
         return self._can_use_xhtml
 
+    @property
+    def Accept(self):
+        """
+        Return the contents of the HTTP ``Accept`` header as
+        :class:`~PyXWF.Accept.AcceptPreferenceList`.
+        """
+        self.add_vary("Accept")
+        return self._accept
+
     @CanUseXHTML.setter
     def CanUseXHTML(self, value):
         self._can_use_xhtml = bool(value)
