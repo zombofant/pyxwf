@@ -102,7 +102,8 @@ class RedirectInternal(RedirectBase):
         self._navtitle = node.get("nav-title")
         self._navdisplay = Navigation.DisplayMode(node.get("nav-display", Navigation.Show))
         self._as_directory = Types.Typecasts.bool(node.get("as-directory", False))
-        if self.method is Errors.InternalRedirect:
+        if (self.method is Errors.InternalRedirect and
+                self._as_directory):
             raise Errors.NodeConfigurationError("Directory redirect must not be internal", self)
 
     def resolve_path(self, ctx, relpath):
