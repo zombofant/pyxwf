@@ -74,7 +74,7 @@ class Host(Tweaks.TweakSitleton):
     def _do_redirect(self, ctx, to_host, method):
         path = "{2}://{0}{1}".format(
             to_host,
-            ctx.FullURI,
+            ctx.FullURI.encode("utf-8"),
             ctx.URLScheme
         )
         raise method(location=path, local=False)
