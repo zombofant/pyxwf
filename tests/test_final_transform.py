@@ -315,6 +315,30 @@ class FinalTransform(Mocks.SiteTest):
 
         self.assertTreeEqual(tree_xsl, correct_tree)
 
+    def test_no_script_content_duplication(self):
+        pwx = NS.PyWebXML
+        xhtml = NS.XHTML
+        root = pwx("page",
+            pwx("meta",
+                pwx("script", "This is a test.")
+            ),
+            xhtml("body", "bar")
+        )
+        document = self.site.parser_registry[ContentTypes.PyWebXML].parse_tree(root)
+
+        ctx = self.mock_ctx()
+        tree_xsl = self.transform.final(ctx, document)
+
+        correct_tree = xhtml("html",
+            xhtml("head",
+                xhtml("title", "None"),
+                xhtml("script", "This is a test.")
+            ),
+            xhtml("body", "bar")
+        )
+
+        self.assertTreeEqual(tree_xsl, correct_tree)
+
     def tearDown(self):
         del self.transform
         super(FinalTransform, self).tearDown()

@@ -156,7 +156,6 @@
                 </xsl:attribute>
             </xsl:if>
             <xsl:apply-templates select="@*[local-name() != 'href']|node()" />
-            <xsl:value-of select="." />
         </xsl:element>
     </xsl:template>
 
