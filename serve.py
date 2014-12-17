@@ -69,9 +69,6 @@ if __name__=="__main__":
     app = locals_dict[args.application_name]
 
     httpd = make_server('', args.port, app)
-    print("Your website is now reachable via:")
+    print("Your website is now reachable at:")
     print("  http://localhost:{0}/".format(args.port))
     httpd.serve_forever()
-
-
-
