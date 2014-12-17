@@ -23,17 +23,21 @@
 # For feedback and questions about pyxwf please e-mail one of the
 # authors named in the AUTHORS file.
 ########################################################################
-from wsgiref.simple_server import make_server
 import argparse
 import importlib
-import logging
+import sys
+
+from wsgiref.simple_server import make_server
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--path",
+        "--add-path",
         metavar="PATH",
-        help="Path to add to the pythonpath."
+        action="append",
+        dest="paths",
+        default=[],
+        help="Add path to PYTHONPATH. May be passed multiple times.",
     )
     parser.add_argument(
         "-p", "--port",
@@ -55,6 +59,9 @@ if __name__=="__main__":
     )
 
     args = parser.parse_args()
+
+    sys.path.extend(args.paths)
+
     globals_dict = globals()
     locals_dict = {}
     execfile(args.wsgi_module, globals_dict, locals_dict)
