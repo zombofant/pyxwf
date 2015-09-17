@@ -24,7 +24,7 @@
 ########################################################################
 from __future__ import unicode_literals, absolute_import
 
-import os, warnings, gc, urllib
+import os, warnings, gc, urllib, logging
 from datetime import datetime
 
 import WebStack

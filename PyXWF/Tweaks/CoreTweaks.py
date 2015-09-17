@@ -52,7 +52,8 @@ class CoreTweaks(Tweaks.TweakSitleton):
                 ("formatting", self.tweak_formatting),
                 ("templates", self.tweak_templates),
                 ("mime-map", self.tweak_mimemap),
-                ("xml-namespaces", self.tweak_xml_namespaces)
+                ("xml-namespaces", self.tweak_xml_namespaces),
+                ("html-transform", self.tweak_html_transform)
             ]
         )
         site.pretty_print = False

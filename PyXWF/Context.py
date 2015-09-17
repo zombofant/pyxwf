@@ -161,6 +161,11 @@ take precedence")
             ] if attr is not None)
         )
 
+class UserData(object):
+    """
+
+    """
+    pass
 
 class Context(object):
     """
@@ -268,6 +273,8 @@ class Context(object):
         self._response_headers = {}
         self._vary = set(["host"])
         self._response_cookies = []
+
+        self.userdata = UserData()
 
     @abc.abstractmethod
     def _require_query(self):

@@ -80,7 +80,7 @@ class Navigation(Crumbs.CrumbBase):
         self.mindisplay = Types.Typecasts.int(node.get("min-display", 1))
         self.root_as_header = Types.DefaultForNone(False,
             Types.NumericRange(int, 1, 6))(node.get("root-as-header"))
-        self.pass_id = Types.Typecasts.bool(node.get("pass-id", False));
+        self.pass_id = Types.Typecasts.bool(node.get("pass-id", False))
 
     @staticmethod
     def page_representative(ctx, page):

@@ -25,6 +25,7 @@
 from __future__ import unicode_literals
 import os
 import httplib, random, urllib
+import logging
 
 import PyXWF.Nodes as Nodes
 import PyXWF.Types as Types
@@ -34,6 +35,8 @@ import PyXWF.Document as Document
 import PyXWF.Errors as Errors
 import PyXWF.Resource as Resource
 import PyXWF.Namespaces as NS
+
+logger = logging.getLogger(__name__)
 
 class MirrorNS(object):
     __metaclass__ = NS.__metaclass__

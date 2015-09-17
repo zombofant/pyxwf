@@ -71,6 +71,7 @@ class TOC(Crumbs.CrumbBase):
         if section_links:
             self.section_links = True
             self.section_link_template = copy.deepcopy(section_links[0])
+            del self.section_link_template.attrib["id"]
         self.maxdepth = Types.DefaultForNone(None, Types.NumericRange(int, 1, None))(node.get("max-depth"))
 
 
@@ -203,6 +204,3 @@ class TOC(Crumbs.CrumbBase):
             if self.optional_header is not None:
                 yield copy.deepcopy(self.optional_header)
             yield ul
-
-
-
