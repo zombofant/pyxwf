@@ -82,7 +82,7 @@ class Blog(Nodes.DirectoryResolutionBehaviour, Nodes.Node):
             return self.super_info.get_representative()
 
         def get_display(self):
-            self.blog._navdisplay
+            return self.blog._navdisplay
 
         def __iter__(self):
             if self.blog._posts_first:

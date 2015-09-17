@@ -226,6 +226,8 @@ class Index(Resource.Resource):
                     continue
 
                 fullpath = os.path.join(dirpath, filename)
+                if not os.path.isfile(fullpath):
+                    continue
                 # first, check if we already know the file. If that's the case,
                 # we only do an update.
                 try:
